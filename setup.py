@@ -22,15 +22,15 @@ setup(
     version= versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Simons Observatory Collaboration Power Spectrum Task Force",
-    author_email="",
+    url="https://github.com/simonsobs/pspy",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6"
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8"
         ],
     entry_points={},
