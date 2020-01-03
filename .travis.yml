@@ -1,0 +1,22 @@
+language: python
+
+dist: bionic
+
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install gfortran libfftw3-dev
+  - gfortran --version
+  - python --version
+  - python -m pip install numpy
+  - python -m pip install cython
+
+install:
+  - python -m pip install .
+
+script:
+  - python -c 'print("pspy rocks")'
