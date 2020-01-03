@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Install pspy after numpy has been installed
+pip install git+https://github.com/thibautlouis/pspy@master#egg=pspy
