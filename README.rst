@@ -2,12 +2,12 @@
 pspy
 ====
 
-.. image:: https://travis-ci.com/thibautlouis/pspy.svg?branch=master
-   :target: https://travis-ci.com/thibautlouis/pspy
-.. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
+.. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
+   :target: https://travis-ci.com/simonsobs/pspy
+.. image:: https://readthedocs.org/projects/simonsobs/badge/?version=latest
    :target: https://pspy.readthedocs.io/en/latest/?badge=latest
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/thibautlouis/pspy/master?filepath=notebooks/%2Findex.ipynb
+   :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=notebooks/%2Findex.ipynb
 
 Python power spectrum library
 
@@ -19,7 +19,7 @@ Installing the code
 
 .. code:: shell
 
-    $ git clone https://github.com/thibautlouis/pspy.git /where/to/clone
+    $ git clone https://github.com/simonsobs/pspy.git /where/to/clone
 
 Then you can install the ``pspy`` library and its dependencies *via*
 
