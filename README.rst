@@ -30,3 +30,13 @@ Then you can install the ``pspy`` library and its dependencies *via*
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
 to reinstall at every changes. If you plan to just use the likelihood and do not develop it, you can
 remove the ``-e`` option.
+
+
+Ipython notebooks:
+-------------------
+
+* `Reading, writing and plotting SO maps  <https://pspy.readthedocs.org/en/latest/tutorial_io.html>`_
+* `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
+* `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
+* `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
+
