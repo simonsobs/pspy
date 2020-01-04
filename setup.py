@@ -2,6 +2,9 @@ import setuptools
 from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
 
+with open("README.rst") as readme_file:
+    readme = readme_file.read()
+
 compile_opts = {
     "extra_f90_compile_args": [
         "-fopenmp", "-ffree-line-length-none", "-fdiagnostics-color=always", "-Wno-tabs"],
@@ -23,6 +26,10 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     author="Simons Observatory Collaboration Power Spectrum Task Force",
     url="https://github.com/simonsobs/pspy",
+    description="Python power spectrum code",
+    long_description=readme,
+    license="BSD license",
+    python_requires=">=3.5",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
@@ -37,12 +44,12 @@ setup(
     ext_modules=[mcm, cov],
     install_requires=[
         "numpy",
+        # "scipy==1.3.3", # to be used with pyFFTW on pypi
         "healpy",
         "cython", # this one should be installed by pyFFTW
         "pyFFTW @ git+https://github.com/pyFFTW/pyFFTW.git",
         "pillow", # this one should be installed by pixell
         "pixell @ git+https://github.com/simonsobs/pixell.git"],
-    license="BSD license",
     packages=["pspy"],
     data_files=[("data", ["data/Planck_Parchment_RGB.txt"])],
 )
