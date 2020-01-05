@@ -138,7 +138,8 @@ class so_map:
         color_range: scalar for single component or len(3) list for T, Q, U.
           the range of the colorscale
         file_name: string
-          file_name is the name of the png file that will be created, if ``None`` the plot will be displayed.
+          file_name is the name of the png file that will be created, if ``None`` the plot
+          will be displayed.
         title: string
           the title of the plot.
         cbar: boolean
