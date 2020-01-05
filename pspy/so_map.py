@@ -3,27 +3,35 @@ SO map class for handling healpix and CAR maps.
 This is a wrapper around healpix and enlib (pixell).
 """
 
-import copy
 import os
+from copy import deepcopy
 
 import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
-
+from astropy.io import fits
 from pixell import curvedsky, enmap, enplot, powspec, reproject
+from scipy.ndimage import distance_transform_edt
+
+from pspy.pspy_utils import ps_lensed_theory_to_dict
 
 
 class so_map:
     """Class defining a ``so_map`` object.
     """
     def __init__(self):
-        pass
+        self.pixel = None
+        self.nside = None
+        self.ncomp = None
+        self.data = None
+        self.geometry = None
+        self.coordinate = None
 
     def copy(self):
         """ Create a copy of the ``so_map`` object.
         """
 
-        return copy.deepcopy(self)
+        return deepcopy(self)
 
     def info(self):
         """ Print information about the ``so_map`` object.
@@ -86,7 +94,7 @@ class so_map:
 
         downgrade = self.copy()
         if self.pixel == "HEALPIX":
-            nside_out = nside / factor
+            nside_out = self.nside / factor
             downgrade.data = hp.ud_grade(self.data, nside_out=nside_out)
             downgrade.nside = nside_out
         if self.pixel == "CAR":
@@ -105,7 +113,6 @@ class so_map:
         """
 
         if self.pixel == "HEALPIX":
-            from pspy.pspy_utils import ps_lensed_theory_to_dict
             l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", startAtZero=True)
             if self.ncomp == 1:
                 self.data = hp.synfast(ps["TT"], self.nside, new=True, verbose=False)
@@ -195,7 +202,7 @@ class so_map:
                 if file_name is not None:
                     plt.savefig(file_name + ".png", bbox_inches="tight")
                     plt.clf()
-                    plt.close
+                    plt.close()
                 else:
                     plt.show()
             else:
@@ -203,16 +210,15 @@ class so_map:
                 min_ranges = {l1: None for l1 in fields}
                 max_ranges = {l1: None for l1 in fields}
                 if color_range is not None:
-                    for i, l1 in enumerate(fields):
-                        min_ranges[l1] = -color_range[i]
-                        max_ranges[l1] = +color_range[i]
-                for data, l1 in zip(self.data, fields):
-
+                    for i, field in enumerate(fields):
+                        min_ranges[field] = -color_range[i]
+                        max_ranges[field] = +color_range[i]
+                for data, field in zip(self.data, fields):
                     if hp_gnomv is not None:
                         lon, lat, xsize, reso = hp_gnomv
                         hp.gnomview(data,
-                                    min=min_ranges[l1],
-                                    max=max_ranges[l1],
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
                                     cmap=cmap,
                                     notext=True,
                                     title=title,
@@ -222,16 +228,16 @@ class so_map:
                                     reso=reso)
                     else:
                         hp.mollview(data,
-                                    min=min_ranges[l1],
-                                    max=max_ranges[l1],
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
                                     cmap=cmap,
                                     notext=True,
-                                    title=l1 + "" + title,
+                                    title=field + "" + title,
                                     cbar=cbar)
                     if file_name is not None:
-                        plt.savefig(file_name + "_%s" % l1 + ".png", bbox_inches="tight")
+                        plt.savefig(file_name + "_%s" % field + ".png", bbox_inches="tight")
                         plt.clf()
-                        plt.close
+                        plt.close()
                     else:
                         plt.show()
 
@@ -269,9 +275,9 @@ class so_map:
                                          colorbar=1,
                                          ticks=ticks_spacing_car)
 
-                for (plot, l1) in zip(plots, fields):
+                for (plot, field) in zip(plots, fields):
                     if file_name is not None:
-                        enplot.write(file_name + "_%s" % l1 + ".png", plot)
+                        enplot.write(file_name + "_%s" % field + ".png", plot)
                     else:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
@@ -292,7 +298,6 @@ def read_map(file_name, coordinate=None, fields_healpix=None):
     """
 
     new_map = so_map()
-    from astropy.io import fits
     hdulist = fits.open(file_name)
     try:
         header = hdulist[1].header
@@ -301,26 +306,17 @@ def read_map(file_name, coordinate=None, fields_healpix=None):
             new_map.ncomp = header["TFIELDS"]
             new_map.data = hp.read_map(file_name, field=np.arange(new_map.ncomp), verbose=False)
         else:
-            try:
-                new_map.ncomp = len(fields_healpix)
-            except:
-                new_map.ncomp = 1
+            new_map.ncomp = len(fields_healpix) if hasattr(fields_healpix, "__len__") else 1
             new_map.data = hp.read_map(file_name, verbose=False, field=fields_healpix)
 
         new_map.nside = hp.get_nside(new_map.data)
         new_map.geometry = "healpix geometry"
-        try:
-            new_map.coordinate = header["SKYCOORD"]
-        except:
-            new_map.coordinate = None
+        new_map.coordinate = header.get("SKYCOORD", None) or None
 
     except:
         header = hdulist[0].header
         new_map.pixel = (header["CTYPE1"][-3:])
-        try:
-            new_map.ncomp = header["NAXIS3"]
-        except:
-            new_map.ncomp = 1
+        new_map.ncomp = header.get("NAXIS3", None) or 1
         new_map.data = enmap.read_map(file_name)
         new_map.nside = None
         new_map.geometry = new_map.data.geometry[1:]
@@ -584,29 +580,31 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     rad_to_arcmin = np.rad2deg(60)
     if noise.pixel == "HEALPIX":
         nside = noise.nside
-        pixArea = hp.nside2pixarea(nside) * rad_to_arcmin**2
+        pix_area = hp.nside2pixarea(nside) * rad_to_arcmin**2
     if noise.pixel == "CAR":
-        pixArea = noise.data.pixsizemap() * rad_to_arcmin**2
+        pix_area = noise.data.pixsizemap() * rad_to_arcmin**2
     if noise.ncomp == 1:
         if noise.pixel == "HEALPIX":
             size = len(noise.data)
-            noise.data = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pixArea)
+            noise.data = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pix_area)
         if noise.pixel == "CAR":
             size = noise.data.shape
-            noise.data = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pixArea)
+            noise.data = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pix_area)
     if noise.ncomp == 3:
         if rms_uKarcmin_pol is None:
             rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         if noise.pixel == "HEALPIX":
             size = len(noise.data[0])
-            noise.data[0] = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pixArea)
-            noise.data[1] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pixArea)
-            noise.data[2] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pixArea)
+            noise.data[0] = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pix_area)
+            noise.data[1] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pix_area)
+            noise.data[2] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pix_area)
         if noise.pixel == "CAR":
             size = noise.data[0].shape
-            noise.data[0] = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pixArea)
-            noise.data[1] = np.random.randn(size[0], size[1]) * rms_uKarcmin_pol / np.sqrt(pixArea)
-            noise.data[2] = np.random.randn(size[0], size[1]) * rms_uKarcmin_pol / np.sqrt(pixArea)
+            noise.data[0] = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pix_area)
+            noise.data[1] = np.random.randn(size[0],
+                                            size[1]) * rms_uKarcmin_pol / np.sqrt(pix_area)
+            noise.data[2] = np.random.randn(size[0],
+                                            size[1]) * rms_uKarcmin_pol / np.sqrt(pix_area)
 
     return noise
 
@@ -628,7 +626,7 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     rad_to_arcmin = np.rad2deg(60)
     if binary.pixel == "HEALPIX":
         idx = np.where(binary.data == 1)
-        for i in range(n_holes):
+        for _ in range(n_holes):
             random_index1 = np.random.choice(idx[0])
             vec = hp.pix2vec(binary.nside, random_index1)
             disc = hp.query_disc(binary.nside, vec, hole_radius_arcmin / rad_to_arcmin)
@@ -639,7 +637,6 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
         random_index1 = np.random.randint(0, binary.data.shape[0], size=n_holes)
         random_index2 = np.random.randint(0, binary.data.shape[1], size=n_holes)
         mask.data[random_index1, random_index2] = 0
-        from scipy.ndimage import distance_transform_edt
         dist = distance_transform_edt(mask.data)
         mask.data[dist * pixSize_arcmin < hole_radius_arcmin] = 0
 
