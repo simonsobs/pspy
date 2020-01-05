@@ -173,11 +173,10 @@ class so_map:
                 cmap.set_under("white")
 
             if self.ncomp == 1:
-
-                min_range, max_range = None, None
-                if color_range is not None:
-                    min_range = -color_range
-                    max_range = +color_range
+                # pylint: disable=invalid-unary-operand-type
+                # https://github.com/PyCQA/pylint/issues/1472
+                min_range = -color_range if color_range is not None else None
+                max_range = +color_range if color_range is not None else None
 
                 if hp_gnomv is not None:
                     lon, lat, xsize, reso = hp_gnomv
