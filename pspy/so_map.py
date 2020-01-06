@@ -113,7 +113,7 @@ class so_map:
         """
 
         if self.pixel == "HEALPIX":
-            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", startAtZero=True)
+            ell, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
                 self.data = hp.synfast(ps["TT"], self.nside, new=True, verbose=False)
             else:
@@ -278,7 +278,7 @@ class so_map:
                     if file_name is not None:
                         enplot.write(file_name + "_%s" % field + ".png", plot)
                     else:
-                        #enplot.show(plot,method="ipython")
+                        # enplot.show(plot,method="ipython")
                         plot.img.show()
 
 
