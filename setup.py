@@ -22,7 +22,7 @@ cov = Extension(name="pspy.cov_fortran.cov_fortran",
 import versioneer
 setup(
     name="pspy",
-    version= versioneer.get_version(),
+    version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Simons Observatory Collaboration Power Spectrum Task Force",
     url="https://github.com/simonsobs/pspy",
