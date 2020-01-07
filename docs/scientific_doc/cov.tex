@@ -1,0 +1,119 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,wrapfig,subfigure,amsmath,amssymb,epsfig,bm}
+\usepackage{listings,textcomp,color,geometry,siunitx}
+\geometry{hmargin=2cm, vmargin=2cm}
+
+\def\Box{\mathord{\dalemb{7.9}{8}\hbox{\hskip1pt}}}
+\def\dalemb#1#2{{\vbox{\hrule height.#2pt
+        \hbox{\vrule width.#2pt height#1pt \kern#1pt \vrule width.#2pt}
+        \hrule height.#2pt}}}
+
+\def\eop{\mathcal{E}}
+\def\bop{\mathcal{B}}
+\def\ba{\begin{eqnarray}}
+\def\ea{\end{eqnarray}}
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+\def\tr{{\rm tr}}
+\def\Var{{\rm Var}}
+\def\gtorder{\mathrel{\raise.3ex\hbox{$>$}\mkern-14mu
+             \lower0.6ex\hbox{$\sim$}}}
+\def\ltorder{\mathrel{\raise.3ex\hbox{$<$}\mkern-14mu
+             \lower0.6ex\hbox{$\sim$}}}
+
+\def\bb{{\mathfrak b}}
+\newcommand{\ellb }{\boldsymbol{\ell }}
+
+% Personal colors defined here
+\newcommand{\skn}[1]{{\color{red}#1}}
+\newcommand{\TIB}[1]{{\color{blue}#1}}
+\newcommand{\assume}[1]{{\bf#1}}
+\newcommand{\tj}[6]{ \begin{pmatrix}
+   #1 & #2 & #3 \\
+   #4 & #5 & #6 
+\end{pmatrix}}
+
+
+\begin{document}
+
+
+
+\title{\textbf{Covariance matrix computation}}
+\maketitle
+
+The goal of this document is to provide a very detailed computation of the covariance matrices of CMB power spectra. We describe the algorithm implemented in {\it pspy} to compute  them. 
+
+\section{Covariance of a spin 0 x spin 0 power spectrum on the sphere}
+
+Let's start with a simple data model, the observed temperature field at frequency $\nu_{1}$ is related to the true temperature field by
+\ba
+\tilde{T}^{\nu_{1}}(\hat{n})= W_{T}^{ \nu_{1}}(\hat{n}) \left(\int B^{\nu_{1}}(\hat{n},\hat{n}')  T^{\nu_{1}}(\hat{n}')d\hat{n}' + n^{\nu_{1}}(\hat{n}) \right)
+\ea
+Here $W_{T}^{ \nu_{1}}$ is the window function,  $B^{\nu_{1}}(\hat{n})$ is the beam of the instrument and $n^{\nu_{1}}(\hat{n}) $ is the instrumental noise. In harmonic space, this expression becomes
+\ba
+\tilde{T}^{\nu_{1}}_{ \ell m}= \sum_{\ell' m'} K^{\nu_{1}}_{\ell m, \ell' m'}( B^{\nu_{1}}_{\ell'} a^{\nu_{1}}_{\ell'm'} + n^{\nu_{1}}_{ \ell' m'})
+\ea
+With the coupling kernel
+\ba
+ K^{\nu_{1}}_{\ell m, \ell' m'}= \int d \hat{n} Y_{\ell' m'} (\hat{n}) W_{T}^{ \nu_{1}}(\hat{n})Y^{*}_{\ell m} (\hat{n}).
+\ea
+An estimate of the power spectrum can be written
+\ba
+\langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle = \sum_{\ell_1}M^{00, \nu_{1}\nu_{2}}_{ \ell \ell_1} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle
+\ea
+Where $M^{\nu_{1}\nu_{2}00}_{ \ell \ell_1}$ is the standard master mode coupling matrix for spin 0 $\times$ spin 0 spectra.
+\ba
+M^{\nu_{1}\nu_{2}00}_{ \ell \ell_1}=   \frac{2\ell_1 +1}{4\pi}  \sum_{ \ell_3} (2\ell_3+1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)^{2} .
+\ea 
+An unbiased estimator for the spectra can be formed using
+
+\ba 
+\hat{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{b} & =& \sum_{b'} (M^{\nu_{1}\nu_{2}00})_{ bb'}^{-1} \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{b} \\
+\tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{b} &=& P_{b\ell}\tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell}  \\
+M^{\nu_{1}\nu_{2}00}_{ bb'} &=&  P_{b\ell}  M^{\nu_{1}\nu_{2}00}_{ \ell \ell'} B^{\nu_{1}}_{\ell'}  B^{\nu_{2}}_{\ell'}    Q_{\ell' b'}
+\ea 
+The variance of the binned unbiased estimator is then given by
+\ba
+\Xi_{b b'}^{ \nu_{1}  \times  \nu_{2} ,   \nu_{3} \gamma \times  \nu_{4} \eta} &=&  \langle  (\hat{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{b} -   C^{T_{\nu_{1}}T_{\nu_{2}}}_{b} )  ( \hat{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{b'} -   C^{T_{\nu_{3}}T_{\nu_{4}}}_{b'} )  \rangle  \nonumber \\
+&=&  (M^{\nu_{1}\nu_{2}00})_{bb_{1}}^{-1} \langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{b_{1}} \tilde{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{b_{2}}\rangle {}^{t} (M^{\nu_{3}\nu_{4}00})^{-1}_{b_{2}b'} -  C^{T_{\nu_{1}}T_{\nu_{2}}}_{b} C^{T_{\nu_{3}}T_{\nu_{4}}}_{b'} \nonumber  \\
+&=&  (M^{\nu_{1}\nu_{2}00})_{bb_{1}}^{-1}  P_{b_{1} \ell_{1}}  P_{b_{2} \ell_{2}} \langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \tilde{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{\ell_{2}}\rangle {}^{t} (M^{\nu_{3}\nu_{4}00})^{-1}_{b_{2}b'} -  C^{T_{\nu_{1}}T_{\nu_{2}}}_{b} C^{T_{\nu_{3}}T_{\nu_{4}}}_{b'} \nonumber  \\
+&\approx&  (M^{\nu_{1}\nu_{2}00})_{bb_{1}}^{-1}  P_{b_{1} \ell_{1}}  P_{b_{2} \ell_{2}} \langle \Delta \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \Delta  \tilde{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{\ell_{2}}\rangle {}^{t} (M^{\nu_{3}\nu_{4}00})^{-1}_{b_{2}b'} 
+\ea
+We are left with computing:
+\ba
+\langle \Delta \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \Delta  \tilde{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{\ell_{2}}\rangle &=& f_{\ell_{1} \ell_{2}} \sum_{m_{1} m_{2}} \langle  \tilde{T}^{\nu_{1}}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{3}}_{ \ell_{2} m_{2}}\rangle \langle \tilde{T}^{\nu_{2} *}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{4} *}_{  \ell_{2} m_{2}}\rangle + \langle \tilde{T}^{\nu_{1}}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{4} *}_{  \ell_{2} m_{2}}\rangle \langle \tilde{T}^{\nu_{2}}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{3} *}_{  \ell_{2} m_{2}}\rangle \\
+ f_{\ell_{1} \ell_{2}} &=& \frac{1}{2\ell_1+1}  \frac{1}{2\ell_2+1}
+\ea
+We can expand  the first term
+\ba
+T_{1} &=&f_{\ell_{1} \ell_{2}} \sum_{m_{1} m_{2}}  \langle  \tilde{T}^{\nu_{1}}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{3}}_{ \ell_{2} m_{2}}\rangle \langle \tilde{T}^{\nu_{2} *}_{ \ell_{1} m_{1}} \tilde{T}^{\nu_{4} *}_{  \ell_{2} m_{2}}\rangle \\
+&=&  f_{\ell_{1} \ell_{2}}  \sum_{m_{1} m_{2}}  \sum_{\ell_{3} m_{3}} \sum_{\ell_{4}m_{4}} K^{\nu_{1}}_{\ell_{1} m_{1}, \ell_{3} m_{3}}  K^{\nu_{3}}_{\ell_{2} m_{2}, \ell_{3} m_{3}}  K^{\nu_{2} *}_{\ell_{1} m_{1}, \ell_{4} m_{4}}  K^{\nu_{4}*}_{\ell_{2} m_{2}, \ell_{4} m_{4}} C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{3}} C^{T_{\nu_{2}}T_{\nu_{4}}}_{\ell_{4}}
+\ea
+We are basically stuck here and have to rely on harsh approximation to go further. We will remove the power spectra from the sum and replace their product by a symmetric version
+\ba
+T_{1} = f_{\ell_{1} \ell_{2}}   C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  C^{T_{\nu_{2}}T_{\nu_{4}}}_{\ell_{1}\ell_{2}}  \sum_{m_{1} m_{2}}  \sum_{\ell_{3} m_{3}} \sum_{\ell_{4}m_{4}} K^{\nu_{1}}_{\ell_{1} m_{1}, \ell_{3} m_{3}}  K^{\nu_{3}}_{\ell_{2} m_{2}, \ell_{3} m_{3}}  K^{\nu_{2} *}_{\ell_{1} m_{1}, \ell_{4} m_{4}}  K^{\nu_{4}*}_{\ell_{2} m_{2}, \ell_{4} m_{4}} 
+\ea
+\ba
+C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  &=& \frac{C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{1}} + C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{2}}  }{2}
+\ea
+Then we use 
+\ba
+\sum_{\ell_{3} m_{3}}  K^{\nu_{1}}_{\ell_{1} m_{1}, \ell_{3} m_{3}}  K^{\nu_{3}*}_{\ell_{2} m_{2}, \ell_{3} m_{3}} &=& \sum_{\ell_{3} m_{3}}   \int d \hat{n}_{1} Y_{\ell_{3} m_{3}} (\hat{n}_{1}) W_{T}^{ \nu_{1}}(\hat{n_{1}}) Y^{*}_{\ell_{1} m_{1}} (\hat{n}_{1})  \int d \hat{n}_{2} Y^{*}_{\ell_{3} m_{3}} (\hat{n}_{2})W_{T}^{ \nu_{3}}(\hat{n}_{2}) Y_{\ell_{2} m_{2}} (\hat{n}_{2})  \nonumber \\
+&=&  \int d \hat{n}_{1}  Y_{\ell_{2} m_{2}} (\hat{n}_{1})   W_{T}^{ \nu_{1}}(\hat{n_{1}}) W_{T}^{ \nu_{3}}(\hat{n}_{1}) Y^{*}_{\ell_{1} m_{1}} (\hat{n}_{1})=  K^{\nu_{1} \nu_{3} }_{\ell_{1} m_{1}, \ell_{2} m_{2}}
+\ea
+The covariance matrix can finally be written
+\ba
+\langle \Delta \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \Delta  \tilde{C}^{T_{\nu_{3}}T_{\nu_{4}}}_{\ell_{2}}\rangle &\approx& f_{\ell_{1} \ell_{2}}    C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  C^{T_{\nu_{2}}T_{\nu_{4}}}_{\ell_{1}\ell_{2}}  \sum_{m_{1}m_{2}} K^{\nu_{1} ,\nu_{3} }_{\ell_{1} m_{1}, \ell_{2} m_{2}} K^{\nu_{2} ,\nu_{4} }_{\ell_{1} m_{1}, \ell_{2} m_{2}} \\
+&+&  f_{\ell_{1} \ell_{2}}    C^{T_{\nu_{1}}T_{\nu_{4}}}_{\ell_{1}\ell_{2}}  C^{T_{\nu_{2}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  \sum_{m_{1}m_{2}} K^{\nu_{1} ,\nu_{4} }_{\ell_{1} m_{1}, \ell_{2} m_{2}} K^{\nu_{2} ,\nu_{3} }_{\ell_{1} m_{1}, \ell_{2} m_{2}} \\
+&=&     C^{T_{\nu_{1}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  C^{T_{\nu_{2}}T_{\nu_{4}}}_{\ell_{1}\ell_{2}}  M_{\ell_{1} \ell_{2}}(W_{T}^{\nu_{1}, } W_{T}^{\nu_{3}},W_{T}^{ \nu_{2} }W_{T}^{ \nu_{4} })) \\
+& +& C^{T_{\nu_{1}}T_{\nu_{4}}}_{\ell_{1}\ell_{2}}  C^{T_{\nu_{2}}T_{\nu_{3}}}_{\ell_{1}\ell_{2}}  M_{\ell_{1} \ell_{2}}(W_{T}^{\nu_{1}}W_{T}^{ \nu_{4} },W_{T}^{ \nu_{2} }W_{T}^{\nu_{3}})
+\ea
+
+
+\end{document}
+
+

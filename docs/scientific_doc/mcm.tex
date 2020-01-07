@@ -1,0 +1,506 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx,wrapfig,subfigure,amsmath,amssymb,epsfig,bm}
+\usepackage{listings,textcomp,color,geometry,siunitx}
+\usepackage{hyperref}
+\geometry{hmargin=2cm, vmargin=2cm}
+
+
+\def\Box{\mathord{\dalemb{7.9}{8}\hbox{\hskip1pt}}}
+\def\dalemb#1#2{{\vbox{\hrule height.#2pt
+        \hbox{\vrule width.#2pt height#1pt \kern#1pt \vrule width.#2pt}
+        \hrule height.#2pt}}}
+
+\def\eop{\mathcal{E}}
+\def\bop{\mathcal{B}}
+\def\ba{\begin{eqnarray}}
+\def\ea{\end{eqnarray}}
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+\def\tr{{\rm tr}}
+\def\Var{{\rm Var}}
+\def\gtorder{\mathrel{\raise.3ex\hbox{$>$}\mkern-14mu
+             \lower0.6ex\hbox{$\sim$}}}
+\def\ltorder{\mathrel{\raise.3ex\hbox{$<$}\mkern-14mu
+             \lower0.6ex\hbox{$\sim$}}}
+
+\def\bb{{\mathfrak b}}
+\newcommand{\ellb }{\boldsymbol{\ell }}
+
+% Personal colors defined here
+\newcommand{\skn}[1]{{\color{red}#1}}
+\newcommand{\TIB}[1]{{\color{blue}#1}}
+\newcommand{\assume}[1]{{\bf#1}}
+
+\begin{document}
+
+\title{\textbf{Mode coupling matrix computation}}
+\maketitle
+
+The goal of this document is to provide a very detailed computation of the effect of window functions on CMB power spectra estimation. We describe the algorithm implemented in {\it pspy} to compute the mode coupling matrices and deconvolve them. There is a lot of literature on the subject, without trying to be exhaustive we have used in particular  \href{https://arxiv.org/pdf/astro-ph/0105302.pdf}{Hivon et al}, \href{https://arxiv.org/abs/1609.09730}{Couchot et al} and \href{https://arxiv.org/abs/astro-ph/0410394}{Brown et al}. We also recommend the \href{https://github.com/LSSTDESC/NaMaster/blob/master/doc/doc_scientific.pdf}{Namaster scientific documentation}. 
+
+
+
+\section{Mode coupling for spin 0$\times$0 power spectra on the sphere}
+
+Let us consider with the decomposition of a spin 0 field (e.g the CMB temperature map) in spherical harmonics.
+In practice, {\it pspy}  use the {\it sharp} module included in {\it pixell}). Let's denote by $\nu$ the frequency of observation.
+\ba
+T^{\nu}(\hat{n}) &=& \sum_{\ell m} a^{\nu}_{\ell m} Y_{\ell m}(\hat{n}) \\
+a^{T, \nu}_{\ell m} &=& \int d \hat{n} T^{\nu}(\hat{n})  Y^{*}_{\ell m}(\hat{n})
+\ea
+Due to foreground contamination or simply incomplete sky observation, a realistic temperature map is given by the product of the temperature map with a window function. The harmonic transform of this product is given by
+\ba
+\tilde{a}^{T,\nu}_{\ell m} &=& \int d \hat{n} T^{\nu}(\hat{n}) W^{\nu}(\hat{n}) Y^{*}_{\ell m}(\hat{n}) \nonumber \\
+\tilde{a}^{T,\nu}_{\ell m} &=& \sum_{\ell' m'} a^{\nu}_{\ell' m'} \int d \hat{n} Y_{\ell' m'}(\hat{n}) W^{\nu}(\hat{n}) Y^{*}_{\ell m}(\hat{n}) \nonumber \\
+\tilde{a}^{T,\nu}_{\ell m} &=& \sum_{\ell' m'} K^{\nu}_{\ell m, \ell' m'} a^{T,\nu}_{\ell' m'} .
+\ea
+As can seen from this equation, the effect of incomplete observation (encoded into the window function) is to couple otherwise independent modes $a_{\ell m} $. The coupling is represented by the coupling kernel $K^{\nu}_{\ell_1,m_1, \ell_2, m_2}$.
+The expectation value of our estimator for the power spectra of the temperature maps $T^{\nu_{1}}(\hat{n})$ and $T^{\nu_{2}}(\hat{n})$ is given by
+\ba
+\langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle &=& \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell} \langle \tilde{a}^{T,\nu_{1}}_{\ell m} \tilde{a}^{T,\nu_{2}, *}_{\ell m} \rangle \\
+&=&  \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell} \langle \sum_{\ell_1 m_1} K^{\nu_{1}}_{\ell m, \ell_1  m_1} a^{T,\nu_{1}}_{\ell_1 m_1}  \sum_{\ell_2 m_2} K^{\nu_{2}*}_{\ell m, \ell_2 m_2} a^{T,\nu_{2} *}_{\ell_2 m_2} \rangle \\
+&=&  \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell}  \sum_{\ell_1 m_1} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle K^{\nu_{1}}_{\ell m, \ell_1 m_1} K^{\nu_{2}*}_{\ell,m, \ell_1, m_1}
+\ea
+To go further we need to develop the expression for the coupling kernel
+\ba
+K^{\nu_{1}}_{\ell_1 m_1, \ell_2  m_2} &=& \int d \hat{n} Y^{*}_{\ell_1 m_1}(\hat{n}) W^{\nu_{1}}(\hat{n}) Y_{\ell_2 m_2}(\hat{n}) \\
+&=& \sum_{ \ell_3, m_3} w^{\nu_{1}}_{ \ell_3, m_3}  \int d \hat{n} Y^{*}_{\ell_1 m_1}(\hat{n}) Y_{\ell_3 m_3} (\hat{n}) Y_{\ell_2 m_2}(\hat{n})
+\ea
+The integral can be express in term of Wigner 3j symbol
+ \ba
+\int d \hat{n} Y^{*}_{\ell_1 m_1}(\hat{n}) Y_{\ell_3 m_3} (\hat{n}) Y_{\ell_2 m_2}(\hat{n}) &=& (-1)^{m_1} \left[\frac{(2\ell_1+1) (2\ell_2+1) (2\ell_3+1)}{4\pi} \right]^{1/2} \\ \nonumber
+&\times& \left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell_3\\
+0 & 0 & 0 \end{array}\right)
+\left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell_3\\
+-m_{1} & m_{2} & m_{3} \end{array}\right) .
+\ea
+The next move is to expand our formula for the expectation value of our power spectrum estimator
+\ba
+\langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle &=&    \sum_{\ell_1}  \frac{2\ell_1 +1}{4\pi} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle  \sum_{ \ell_3, m_3} w^{\nu_{1}}_{ \ell_3, m_3}  \sum_{ \ell_4, m_4} w^{ \nu_{2}*}_{ \ell_4, m_4}  (2\ell_3+1)^{1/2} (2\ell_4+1)^{1/2} \label{eq:line1mcm}  \nonumber  \\
+&\times &
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_4\\
+0 & 0 & 0 \end{array}\right)
+\sum_{m,m_1}
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-m & m_{1} & m_{3} \end{array}\right)
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_4\\
+-m & m_{1} & m_{4} \end{array}\right) 
+\ea
+That looks horrible but one nice thing about Wigner 3j symbol is the following property
+\ba
+\sum_{m_1 m_2}
+\left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell_3\\
+m_{1} & m_{2} & m_{3} \end{array}\right)
+\left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell^{'}_3\\
+m_{1} & m_{2} & m^{'}_{3} \end{array}\right)= \delta_{m_3 m^{'}_3} \delta_{\ell_3 \ell^{'}_3} \delta(\ell_1, \ell_2, \ell_3) \frac{1}{2\ell_3+1}
+\ea
+where $\delta(\ell_1, \ell_2, \ell_3) = 1$ when the triangular relation $\| \ell_{1}-\ell_{2} \| \le \ell_{3} \le \ell_{1}-\ell_{2}$   is satisfied, and $\delta(\ell_1, \ell_2, \ell_3) =0$ otherwise. This allows to drastically simplify the expression
+\ba
+\langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle &=&    \sum_{\ell_1}  \frac{2\ell_1 +1}{4\pi} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle  \sum_{ \ell_3, m_3} w^{\nu_{1}}_{ \ell_3, m_3}  \sum_{ \ell_4, m_4} w^{\nu_{2}*}_{ \ell_4, m_4}  (2\ell_3+1)^{1/2} (2\ell_4+1)^{1/2} \label{eq:line2mcm} \nonumber \\ 
+&\times &
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_4\\
+0 & 0 & 0 \end{array}\right)
+\delta_{m_3 m_4} \delta_{\ell_3 \ell_4} \delta(\ell_1, \ell_2, \ell_3) \frac{1}{2\ell_3+1} \nonumber \\
+&=&    \sum_{\ell_1}  \frac{2\ell_1 +1}{4\pi} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle  \sum_{ \ell_3, m_3} w^{\nu_{1}}_{ \ell_3, m_3}   w^{\nu_{2},*}_{ \ell_3, m_3}    
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)^{2 } \nonumber \\
+&=&    \sum_{\ell_1}  \frac{2\ell_1 +1}{4\pi} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle  \sum_{ \ell_3} (2\ell_3+1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)^{2} \nonumber \\
+&=& \sum_{\ell_1}M^{00, \nu_{1}\nu_{2}}_{ \ell, \ell_1} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_1} \rangle
+\ea
+At the end, the expression of the mode coupling is simply
+\ba
+M^{\nu_{1}\nu_{2}00}_{ \ell, \ell_1}=   \frac{2\ell_1 +1}{4\pi}  \sum_{ \ell_3} (2\ell_3+1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)^{2}
+\ea
+with ${\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} $ the cross power spectrum of the window function of the map at frequency $\nu_{1}$ and $\nu_{2}$.
+In {\it pspy}, the mode coupling is computed using the fortran routine {\it calc\_mcm\_spin0} in {\it mcm\_fortran.f90}.
+ 
+\section{Mode coupling for spin 2 $\times$ 2 power spectra on the sphere}
+
+Let us now consider the polarisation case, the polarisation field ${}_{\pm 2} P^{\nu}(\hat{n})= (Q^{\nu} \pm iU^{\nu})(\hat{n})$ is a spin 2 field on the sphere. It can be decomposed into E and B modes
+\ba
+{}_{\pm 2} P^{\nu}(\hat{n}) = - \sum_{\ell m} (a^{E, \nu}_{\ell m} \pm i a^{B, \nu}_{\ell m}) {}_{\pm 2} Y_{\ell m} (\hat{n})
+\ea
+where ${}_{\pm 2} Y_{\ell m} (\hat{n})$ are spin-2 spherical harmonics.
+We can inverse this expression and expresse $a^{E, \nu}_{\ell m}$ and $a^{B, \nu}_{\ell m}$  as a function of ${}_{\pm 2} P^{\nu}(\hat{n})$
+ \ba
+ a^{E, \nu}_{\ell m}&=& -\frac{1}{2}  \int \left(  {}_{2} P^{\nu}(\hat{n})  {}_{2} Y^{*}_{\ell m} (\hat{n})+  {}_{-2} P^{\nu}(\hat{n})  {}_{-2} Y^{*}_{\ell m} (\hat{n}) \right) d\hat{n} \nonumber \\
+ a^{B, \nu}_{\ell m}&=& \frac{i}{2}  \int \left(  {}_{2} P^{\nu}(\hat{n})  {}_{2} Y^{*}_{\ell m} (\hat{n})-  {}_{-2} P^{\nu}(\hat{n})  {}_{-2} Y^{*}_{\ell m} (\hat{n}) \right) d\hat{n}
+ \ea
+ or simply
+ \ba
+  a^{E, \nu}_{\ell m} \pm i a^{B, \nu}_{\ell m} = - \int {}_{\pm 2} P^{\nu}(\hat{n}) {}_{\pm 2} Y^{*}_{\ell m} (\hat{n})d\hat{n}
+ \ea
+including a window function we get
+ \ba
+  \tilde{a}^{E, \nu}_{\ell m} \pm i \tilde{a}^{B, \nu}_{\ell m} = - \int W^{\nu}(\hat{n}) {}_{\pm 2} P^{\nu}(\hat{n}) {}_{\pm 2} Y^{*}_{\ell m} (\hat{n})d\hat{n}
+ \ea
+ re-expending ${}_{\pm 2} P^{\nu}(\hat{n})$ in spherical harmonic
+ \ba
+   \tilde{a}^{E, \nu}_{\ell m} \pm i   \tilde{a}^{B, \nu}_{\ell m} =  \sum_{\ell' m'} (a^{E, \nu}_{\ell' m'} \pm i a^{B, \nu}_{\ell' m'}) \int W^{\nu}(\hat{n}) {}_{\pm 2} Y_{\ell' m'} (\hat{n})  {}_{\pm 2} Y^{*}_{\ell m} (\hat{n})d\hat{n}
+ \ea
+Then
+\ba
+   \tilde{a}^{E, \nu}_{\ell m} &= & \frac{1}{2} \sum_{\ell' m'} a^{E, \nu}_{\ell' m'} \left[ \int W^{\nu}(\hat{n}) {}_{ 2} Y_{\ell' m'} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} + \int W^{\nu}(\hat{n}) {}_{ -2} Y_{\ell' m'} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n} \right] \nonumber \\
+ &+& \frac{i}{2} \sum_{\ell' m'}  a^{B, \nu}_{\ell' m'} \left[ \int W^{\nu}(\hat{n}) {}_{ 2} Y_{\ell' m'} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} -\int W^{\nu}(\hat{n}) {}_{ -2} Y_{\ell' m'} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n}\right] \nonumber \\ 
+ &=&  \frac{1}{2}   \sum_{\ell' m'} K^{\rm diag, \nu}_{\ell m, \ell' m'} a^{E, \nu}_{\ell' m'} + i K^{\rm off, \nu}_{\ell m, \ell' m'} a^{B, \nu}_{\ell' m'}
+\ea
+and 
+\ba
+   \tilde{a}^{B, \nu}_{\ell m} &= & \frac{-i}{2} \sum_{\ell' m'} a^{E, \nu}_{\ell' m'} \left[ \int W^{\nu}(\hat{n}) {}_{ 2} Y_{\ell' m'} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} - \int W^{\nu}(\hat{n}) {}_{ -2} Y_{\ell' m'} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n} \right] \nonumber \\
+ &+& \frac{1}{2} \sum_{\ell' m'}  a^{B, \nu}_{\ell' m'} \left[ \int W^{\nu}(\hat{n}) {}_{ 2} Y_{\ell' m'} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} +\int W^{\nu}(\hat{n}) {}_{ -2} Y_{\ell' m'} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n}\right] \nonumber \\
+ &=&  \frac{1}{2}  \sum_{\ell' m'} -i K^{\rm off, \nu}_{\ell m, \ell' m'} a^{E, \nu}_{\ell' m'} + K^{\rm diag, \nu}_{\ell m, \ell' m'} a^{B, \nu}_{\ell' m'}
+\ea
+We can see that the effect of applying a window function on the CMB polarisation field is not only to couple different multipoles but also to couple E and B modes
+\ba
+ \begin{pmatrix} \tilde{a}^{E, \nu}_{\ell m} \cr \tilde{a}^{B, \nu}_{\ell m} \cr \end{pmatrix} = 
+ \frac{1}{2}  \sum_{\ell' m'} 
+\begin{pmatrix} 
+K^{\rm diag, \nu}_{\ell m, \ell' m'} & 
+ i K^{\rm off, \nu}_{\ell m, \ell' m'} &
+\cr
+-i K^{\rm off, \nu}_{\ell m, \ell' m'} & 
+K^{\rm diag, \nu}_{\ell m, \ell' m'}  &
+\cr
+\end{pmatrix}
+ \begin{pmatrix} a^{E, \nu}_{\ell' m'} \cr a^{B, \nu}_{\ell' m'} \cr \end{pmatrix}\ea
+The expectation value of our estimator for the power spectrum of  E modes is given by
+\ba
+\langle \tilde{C}^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle &=& \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell} \langle \tilde{a}^{E, \nu_{1}}_{\ell m} \tilde{a}^{E, \nu_{2}, *}_{\ell m} \rangle \nonumber \\
+&=&  \frac{1}{4(2\ell +1)}\sum^{\ell}_{m=-\ell} \langle     \sum_{\ell_{1} m_{1}} \sum_{\ell_{2} m_{2}} (K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} a^{E, \nu_{1}}_{\ell_{1} m_{1}} + i K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}} a^{B, \nu_{1}}_{\ell_{1} m_{1}} )(     K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{E, \nu_{2}, *}_{\ell_{2} m_{2}} - i K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{B, \nu_{2}, *}_{\ell_{2} m_{2}} )\rangle \nonumber \\
+&=&  \frac{1}{4(2\ell +1)}\sum^{\ell}_{m=-\ell} \sum_{\ell_{1} m_{1}}  K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle +  K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle \nonumber \\
+\ea
+Note that we dropped the imaginary terms in this expression, they are zero due to the symmetry properties of the Wigner 3j symbols.
+Similarly the estimator for the B modes power spectrum
+\ba
+\langle \tilde{C}^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle &=&  \frac{1}{4(2\ell +1)}\sum^{\ell}_{m=-\ell} \sum_{\ell_{1} m_{1}}  K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle +  K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle  \nonumber \\
+\ea
+For the cross power spectrum between E and B modes we get
+\ba
+\langle \tilde{C}^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle &=&  \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell} \langle \tilde{a}^{E, \nu_{1}}_{\ell m} \tilde{a}^{B, \nu_{2}, *}_{\ell m} \rangle \nonumber \\
+&=&  \frac{1}{4(2\ell +1)}\sum^{\ell}_{m=-\ell} \langle     \sum_{\ell_{1} m_{1}} \sum_{\ell_{2} m_{2}} (K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} a^{E, \nu_{1}}_{\ell_{1} m_{1}} + i K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}} a^{B, \nu_{1}}_{\ell_{1} m_{1}} ) ( i K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{E, \nu_{2}, *}_{\ell_{2} m_{2}} + K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{B, \nu_{2}, *}_{\ell_{2} m_{2}})  \rangle \nonumber \\
+&=&  \frac{1}{4(2\ell +1)}\sum^{\ell}_{m=-\ell} \sum_{\ell_{1} m_{1}}  K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}}  K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}}\rangle - K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}}  K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{B_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}}\rangle
+\ea
+So we have to expand and simplify terms like
+\ba
+M^{++}_{\ell \ell_{1}}=\frac{1}{4(2\ell +1)}\sum_{mm_{1}}   K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \\
+M^{--}_{\ell \ell_{1}}=\frac{1}{4(2\ell +1)}\sum_{mm_{1}}   K^{\rm off, \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}}
+\ea
+let's do it
+\ba
+ K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} &=& \left[ \int W^{\nu_{1}}(\hat{n}) {}_{ 2} Y_{\ell_{1} m_{1}} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} + \int W^{\nu_{1}}(\hat{n}) {}_{ -2} Y_{\ell_{1} m_{1}} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n} \right] \nonumber \\
+ &=&  \sum_{\ell_3 m_3} w^{\nu_{1}}_{\ell_3 m_3} \left[ \int Y_{\ell_{3} m_{3}}  (\hat{n}) {}_{ 2} Y_{\ell_{1} m_{1}} (\hat{n})  {}_{ 2} Y^{*}_{\ell m} (\hat{n})d\hat{n} + \int Y_{\ell_{3} m_{3}} (\hat{n}) {}_{ -2} Y_{\ell_{1} m_{1}} (\hat{n})  {}_{ -2} Y^{*}_{\ell m} (\hat{n})d\hat{n} \right] \nonumber \\
+\ea
+Using the definition of the Wigner 3j symbol and its expression in term of integral of spherical harmonics
+\ba
+\int d \hat{n} \  {}_{ 2} Y^{*}_{\ell m}(\hat{n}) Y_{\ell_3 m_3} (\hat{n})  {}_{ 2} Y_{\ell_1 m_1}(\hat{n}) &=& (-1)^{m_1} \left[\frac{(2\ell+1) (2\ell_1+1) (2\ell_3+1)}{4\pi} \right]^{1/2} \\ \nonumber
+&\times& \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-m & m_{1} & m_{3} \end{array}\right)
+\ea
+similarly
+\ba
+\int d \hat{n} \  {}_{ -2} Y^{*}_{\ell m}(\hat{n}) Y_{\ell_3 m_3} (\hat{n})  {}_{ -2} Y_{\ell_1 m_1}(\hat{n}) &=& (-1)^{m_1} \left[\frac{(2\ell+1) (2\ell_1+1) (2\ell_3+1)}{4\pi} \right]^{1/2} \\ \nonumber
+&\times& \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-2 & 2 & 0 \end{array}\right)
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-m & m_{1} & m_{3} \end{array}\right) 
+\ea
+we get
+\ba
+ K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} &=& \sum_{\ell_3 m_3} w^{\nu_{1}}_{\ell_3 m_3}
+  (-1)^{m_1} \left[\frac{(2\ell+1) (2\ell_1+1) (2\ell_3+1)}{4\pi} \right]^{1/2} \\ \nonumber
+&\times& 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-m & m_{1} & m_{3} \end{array}\right) 
+\left[
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-2 & 2 & 0 \end{array}\right)
++
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right) \right] .
+\ea
+Another properties of Wigner 3j is 
+\ba
+\left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell_3\\
+m_{1} & m_{2} & m_{3} \end{array}\right) = 
+(-1)^{\ell_1+ \ell_2 + \ell_3}\left(\begin{array}{clcr}
+\ell_1 & \ell_2 & \ell_3\\
+-m_{1} & -m_{2} & -m_{3} \end{array}\right) 
+\ea
+So the expression simplifies to
+\ba
+ K^{\rm diag, \nu_{1}}_{\ell m, \ell_{1} m_{1}} &=& \sum_{\ell_3 m_3} w^{\nu_{1}}_{\ell_3 m_3}
+  (-1)^{m_1} \left[\frac{(2\ell+1) (2\ell_1+1) (2\ell_3+1)}{4\pi} \right]^{1/2} \\ \nonumber
+&\times& 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-m & m_{1} & m_{3} \end{array}\right) 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)
+(1+ (-1)^{\ell_1+ \ell_2 + \ell_3}).
+\ea
+With this we can expand the coupling term and simplify them
+\ba
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &=&      \frac{2\ell_1 +1}{4\pi}   \sum_{ \ell_3, m_3} w^{\nu_{1}}_{ \ell_3, m_3}  \sum_{ \ell_4, m_4} w^{\nu_{2}*}_{ \ell_4, m_4}  (2\ell_3+1)^{1/2} (2\ell_4+1)^{1/2} \label{eq:line2mcm} \nonumber \\ 
+&\times &
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)^{2}
+\delta_{m_3 m_4} \delta_{\ell_3 \ell_4} \delta(\ell_1, \ell_2, \ell_3) \frac{1}{2\ell_3+1} \frac{(1+ (-1)^{\ell_1+ \ell_2 + \ell_3})}{2} \nonumber \\
+&=&
+\frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)^{2} \frac{(1+ (-1)^{\ell_1+ \ell_2 + \ell_3})}{2}
+\ea
+Using the exact same math we derive the expression for 
+\ba
+M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}}= \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)^{2} \frac{(1- (-1)^{\ell_1+ \ell_2 + \ell_3})}{2}.
+\ea
+These two matrices can be used to relate the observed power spectra to the true underlying power spectra
+\ba
+ \begin{pmatrix} \langle \tilde{C}^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle \cr  \langle \tilde{C}^{B_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle \cr \langle \tilde{C}^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle \end{pmatrix} = 
+\begin{pmatrix} 
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} & 
+0 &
+0 &
+M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} &
+\cr
+0 & 
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &
+-M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} &
+0 &
+\cr
+0& 
+-M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}}  &
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}}  &
+0&
+\cr
+M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} & 
+0 &
+0 &
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &
+\end{pmatrix}
+\begin{pmatrix} \langle C^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle \cr  \langle C^{B_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle \cr \langle C^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle \end{pmatrix}\ea
+
+Along with spin 0x0 and spin 0x2 mode coupling matrices, In {\it pspy}, this expression is computed using the fortran routine {\it calc\_mcm\_spin0and2} in {\it mcm\_fortran.f90}.
+
+\section{Mode coupling for spin 0$\times$2 power spectra on the sphere}
+
+The expectation value of our estimator for the TE power spectrum  is given by
+\ba
+\langle \tilde{C}^{T_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle &=& \frac{1}{2\ell +1}\sum^{\ell}_{m=-\ell} \langle \tilde{a}^{T, \nu_{1}}_{\ell m} \tilde{a}^{E, \nu_{2}, *}_{\ell m} \rangle \nonumber \\
+&=&  \frac{1}{2(2\ell +1)}\sum^{\ell}_{m=-\ell} \langle     \sum_{\ell_{1} m_{1}} \sum_{\ell_{2} m_{2}} (K^{\nu_{1}}_{\ell m, \ell_1 m_1} a^{\nu_{1}}_{\ell_1 m_1})(     K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{E, \nu_{2}, *}_{\ell_{2} m_{2}} - i K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{2} m_{2}} a^{B, \nu_{2}, *}_{\ell_{2} m_{2}} )\rangle \nonumber \\
+&=&  \frac{1}{2(2\ell +1)}\sum^{\ell}_{m=-\ell} \sum_{\ell_{1} m_{1}}  K^{\rm , \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm diag, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} \langle C^{T_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle  \\
+&=&\sum_{\ell_{1}} M^{\nu_{1}\nu_{2} 02}_{\ell \ell_{1}}  C^{T_{\nu_{1}}E_{\nu_{2}}}_{\ell}
+\ea
+Note that we dropped the imaginary term, this is because term of the form $K^{\rm , \nu_{1}}_{\ell m, \ell_{1} m_{1}} K^{\rm off, \nu_{2}, *}_{\ell m, \ell_{1} m_{1}} $ are zero by symmetry, indeed they involve product such as
+\ba
+I(\ell, \ell_{1}, \ell_{3}) &=& \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 &0 & 0 \end{array}\right) 
+\left[
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-2 & 2 & 0 \end{array}\right)
+-
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right) \right] \nonumber \\
+&=& (-1)^{\ell+ \ell_{1}+ \ell_{3}} \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 &0 & 0 \end{array}\right) 
+\left[
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right)
+-
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+-2 & 2 & 0 \end{array}\right) \right] \nonumber \\
+&=&- I(\ell, \ell_{1}, \ell_{3})
+\ea
+Where we also use the fact that $ \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 &0 & 0 \end{array}\right) $ is non zero only when $\ell+ \ell_{1}+ \ell_{3}$ is an even number (another property of Wigner 3j).
+Using the development in Wigner 3j we get an expression for $M^{\nu_{1}\nu_{2} 02}_{\ell \ell_{1}}$
+\ba
+M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}}= \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+2 & -2 & 0 \end{array}\right) 
+\left(\begin{array}{clcr}
+\ell & \ell_1 & \ell_3\\
+0 & 0 & 0 \end{array}\right)
+\ea
+Note that this derivation is also valid for $ \tilde{C}^{E_{\nu_{1}}T_{\nu_{2}}}_{\ell} $, $ \tilde{C}^{T_{\nu_{1}}B_{\nu_{2}}}_{\ell} $ and $ \tilde{C}^{B_{\nu_{1}}T_{\nu_{2}}}_{\ell} $
+
+\section{Summary}
+
+The effect of the window function on the CMB power spectra can therefore be written in term of a mode coupling matrix, also coupling E and B modes together
+
+\tiny
+\ba
+ \begin{pmatrix} \langle \tilde{C}^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{T_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{T_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{E_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{B_{\nu_{1}}T_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle  \cr \langle \tilde{C}^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle \cr  \langle \tilde{C}^{B_{\nu_{1}}E_{\nu_{2}}}_{\ell} \rangle \cr \langle \tilde{C}^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell} \rangle \end{pmatrix} = \sum_{\ell_{1}}
+\begin{pmatrix} 
+M^{\nu_{1}\nu_{2}00}_{\ell \ell_{1}} & 
+0 &
+0 &
+0 &
+0 &
+0 &
+0 &
+0 &
+\cr
+0 &
+M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}} & 
+0 &
+0 &
+0 &
+0 &
+0 &
+0 &
+0 &
+\cr
+0 &
+0 & 
+M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}} &
+0 &
+0 &
+0 &
+0 &
+0 &
+0 &
+\cr
+0 &
+0 & 
+0 &
+M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}} &
+0 &
+0 &
+0 &
+0 &
+0 &
+\cr
+0 &
+0 & 
+0 &
+0 &
+M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}} &
+0 &
+0 &
+0 &
+0 &
+\cr
+0 &
+0 &
+0 &
+0 &
+0 &
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} & 
+0 &
+0 &
+M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} &
+\cr
+0 &
+0 &
+0 &
+0 &
+0 &
+0 & 
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &
+-M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} &
+0 &
+\cr
+0 &
+0 &
+0 &
+0 &
+0 &
+0& 
+-M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}}  &
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}}  &
+0&
+\cr
+0 &
+0 &
+0 &
+0 &
+0 &
+M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}} & 
+0 &
+0 &
+M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &
+\end{pmatrix}
+\begin{pmatrix} \langle C^{T_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{T_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{T_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{E_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{B_{\nu_{1}}T_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{E_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle  \cr \langle C^{E_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle \cr  \langle C^{B_{\nu_{1}}E_{\nu_{2}}}_{\ell_{1}} \rangle \cr \langle C^{B_{\nu_{1}}B_{\nu_{2}}}_{\ell_{1}} \rangle \end{pmatrix}\ea
+\normalsize
+Which can be re-written $\bm{\tilde{C}}^{X_{\nu_{1}}Y_{\nu_{2}}}= M_{X_{\nu_{1}}Y_{\nu_{2}} W_{\nu_{1}}Z_{\nu_{2}}} \bm{C}^{W_{\nu_{1}}Z_{\nu_{2}}}$
+When the window is defined such as all angular scale can be represented (one important condition is that there are at least two (non zero) pixels of the window point separated by 180 degree), the matrix is invertible and we can recover unbiased power spectrum by computing $\bm{C}^{X_{\nu_{1}}Y_{\nu_{2}}}= (M^{-1})_{X_{\nu_{1}}Y_{\nu_{2}} W_{\nu_{1}}Z_{\nu_{2}}} \bm{\tilde{C}}^{W_{\nu_{1}}Z_{\nu_{2}}}$. In   {\it pspy} this is an option in the {\it bin\_spectra} in the {\it so\_spectra} module.
+
+\subsection{Binning}
+
+If not all angular scales can be represented,  for example  due to the smallness of the window function, we can still deconvolve the effect of the mask but it requires first binning the mode coupling matrix element.
+\ba
+M^{\nu_{1}\nu_{2}}_{b b_{1}}= \sum_{\ell, \ell_{1}} P_{b \ell} M^{\nu_{1}\nu_{2} }_{\ell \ell_{1}}  Q_{\ell_{1} b_{1}}
+\ea
+There are two options for the $P_{b \ell}$ matrix in {\it pspy}, you can either bin $C_{\ell}$ 
+\ba
+P^{(C_{\ell})}_{b \ell} &=& 1/\Delta \ell_{b} \ \ \ell^{\rm low}_{b} \le \ell \le \ell^{\rm high}_{b} \nonumber \\
+&=& 0 \ \ {\rm otherwise}
+\ea
+with $\Delta \ell_{b} =  \ell^{\rm high}_{b}- \ell^{\rm low}_{b}$, or you can bin  $D_{\ell}= \ell (\ell+1) / 2\pi C_{\ell}$ 
+\ba
+P^{(D_{\ell})}_{b \ell} &=&.  \frac{\ell (\ell+1) }{ 2\pi \Delta \ell_{b}} \ \ \ell^{\rm low}_{b} \le \ell \le \ell^{\rm high}_{b} \nonumber \\
+&=& 0 \ \ {\rm otherwise}
+\ea
+for CMB power spectra that are pretty red, binning $D_{\ell}$ is recommended. Similarly we have two different $ Q_{\ell b}$ matrices
+\ba
+Q^{(C_{\ell})}_{\ell b} &=& 1   \ \ \ell^{\rm low}_{b} \le \ell \le \ell^{\rm high}_{b}  \nonumber \\
+&=& 0 \ \ {\rm otherwise} \nonumber \\
+Q^{(D_{\ell})}_{\ell b} &=& \frac{2\pi}{\ell (\ell+1)}  \ \ \ell^{\rm low}_{b} \le \ell \le \ell^{\rm high}_{b} \nonumber \\
+&=& 0 \ \ {\rm otherwise} \nonumber .\\
+\ea
+
+\subsection{Deconvolving beam and transfer function}
+
+In {\it pspy} the mode coupling deconvolution also serves for deconvolving beam and transfer function.
+The following modification of the mode coupling matrix is done
+\ba
+M^{\nu_{1}\nu_{2} }_{\ell \ell_{1}}= M^{\nu_{1}\nu_{2} }_{\ell \ell_{1}} F^{\nu_{1}}_{\ell_{1}}F^{\nu_{2}}_{\ell_{1}}  B^{\nu_{1}}_{\ell_{1}}   B^{\nu_{2}}_{\ell_{1}} 
+\ea
+Where $ B^{\nu_{1}}_{\ell_{1}}$ is the beam harmonic transform at frequency $\nu_{1}$  and $ F^{\nu_{1}}_{\ell_{1}}$ is the map transfer function.
+\end{document}
+
+
