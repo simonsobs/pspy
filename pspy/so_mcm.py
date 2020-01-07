@@ -14,7 +14,7 @@ def mcm_and_bbl_spin0(win1,
                       binning_file,
                       lmax,
                       niter,
-                      cl_type="Dl",
+                      ps_type="Dl",
                       win2=None,
                       bl1=None,
                       bl2=None,
@@ -33,7 +33,7 @@ def mcm_and_bbl_spin0(win1,
       a binning file with three columns bin low, bin high, bin mean
     lmax: integer
       the maximum multipole to consider for the spectra computation
-    cl_type: string
+    ps_type: string
       the type of binning, either bin Cl or bin Dl
     win2: ``so_map`` (or alm)
       the window function of survey 2, if input_alm=True, expect wlm2
@@ -52,9 +52,9 @@ def mcm_and_bbl_spin0(win1,
       lmax_pad should always be greater than lmax
     """
 
-    if cl_type == "Dl":
+    if ps_type == "Dl":
         do_dl = 1
-    if cl_type == "Cl":
+    if ps_type == "Cl":
         do_dl = 0
 
     maxl = lmax
@@ -107,7 +107,7 @@ def mcm_and_bbl_spin0and2(win1,
                           binning_file,
                           lmax,
                           niter,
-                          cl_type="Dl",
+                          ps_type="Dl",
                           win2=None,
                           bl1=None,
                           bl2=None,
@@ -128,7 +128,7 @@ def mcm_and_bbl_spin0and2(win1,
       a binning file with three columns bin low, bin high, bin mean
     lmax: integer
       the maximum multipole to consider
-    cl_type: string
+    ps_type: string
       the type of binning, either bin Cl or bin Dl
     win2: python tuple of ``so_map`` or alms (if input_alm=True)
       a python tuple (win_spin0,win_spin2) with the window functions of survey 1,
@@ -165,9 +165,9 @@ def mcm_and_bbl_spin0and2(win1,
         coupling_dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
         return coupling_dict
 
-    if cl_type == "Dl":
+    if ps_type == "Dl":
         do_dl = 1
-    if cl_type == "Cl":
+    if ps_type == "Cl":
         do_dl = 0
 
     maxl = lmax

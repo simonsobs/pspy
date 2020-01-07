@@ -59,7 +59,7 @@ def get_spectra(alm1, alm2=None, spectra=None):
     return ell, cl_dict
 
 
-def bin_spectra(ell, cl, binning_file, lmax, cl_type, spectra=None, mbb_inv=None, mcm_inv=None):
+def bin_spectra(ell, cl, binning_file, lmax, ps_type, spectra=None, mbb_inv=None, mcm_inv=None):
     """Bin the power spectra according to a binning file and optionnaly deconvolve the mode coupling
        matrix
 
@@ -73,7 +73,7 @@ def bin_spectra(ell, cl, binning_file, lmax, cl_type, spectra=None, mbb_inv=None
       a binning file with format bin low, bin high, bin mean
     lmax: int
       the maximum multipole to consider
-    cl_type: string
+    ps_type: string
       the type of binning, either bin Cl or bin Dl
     spectra: list of string
       needed for spin0 and spin2 cross correlation, the arrangement of the spectra
@@ -100,9 +100,9 @@ def bin_spectra(ell, cl, binning_file, lmax, cl_type, spectra=None, mbb_inv=None
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
 
-    if cl_type == "Dl":
+    if ps_type == "Dl":
         fac = (ell * (ell + 1) / (2 * np.pi))
-    if cl_type == "Cl":
+    if ps_type == "Cl":
         fac = ell * 0 + 1
 
     if spectra is None:
@@ -159,7 +159,7 @@ def vec2spec_dict(n_bins, vec, spectra):
     return {spec: vec[i * n_bins:(i + 1) * n_bins] for i, spec in enumerate(spectra)}
 
 
-def write_ps(file_name, ell, ps, cl_type, spectra=None):
+def write_ps(file_name, ell, ps, ps_type, spectra=None):
     """Write down the power spectra to disk.
 
     Parameters
@@ -170,7 +170,7 @@ def write_ps(file_name, ell, ps, cl_type, spectra=None):
       the multipoles (or binned multipoles)
     ps: 1d array or dict of 1d array
       the power spectrum, if spectra is not None, expect a dictionary with entry spectra
-    cl_type:  string
+    ps_type:  string
       'Cl' or 'Dl'
     spectra: list of strings
       needed for spin0 and spin2 cross correlation, the arrangement of the spectra
@@ -180,14 +180,14 @@ def write_ps(file_name, ell, ps, cl_type, spectra=None):
         ps_list = [ps]
         ps_list[0:0] = [ell]
         ps_list = np.array(ps_list)
-        header = "l %s" % cl_type
+        header = "l %s" % ps_type
         np.savetxt(file_name, np.transpose(ps_list), header=header)
     else:
         ps_list = [ps[spec] for spec in spectra]
         ps_list[0:0] = [ell]
         header = "l"
         for spec in spectra:
-            header += " %s_%s" % (cl_type, spec)
+            header += " %s_%s" % (ps_type, spec)
         ps_list = np.array(ps_list)
         np.savetxt(file_name, np.transpose(ps_list), header=header)
 

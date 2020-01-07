@@ -42,7 +42,7 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
 
 
 def get_nlth_dict(rms_uKarcmin_T,
-                  cl_type,
+                  ps_type,
                   lmax,
                   spectra=None,
                   rms_uKarcmin_pol=None,
@@ -53,7 +53,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     ----------
     rms_uKarcmin_T: float
       the temperature noise rms in uK.arcmin
-    cl_type: string
+    ps_type: string
       'Cl' or 'Dl'
     lmax: integer
       the maximum multipole to consider
@@ -74,7 +74,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     nl_th = {}
     if spectra is None:
         nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[2:lmax + 2]**2
-        if cl_type == "Dl":
+        if ps_type == "Dl":
             nl_th["TT"] *= lth * (lth + 1) / (2 * np.pi)
     else:
         if rms_uKarcmin_pol is None:
@@ -84,7 +84,7 @@ def get_nlth_dict(rms_uKarcmin_T,
         nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[:lmax]**2
         nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
         nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
-        if cl_type == "Dl":
+        if ps_type == "Dl":
             for spec in spectra:
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
@@ -114,10 +114,10 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
         bin_low, bin_hi, bin_cent = bin_low[idx], bin_hi[idx], bin_cent[idx]
 
     if file_name is not None:
-        f = open("%s" % file_name, mode="w")
+        output = open("%s" % file_name, mode="w")
         for i in range(n_bins):
-            f.write("%0.2f %0.2f %0.2f\n" % (bin_low[i], bin_hi[i], bin_cent[i]))
-        f.close()
+            output.write("%0.2f %0.2f %0.2f\n" % (bin_low[i], bin_hi[i], bin_cent[i]))
+        output.close()
     return bin_low, bin_hi, bin_cent
 
 
