@@ -549,7 +549,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     box = get_box(ra0, ra1, dec0, dec1)
     res = res * np.pi / (180 * 60)
     temp = so_map()
-    shape,wcs = enmap.geometry(box, res=res,pre=pre)
+    shape,wcs = enmap.geometry(box, res=res, pre=pre)
     temp.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     temp.pixel = "CAR"
     temp.nside = None
