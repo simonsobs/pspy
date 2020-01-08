@@ -95,7 +95,7 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
         coupling = np.zeros((3, lmax, lmax))
         cov_fortran.calc_cov_spin0and2_single_win(wcl, coupling.T)
         
-        indexlist=[0,0,1,1,2,0,0,0,0,0,2,2]
+        indexlist=[0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 2, 2]
         
         for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
@@ -200,7 +200,7 @@ def bin_mat(mat, binning_file, lmax):
     coupling_b = np.zeros((n_bins, n_bins))
     for i in range(n_bins):
         for j in range(n_bins):
-            coupling_b[i,j]=np.mean(mat[bin_lo[i]:bin_hi[i], bin_lo[j]:bin_hi[j]])
+            coupling_b[i,j] = np.mean(mat[bin_lo[i]:bin_hi[i], bin_lo[j]:bin_hi[j]])
     return coupling_b
 
 def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
