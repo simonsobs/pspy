@@ -73,7 +73,7 @@ class so_map:
         
         upgrade = self.copy()
         if self.pixel == "HEALPIX":
-            nside_out = self.nside*factor
+            nside_out = self.nside * factor
             upgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out = nside_out)
             upgrade.nside = nside_out
         if self.pixel == "CAR":
@@ -114,11 +114,14 @@ class so_map:
         """
         
         if self.pixel == "HEALPIX":
-            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
+            l, ps = ps_lensed_theory_to_dict(clfile, output_type = "Cl", start_at_zero = True)
             if self.ncomp == 1:
-                self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
+                self.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
             else:
-                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True, verbose=False)
+                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
+                                                self.nside,
+                                                new=True,
+                                                verbose=False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
@@ -171,16 +174,14 @@ class so_map:
             
             if self.ncomp == 1:
                 
-                min,max= None, None
-                if color_range is not None:
-                    min = -color_range
-                    max = +color_range
-            
+                min_range = -color_range if color_range is not None else None
+                max_range = +color_range if color_range is not None else None
+
                 if hp_gnomv is not None:
                     lon, lat, xsize, reso = hp_gnomv
                     hp.gnomview(self.data,
-                                min=min,
-                                max=max,
+                                min=min_range,
+                                max=max_range,
                                 cmap=cmap,
                                 notext=True,
                                 title=title,
@@ -189,8 +190,8 @@ class so_map:
                                 xsize=xsize,reso=reso)
                 else:
                     hp.mollview(self.data,
-                                min=min,
-                                max=max,
+                                min=min_range,
+                                max=max_range,
                                 cmap=cmap,
                                 notext=True,
                                 title=title,
@@ -203,34 +204,33 @@ class so_map:
                     plt.show()
             else:
                 fields = ["T", "Q", "U"]
-                min, max = {}, {}
-                for field in fields:
-                    min[field], max[field] = None, None
+                min_ranges = {field: None for field in fields}
+                max_ranges = {field: None for field in fields}
                 if color_range is not None:
                     for i, field in enumerate(fields):
-                        min[field] = -color_range[i]
-                        max[field] = +color_range[i]
-                for map, field in zip(self.data, fields):
-                    
+                        min_ranges[field] = -color_range[i]
+                        max_ranges[field] = +color_range[i]
+
+                for data, field in zip(self.data, fields):
                     if hp_gnomv is not None:
                         lon, lat, xsize, reso = hp_gnomv
-                        hp.gnomview(map,
-                                    min=min[field],
-                                    max=max[field],
+                        hp.gnomview(data,
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
                                     cmap=cmap,
                                     notext=True,
-                                    title=title,
+                                    title=field + "" + title,
                                     cbar=cbar,
                                     rot=(lon,lat,0),
                                     xsize=xsize,
                                     reso=reso)
                     else:
-                        hp.mollview(map,
-                                    min=min[field],
-                                    max=max[field],
+                        hp.mollview(data,
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
                                     cmap=cmap,
                                     notext=True,
-                                    title=l1+''+title,
+                                    title=field + "" + title,
                                     cbar=cbar)
                     if file_name is not None:
                         plt.savefig(file_name+"_%s"%field+".png", bbox_inches="tight")
@@ -242,13 +242,16 @@ class so_map:
         if self.pixel == "CAR":
             if self.ncomp == 1:
                 if color_range is not None:
-                    max = "%s"%(color_range)
+                    max_range = "%s"%(color_range)
                 else:
-                    max = "%s"%(np.max(self.data))
+                    max_range = "%s"%(np.max(self.data))
                 
-                plots = enplot.get_plots(self.data, color=color, range=max, colorbar=1, ticks=ticks_spacing_car)
+                plots = enplot.get_plots(self.data,
+                                         color=color,
+                                         range=max_range,
+                                         colorbar=1,
+                                         ticks=ticks_spacing_car)
                 
-
                 for plot in plots:
                     if file_name is not None:
                         enplot.write(file_name+".png", plot)
@@ -259,15 +262,19 @@ class so_map:
                 fields=["T", "Q", "U"]
     
                 if color_range is not None:
-                    max = "%s:%s:%s"%(color_range[0], color_range[1], color_range[2])
+                    max_range = "%s:%s:%s"%(color_range[0], color_range[1], color_range[2])
                 else:
-                    max = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
+                    max_range = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
 
-                plots = enplot.get_plots(self.data, color=color, range=max, colorbar=1, ticks=ticks_spacing_car)
+                plots = enplot.get_plots(self.data,
+                                         color=color,
+                                         range=max_range,
+                                         colorbar=1,
+                                         ticks=ticks_spacing_car)
     
-                for (plot,field) in zip(plots,fields):
+                for (plot, field) in zip(plots, fields):
                     if file_name is not None:
-                        enplot.write(file_name+"_%s"%field+".png", plot)
+                        enplot.write(file_name + "_%s"%field+".png", plot)
                     else:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
