@@ -55,29 +55,29 @@ def map2alm(map, niter, lmax, theta_range=None):
     alm = alm.astype(np.complex128)
     return alm
 
-def alm2map(alms, map):
+def alm2map(alms, so_map):
     """alm2map transform (for healpix and CAR).
         
     Parameters
     ----------
     alms: array
-      a set of alms, the shape of alms should correspond to map.ncomp
-    map:  so_map
+      a set of alms, the shape of alms should correspond to so_map.ncomp
+    so_map:  ``so_map``
       the map template that will contain the results of the harmonic transform
     """
-    if map.ncomp == 1:
+    if so_map.ncomp == 1:
         spin = 0
     else:
         spin = [0,2]
-    if map.pixel == "HEALPIX":
-        map.data = curvedsky.alm2map_healpix(alms, map.data, spin)
-    elif map.pixel == "CAR":
-        map.data = curvedsky.alm2map(alms, map.data, spin)
+    if so_map.pixel == "HEALPIX":
+        so_map.data = curvedsky.alm2map_healpix(alms, so_map.data, spin)
+    elif so_map.pixel == "CAR":
+        so_map.data = curvedsky.alm2map(alms, so_map.data, spin)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
-    return map
+    return so_map
 
-def get_alms(map, window, niter, lmax, theta_range=None):
+def get_alms(so_map, window, niter, lmax, theta_range=None):
     """Get a map, multiply by a window and return alms
     This is basically map2alm but with application of the
     window functions.
@@ -85,7 +85,7 @@ def get_alms(map, window, niter, lmax, theta_range=None):
     Parameters
     ----------
 
-    map: so_map
+    so_map: ``so_map``
       the data we wants alms from
     window: so_map or tuple of so_map
       a so map with the window function, if the so map has 3 components
@@ -95,13 +95,13 @@ def get_alms(map, window, niter, lmax, theta_range=None):
       a range [theta_min,theta_max] in radian. All pixel outside this range
       will be assumed to be zero.
     """
-    windowed_map = map.copy()
+    windowed_map = so_map.copy()
     if map.ncomp == 3:
-        windowed_map.data[0] = map.data[0]*window[0].data
-        windowed_map.data[1] = map.data[1]*window[1].data
-        windowed_map.data[2] = map.data[2]*window[1].data
+        windowed_map.data[0] = so_map.data[0]*window[0].data
+        windowed_map.data[1] = so_map.data[1]*window[1].data
+        windowed_map.data[2] = so_map.data[2]*window[1].data
     if map.ncomp == 1:
-        windowed_map.data = map.data*window.data
+        windowed_map.data = so_map.data * window.data
     alms = map2alm(windowed_map, niter, lmax, theta_range=theta_range)
     return alms
 
@@ -157,9 +157,9 @@ def get_pure_alms(map,window,niter,lmax):
     filter_2 = np.zeros(lmax)
     filter_3 = np.zeros(lmax)
 
-    filter_1[2:] = 2*np.sqrt(1.0 /((ell[2:] + 2.)*(ell[2:] - 1.)))
-    filter_2[2:] = np.sqrt(1.0 /((ell[2:] + 2.)*(ell[2:] + 1.)*ell[2:]*(ell[2:] - 1.)))
-    filter_3[2:] = ell[2:]*0+ 1
+    filter_1[2:] = 2 * np.sqrt(1.0 / ((ell[2:] + 2.) * (ell[2:] - 1.)))
+    filter_2[2:] = np.sqrt(1.0  / ((ell[2:] + 2.) * (ell[2:] + 1.) * ell[2:] * (ell[2:] - 1.)))
+    filter_3[2:] = ell[2:] * 0 + 1
     for k in range(2):
         s1eblm[k] = hp.almxfl(s1eblm[k],filter_1)
         s0eblm[k] = hp.almxfl(s0eblm[k],filter_2)
