@@ -401,7 +401,7 @@ def get_box(ra0, ra1, dec0, dec1):
       coordinates of the box in degrees
     """
     
-    box = np.array([[dec0, ra1], [dec1, ra0]])*np.pi/180
+    box = np.array([[dec0, ra1], [dec1, ra0]]) * np.pi / 180
     
     return box
 
