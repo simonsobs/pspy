@@ -109,13 +109,13 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     bin_cent = (bin_low + bin_hi) / 2
     
     if lmax is not None:
-        id = np.where(bin_hi <lmax)
+        id = np.where(bin_hi < lmax)
         bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
 
     if file_name is None:
         return bin_low, bin_hi, bin_cent
     else:
-        f = open("%s"%file_name,mode="w")
+        f = open("%s"%file_name, mode="w")
         for i in range(n_bins):
             f.write("%0.2f %0.2f %0.2f\n"%(bin_low[i], bin_hi[i], bin_cent[i]))
         f.close()
@@ -131,7 +131,7 @@ def read_binning_file(file_name, lmax):
     lmax: integer
       the maximum multipole to consider
     """
-    bin_low, bin_hi, bin_cent = np.loadtxt(file_name,unpack=True)
+    bin_low, bin_hi, bin_cent = np.loadtxt(file_name, unpack=True)
     id = np.where(bin_hi < lmax)
     bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
     if bin_low[0] < 2:
