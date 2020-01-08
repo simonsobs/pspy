@@ -63,14 +63,14 @@ def mcm_and_bbl_spin0(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = sph_tools.map2alm(win1,niter=niter,lmax=maxl)
+        win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
         if win2 is not None:
-            win2 = sph_tools.map2alm(win2,niter=niter,lmax=maxl)
+            win2 = sph_tools.map2alm(win2, niter=niter, lmax=maxl)
 
     if win2 is None:
         wcl = hp.alm2cl(win1)
     else:
-        wcl = hp.alm2cl(win1,win2)
+        wcl = hp.alm2cl(win1, win2)
 
     l = np.arange(len(wcl))
     wcl *= (2*l+1)
@@ -286,14 +286,14 @@ def apply_Bbl(Bbl,ps,spectra=None):
         ps_vec = ps[spectra[0]]
         for f in spectra[1:]:
             ps_vec = np.append(ps_vec, ps[f])
-        ps_b = np.dot(Bbl_array,ps_vec)
+        ps_b = np.dot(Bbl_array, ps_vec)
         n_bins = int(Bbl_array.shape[0]/9)
         ps_th = {}
         for i,f in enumerate(spectra):
             ps_th[f] = ps_b[i*n_bins:(i+1)*n_bins]
         return ps_th
     else:
-        ps_th = np.dot(Bbl,ps)
+        ps_th = np.dot(Bbl, ps)
     return ps_th
 
 def save_coupling(prefix,mbb_inv,Bbl,spin_pairs=None,mcm_inv=None):
