@@ -161,7 +161,7 @@ class so_map:
             if color == "planck":
                 from matplotlib.colors import ListedColormap
                 from pspy.so_config import DEFAULT_DATA_DIR
-                planck_rgb_file = os.path.join(DEFAULT_DATA_DIR, "Planck_Parchment_RGB.txt")
+                planck_rgb_file = os.path.join(DEFAULT_DATA_DIR,"Planck_Parchment_RGB.txt")
                 colombi1_cmap = ListedColormap(np.loadtxt(planck_rgb_file)/255.)
                 colombi1_cmap.set_bad("white")
                 colombi1_cmap.set_under("white")
@@ -196,7 +196,7 @@ class so_map:
                                 title=title,
                                 cbar=cbar)
                 if file_name is not None:
-                    plt.savefig(file_name+".png", bbox_inches="tight")
+                    plt.savefig(file_name + ".png", bbox_inches="tight")
                     plt.clf()
                     plt.close
                 else:
@@ -232,7 +232,7 @@ class so_map:
                                     title=field + "" + title,
                                     cbar=cbar)
                     if file_name is not None:
-                        plt.savefig(file_name + "_%s"%field+".png", bbox_inches="tight")
+                        plt.savefig(file_name + "_%s" % field + ".png", bbox_inches="tight")
                         plt.clf()
                         plt.close
                     else:
@@ -273,7 +273,7 @@ class so_map:
     
                 for (plot, field) in zip(plots, fields):
                     if file_name is not None:
-                        enplot.write(file_name + "_%s"%field+".png", plot)
+                        enplot.write(file_name + "_%s" % field + ".png", plot)
                     else:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
