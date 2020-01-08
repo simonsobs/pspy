@@ -45,13 +45,13 @@ def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
             sq_win_n0n1.data *= win[n1].data
             sq_win_n2n3 = win[n2].copy()
             sq_win_n2n3.data *= win[n3].data
-            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1,niter = niter, lmax = lmax)
-            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3,niter = niter, lmax = lmax)
-            wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1,alm_n2n3)
+            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1, niter = niter, lmax = lmax)
+            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3, niter = niter, lmax = lmax)
+            wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1, alm_n2n3)
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2*l+1)/(4*np.pi)
         
-        coupling = np.zeros((2,lmax,lmax))
+        coupling = np.zeros((2, lmax, lmax))
         cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], coupling.T)
         coupling_dict["TaTcTbTd"] = coupling[0]
         coupling_dict["TaTdTbTc"] = coupling[1]
@@ -96,12 +96,14 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
         cov_fortran.calc_cov_spin0and2_single_win(wcl, coupling.T)
         
         indexlist=[0,0,1,1,2,0,0,0,0,0,2,2]
-        for name,index in zip(win_list,indexlist):
+        
+        for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
     else:
         wcl={}
         for s in win_list:
-            n0,n1,n2,n3 = [s[i*2:(i+1)*2] for i in range(4)]
+            
+            n0, n1, n2, n3 = [s[i*2:(i+1)*2] for i in range(4)]
             
             sq_win_n0n1 = win[n0].copy()
             sq_win_n0n1.data *= win[n1].data
@@ -122,7 +124,7 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
                                        coupling.T)
             
         indexlist = np.arange(12)
-        for name,index in zip(win_list,indexlist):
+        for name, index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
 
     if save_file is not None:
@@ -173,8 +175,8 @@ def symmetrize(Clth, mode="arithm"):
       the power spectrum to be made symmetric
     mode : string
       geometric or arithmetic mean
-      if geo return C_l1l2= sqrt( |Cl1 Cl2 |)
-      if arithm return C_l1l2= (Cl1 + Cl2)/2
+      if geo return C_l1l2 = sqrt( |Cl1 Cl2 |)
+      if arithm return C_l1l2 = (Cl1 + Cl2)/2
     """
     
     if mode == "geo":
