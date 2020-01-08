@@ -28,16 +28,16 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero =
 
     if lmax is not None:
         l = l[:lmax]
-    scale = l*(l+1)/(2*np.pi)
+    scale = l * (l+1) / (2 * np.pi)
     for f in fields:
         if lmax is not None:
             ps[f] = ps[f][:lmax]
         if output_type == "Cl":
             ps[f] /= scale
         if start_at_zero:
-            ps[f] = np.append(np.array([0,0]), ps[f])
+            ps[f] = np.append(np.array([0, 0]), ps[f])
     if start_at_zero:
-        l = np.append( np.array([0,1]), l)
+        l = np.append( np.array([0, 1]), l)
     return l, ps
 
 def get_nlth_dict(rms_uKarcmin_T,
@@ -67,26 +67,26 @@ def get_nlth_dict(rms_uKarcmin_T,
     if beamfile is not None:
         l, bl = np.loadtxt(beamfile, unpack=True)
     else:
-        bl = np.ones(lmax+2)
+        bl = np.ones(lmax + 2)
 
-    lth = np.arange(2,lmax+2)
+    lth = np.arange(2, lmax + 2)
     nl_th = {}
     if spectra is None:
-        nl_th["TT"] = np.ones(lmax)*(rms_uKarcmin_T*np.pi/(60*180))**2/bl[2:lmax+2]**2
+        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[2: lmax + 2]**2
         if type == "Dl":
-            nl_th["TT"] *= lth*(lth+1)/(2*np.pi)
+            nl_th["TT"] *= lth * (lth + 1) / (2 * np.pi)
         return nl_th
     else:
         if rms_uKarcmin_pol is None:
-            rms_uKarcmin_pol = rms_uKarcmin_T*np.sqrt(2)
+            rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         for spec in spectra:
             nl_th[spec] = np.zeros(lmax)
-        nl_th["TT"] = np.ones(lmax)*(rms_uKarcmin_T*np.pi/(60*180))**2/bl[:lmax]**2
-        nl_th["EE"] = np.ones(lmax)*(rms_uKarcmin_pol*np.pi/(60*180))**2/bl[:lmax]**2
-        nl_th["BB"] = np.ones(lmax)*(rms_uKarcmin_pol*np.pi/(60*180))**2/bl[:lmax]**2
+        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[:lmax]**2
+        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
+        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
         if type == "Dl":
             for spec in spectra:
-                nl_th[spec] *= lth*(lth+1)/(2*np.pi)
+                nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
 
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
