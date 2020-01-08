@@ -1,13 +1,14 @@
 """
 Routines for generalized map2alm and alm2map (healpix and CAR).
 """
-from pixell import curvedsky,enmap
+import healpy as hp
+import numpy as np
+from pixell import curvedsky, enmap
+
 from pspy import so_window
-import healpy as hp, numpy as np
-import sys,copy
 
 
-def map2alm(map,niter,lmax,theta_range=None):
+def map2alm(map, niter, lmax, theta_range=None):
     """Map2alm transform (for healpix or CAR).
     
     Parameters
@@ -43,19 +44,18 @@ def map2alm(map,niter,lmax,theta_range=None):
         return alm
 
     elif map.pixel=="CAR":
-        alm = curvedsky.map2alm(map.data,lmax= lmax)
+        alm = curvedsky.map2alm(map.data, lmax= lmax)
         if niter != 0:
             map_copy = map.copy()
             for k in range(niter):
-                alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm,map_copy.data), lmax=lmax)
+                alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm, map_copy.data), lmax=lmax)
     else:
-        print ("Error: file %s is neither a enmap or a healpix map"%file)
-        sys.exit()
+        raise ValueError("Map is neither a CAR nor a HEALPIX")
 
     alm = alm.astype(np.complex128)
     return alm
 
-def alm2map(alms,map):
+def alm2map(alms, map):
     """alm2map transform (for healpix and CAR).
         
     Parameters
@@ -70,15 +70,14 @@ def alm2map(alms,map):
     else:
         spin = [0,2]
     if map.pixel == "HEALPIX":
-        map.data = curvedsky.alm2map_healpix(alms,map.data,spin)
+        map.data = curvedsky.alm2map_healpix(alms, map.data, spin)
     elif map.pixel == "CAR":
-        map.data = curvedsky.alm2map(alms,map.data,spin)
+        map.data = curvedsky.alm2map(alms, map.data, spin)
     else:
-        print ("Error: file %s is neither a enmap or a healpix map"%file)
-        sys.exit()
+        raise ValueError("Map is neither a CAR nor a HEALPIX")
     return map
 
-def get_alms(map,window,niter,lmax,theta_range=None):
+def get_alms(map, window, niter, lmax, theta_range=None):
     """Get a map, multiply by a window and return alms
     This is basically map2alm but with application of the
     window functions.
