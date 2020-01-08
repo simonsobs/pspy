@@ -28,8 +28,7 @@ Then you can install the ``pspy`` library and its dependencies *via*
     $ pip install -e /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
-to reinstall at every changes. If you plan to just use the likelihood and do not develop it, you can
-remove the ``-e`` option.
+to reinstall at every changes. 
 
 
 Ipython notebooks:
