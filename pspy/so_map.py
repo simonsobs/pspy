@@ -43,7 +43,7 @@ class so_map:
         print("geometry:", self.geometry)
         print("coordinates:", self.coordinate)
     
-    def write_map(self,file_name):
+    def write_map(self, file_name):
         """Write the ``so_map`` to disk.
             
         Parameters
@@ -57,7 +57,7 @@ class so_map:
         if self.pixel == "CAR":
             enmap.write_map(file_name, self.data)
 
-    def upgrade(self,factor):
+    def upgrade(self, factor):
         """Upgrade the ``so_map``.
             
         Parameters
@@ -74,12 +74,12 @@ class so_map:
             nside_out = self.nside*factor
             upgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out = nside_out)
             upgrade.nside = nside_out
-        if self.pixel=="CAR":
+        if self.pixel == "CAR":
             upgrade.data = enmap.upgrade(self.data, factor)
             upgrade.geometry = upgrade.data.geometry[1:]
         return upgrade
 
-    def downgrade(self,factor):
+    def downgrade(self, factor):
         """Downgrade the ``so_map``.
             
         Parameters
@@ -101,7 +101,7 @@ class so_map:
             downgrade.geometry = downgrade.data.geometry[1:]
         return downgrade
     
-    def synfast(self,clfile):
+    def synfast(self, clfile):
         """fill a ``so_map`` with a cmb gaussian simulation.
         
         Parameters
@@ -115,7 +115,7 @@ class so_map:
             l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
-            else :
+            else:
                 self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True, verbose=False)
 
         if self.pixel == "CAR":
@@ -169,13 +169,13 @@ class so_map:
             
             if self.ncomp == 1:
                 
-                min,max=None,None
+                min,max= None, None
                 if color_range is not None:
                     min = -color_range
                     max = +color_range
             
                 if hp_gnomv is not None:
-                    lon,lat,xsize,reso = hp_gnomv
+                    lon, lat, xsize, reso = hp_gnomv
                     hp.gnomview(self.data,
                                 min=min,
                                 max=max,
@@ -200,12 +200,12 @@ class so_map:
                 else:
                     plt.show()
             else:
-                fields = ["T","Q","U"]
-                min,max = {},{}
+                fields = ["T", "Q", "U"]
+                min, max = {}, {}
                 for field in fields:
-                    min[field], max[field] = None,None
+                    min[field], max[field] = None, None
                 if color_range is not None:
-                    for i,field in enumerate(fields):
+                    for i, field in enumerate(fields):
                         min[field] = -color_range[i]
                         max[field] = +color_range[i]
                 for map, field in zip(self.data, fields):
@@ -270,7 +270,7 @@ class so_map:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
 
-def read_map(file,coordinate=None,fields_healpix=None):
+def read_map(file, coordinate=None, fields_healpix=None):
     """Create a ``so_map`` object from a fits file.
         
     Parameters
