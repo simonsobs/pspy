@@ -91,7 +91,7 @@ class so_map:
         
         assert( factor % 2 == 0), "factor should be a factor of 2"
         
-        downgrade=self.copy()
+        downgrade = self.copy()
         if self.pixel == "HEALPIX":
             nside_out = self.nside / factor
             downgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out=nside_out)
