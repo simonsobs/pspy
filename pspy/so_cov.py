@@ -308,7 +308,7 @@ def cov2corr(cov):
     corr = ((cov.T/d).T)/d - np.identity(cov.shape[0])
     return corr
 
-def selectblock(cov, spectra, n_bins, block='TTTT'):
+def selectblock(cov, spectra, n_bins, block="TTTT"):
     """Select a block in a spin0 and 2 covariance matrix
         
     Parameters
@@ -380,7 +380,7 @@ def g(a, b, c, d, ns):
     result /= (ns[a] * ns[b] * (ns[c] - delta2(a, c)) * (ns[d] - delta2(b, d)))
     return result
 
-def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id='TTTT'):
+def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     """doc not ready yet
     """
     exp_alpha, f_alpha = alpha.split("_")
