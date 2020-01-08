@@ -45,14 +45,14 @@ def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
             sq_win_n0n1.data *= win[n1].data
             sq_win_n2n3 = win[n2].copy()
             sq_win_n2n3.data *= win[n3].data
-            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1,niter=niter,lmax=lmax)
-            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3,niter=niter,lmax=lmax)
+            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1,niter = niter, lmax = lmax)
+            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3,niter = niter, lmax = lmax)
             wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1,alm_n2n3)
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2*l+1)/(4*np.pi)
         
         coupling = np.zeros((2,lmax,lmax))
-        cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"],wcl["TaTdTbTc"], coupling.T)
+        cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], coupling.T)
         coupling_dict["TaTcTbTd"] = coupling[0]
         coupling_dict["TaTdTbTc"] = coupling[1]
 
@@ -80,19 +80,19 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
       the name of the file in which the coupling kernel will be saved (npy format)
     """
     
-    win_list = ["TaTcTbTd","TaTdTbTc","PaPcPbPd","PaPdPbPc",
-                "TaTcPbPd","TaPdPbTc","TaTcTbPd","TaPdTbTc",
-                "TaPcTbPd","TaPdTbPc","PaTcPbPd","PaPdPbTc"]
+    win_list = ["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
+                "TaTcPbPd", "TaPdPbTc", "TaTcTbPd", "TaPdTbTc",
+                "TaPcTbPd", "TaPdTbPc", "PaTcPbPd", "PaPdPbTc"]
     
-    coupling_dict={}
+    coupling_dict = {}
     if type(win) is not dict:
         sq_win = win.copy()
         sq_win.data *= sq_win.data
-        alm = sph_tools.map2alm(sq_win,niter=niter,lmax=lmax)
+        alm = sph_tools.map2alm(sq_win, niter=niter, lmax=lmax)
         wcl = hp.alm2cl(alm)
         l = np.arange(len(wcl))
         wcl *= (2*l+1)/(4*np.pi)
-        coupling = np.zeros((3,lmax,lmax))
+        coupling = np.zeros((3, lmax, lmax))
         cov_fortran.calc_cov_spin0and2_single_win(wcl, coupling.T)
         
         indexlist=[0,0,1,1,2,0,0,0,0,0,2,2]
@@ -108,14 +108,14 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
             sq_win_n2n3 = win[n2].copy()
             sq_win_n2n3.data *= win[n3].data
             
-            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1,niter=niter,lmax=lmax)
-            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3,niter=niter,lmax=lmax)
+            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1, niter=niter, lmax=lmax)
+            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3, niter=niter, lmax=lmax)
             
-            wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1,alm_n2n3)
+            wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1, alm_n2n3)
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2*l+1)/(4*np.pi)
     
-        coupling = np.zeros((12,lmax,lmax))
+        coupling = np.zeros((12, lmax, lmax))
         cov_fortran.calc_cov_spin0and2(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
                                        wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
                                        wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["PaTcPbPd"], wcl["PaPdPbTc"],
@@ -285,10 +285,10 @@ def extract_TTTEEE_mbb(mbb_inv):
     mbb_inv_array = so_mcm.coupling_dict_to_array(mbb_inv)
     mbb_array = np.linalg.inv(mbb_inv_array)
     n_bins = int(mbb_array.shape[0]/9)
-    mbb_array_select = np.zeros((3*n_bins,3*n_bins))
-    mbb_array_select[:n_bins,:n_bins] = mbb_array[:n_bins,:n_bins]
-    mbb_array_select[n_bins:2*n_bins,n_bins:2*n_bins] = mbb_array[n_bins:2*n_bins,n_bins:2*n_bins]
-    mbb_array_select[2*n_bins:3*n_bins,2*n_bins:3*n_bins] = mbb_array[5*n_bins:6*n_bins,5*n_bins:6*n_bins]
+    mbb_array_select = np.zeros((3*n_bins, 3*n_bins))
+    mbb_array_select[:n_bins,:n_bins] = mbb_array[:n_bins, :n_bins]
+    mbb_array_select[n_bins:2*n_bins, n_bins:2*n_bins] = mbb_array[n_bins:2*n_bins, n_bins:2*n_bins]
+    mbb_array_select[2*n_bins:3*n_bins, 2*n_bins:3*n_bins] = mbb_array[5*n_bins:6*n_bins, 5*n_bins:6*n_bins]
     mbb_inv_array = np.linalg.inv(mbb_array_select)
     return mbb_inv_array
 
@@ -305,7 +305,7 @@ def cov2corr(cov):
     corr = ((cov.T/d).T)/d - np.identity(cov.shape[0])
     return corr
 
-def selectblock(cov, spectra,n_bins,block='TTTT'):
+def selectblock(cov, spectra, n_bins, block='TTTT'):
     """Select a block in a spin0 and 2 covariance matrix
         
     Parameters
@@ -328,10 +328,10 @@ def selectblock(cov, spectra,n_bins,block='TTTT'):
         blockindex = {}
         for c1,s1 in enumerate(spectra):
             for c2,s2 in enumerate(spectra):
-                blockindex[s1+s2] = [c1*n_bins,c2*n_bins]
+                blockindex[s1+s2] = [c1*n_bins, c2*n_bins]
     id1 = blockindex[block][0]
     id2 = blockindex[block][1]
-    cov_select = cov[id1:id1+n_bins,id2:id2+n_bins]
+    cov_select = cov[id1:id1+n_bins, id2:id2+n_bins]
     return cov_select
 
 def delta2(a, b):
