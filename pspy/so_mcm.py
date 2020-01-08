@@ -28,7 +28,7 @@ def mcm_and_bbl_spin0(win1,
     Parameters
     ----------
     
-    win1: so_map (or alm)
+    win1: ``so_map`` (or alm)
       the window function of survey 1, if input_alm=True, expect wlm1
     binning_file: text file
       a binning file with three columns bin low, bin high, bin mean
@@ -73,7 +73,7 @@ def mcm_and_bbl_spin0(win1,
         wcl = hp.alm2cl(win1, win2)
 
     l = np.arange(len(wcl))
-    wcl *= (2*l+1)
+    wcl *= (2 * l + 1)
 
     if bl1 is None:
         bl1 = np.ones(len(l))
@@ -81,7 +81,7 @@ def mcm_and_bbl_spin0(win1,
         bl2 = bl1.copy()
 
     mcm = np.zeros((maxl, maxl))
-    mcm_fortran.calc_mcm_spin0(wcl, bl1*bl2, mcm.T)
+    mcm_fortran.calc_mcm_spin0(wcl, bl1 * bl2, mcm.T)
     mcm = mcm[:lmax, :lmax]
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
@@ -154,13 +154,13 @@ def mcm_and_bbl_spin0and2(win1,
         dict["spin0xspin0"] = array[0, :, :]
         dict["spin0xspin2"] = array[1, :, :]
         dict["spin2xspin0"] = array[2, :, :]
-        dict["spin2xspin2"] = np.zeros((4*dim1, 4*dim2))
+        dict["spin2xspin2"] = np.zeros((4 * dim1, 4 * dim2))
         for i in range(4):
-            dict["spin2xspin2"][i*dim1:(i+1)*dim1,i*dim2:(i+1)*dim2] = array[3,:,:]
-        dict["spin2xspin2"][2*dim1: 3*dim1,dim2:2*dim2] = array[4, :, :]*fac
-        dict["spin2xspin2"][dim1:2*dim1,2*dim2: 3*dim2] = array[4, :, :]*fac
-        dict["spin2xspin2"][3*dim1: 4*dim1,:dim2] = array[4, :, :]
-        dict["spin2xspin2"][:dim1,3*dim2:4*dim2] = array[4, :, :]
+            dict["spin2xspin2"][i * dim1:(i+1) * dim1, i * dim2:(i+1) * dim2] = array[3, :, :]
+        dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = array[4, :, :]*fac
+        dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = array[4, :, :]*fac
+        dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
+        dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
         return dict
     
     if type == "Dl":
@@ -173,9 +173,9 @@ def mcm_and_bbl_spin0and2(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = (sph_tools.map2alm(win1[0], niter=niter, lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
+        win1 = (sph_tools.map2alm(win1[0], niter = niter, lmax = maxl), sph_tools.map2alm(win1[1], niter = niter, lmax = maxl))
         if win2 is not None:
-            win2 = (sph_tools.map2alm(win2[0], niter=niter, lmax=maxl), sph_tools.map2alm(win2[1], niter=niter, lmax=maxl))
+            win2 = (sph_tools.map2alm(win2[0], niter = niter, lmax = maxl), sph_tools.map2alm(win2[1], niter = niter, lmax = maxl))
     if win2 is None:
         win2 = deepcopy(win1)
 
@@ -192,8 +192,8 @@ def mcm_and_bbl_spin0and2(win1,
         for j,s2 in enumerate(spin):
             wcl[s1+s2] = hp.alm2cl(win1[i], win2[j])
             #wcl[s1+s2]=wcl[s1+s2][:lmax]*(2*np.arange(lmax)+1)
-            wcl[s1+s2] = wcl[s1+s2]*(2*np.arange(len(wcl[s1+s2]))+1)
-            wbl[s1+s2] = bl1[i]*bl2[j]
+            wcl[s1+s2] = wcl[s1+s2] * (2 *np.arange(len(wcl[s1+s2])) + 1)
+            wbl[s1+s2] = bl1[i] * bl2[j]
 
     mcm = np.zeros((5, maxl, maxl))
 
@@ -218,8 +218,8 @@ def mcm_and_bbl_spin0and2(win1,
         mcm_fortran.bin_mcm((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (mbb_array[i,:,:]).T, doDl)
         mcm_fortran.binning_matrix((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (Bbl_array[i,:,:]).T, doDl)
 
-    mbb = get_coupling_dict(mbb_array, fac=-1.0)
-    Bbl = get_coupling_dict(Bbl_array, fac=1.0)
+    mbb = get_coupling_dict(mbb_array, fac = -1.0)
+    Bbl = get_coupling_dict(Bbl_array, fac = 1.0)
 
     spin_pairs = ["spin0xspin0", "spin0xspin2", "spin2xspin0", "spin2xspin2"]
     mbb_inv = {}
