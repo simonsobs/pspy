@@ -137,7 +137,7 @@ def get_pure_alms(so_map, window, niter, lmax):
         p1 = enmap.samewcs(p1,so_map.data)
         p2 = enmap.samewcs(p2,so_map.data)
         
-        alm = curvedsky.map2alm(so_map.data[0]*window[0].data, lmax = lmax)
+        alm = curvedsky.map2alm(so_map.data[0] * window[0].data, lmax = lmax)
         s2eblm = curvedsky.map2alm(p2, spin=2, lmax = lmax)
         s1eblm = curvedsky.map2alm(p1, spin=1, lmax = lmax)
         s0eblm = s1eblm.copy()
@@ -145,7 +145,7 @@ def get_pure_alms(so_map, window, niter, lmax):
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax = lmax)
     
     if map.pixel == "HEALPIX":
-        alm = hp.sphtfunc.map2alm(so_map.data[0]*window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
+        alm = hp.sphtfunc.map2alm(so_map.data[0] * window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
         s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax= lmax)
         s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax= lmax)
         s0eblm= s1eblm.copy()
