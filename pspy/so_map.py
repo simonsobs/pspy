@@ -194,7 +194,7 @@ class so_map:
                                 title=title,
                                 cbar=cbar)
                 if file_name is not None:
-                    plt.savefig(file_name+'.png', bbox_inches='tight')
+                    plt.savefig(file_name+".png", bbox_inches="tight")
                     plt.clf()
                     plt.close
                 else:
@@ -436,7 +436,7 @@ def from_enmap(emap):
 
     return map
 
-def healpix2car(map,template, lmax = None):
+def healpix2car(map, template, lmax = None):
     """Project a HEALPIX ``so_map`` into a CAR ``so_map``.
         
     The projection will be done in harmonic space, you can specify a lmax
@@ -538,7 +538,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     else:
         pre = ()
     
-    box = get_box(ra0,ra1,dec0,dec1)
+    box = get_box(ra0, ra1, dec0, dec1)
     res = res*np.pi/(180*60)
     temp = so_map()
     shape,wcs = enmap.geometry(box, res=res,pre=pre)
@@ -619,8 +619,8 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     
     if binary.pixel=="CAR":
         pixSize_arcmin = np.sqrt(binary.data.pixsize()*(60*180/np.pi)**2)
-        random_index1 = np.random.randint(0, binary.data.shape[0], size=n_holes)
-        random_index2 = np.random.randint(0, binary.data.shape[1], size=n_holes)
+        random_index1 = np.random.randint(0, binary.data.shape[0], size = n_holes)
+        random_index2 = np.random.randint(0, binary.data.shape[1], size = n_holes)
         mask.data[random_index1,random_index2] = 0
         dist = distance_transform_edt(mask.data)
         mask.data[dist*pixSize_arcmin < hole_radius_arcmin] = 0
