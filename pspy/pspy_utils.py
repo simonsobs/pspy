@@ -133,7 +133,7 @@ def read_binning_file(file_name, lmax):
     lmax: integer
       the maximum multipole to consider
     """
-    bin_low, bin_hi, bin_cent = plt.loadtxt(file_name,unpack=True)
+    bin_low, bin_hi, bin_cent = np.loadtxt(file_name,unpack=True)
     id = np.where(bin_hi <lmax)
     bin_low, bin_hi, bin_cent=bin_low[id], bin_hi[id], bin_cent[id]
     if bin_low[0] < 2:

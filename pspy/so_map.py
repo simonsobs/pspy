@@ -494,7 +494,6 @@ def car2car(map, template):
     return project
 
 def healpix_template(ncomp, nside, coordinate=None):
-    
     """Create a ``so_map`` template with healpix pixellisation.
         
     Parameters
@@ -522,7 +521,6 @@ def healpix_template(ncomp, nside, coordinate=None):
     return temp
 
 def car_template(ncomp, ra0, ra1, dec0, dec1, res):
-    
     """Create a ``so_map`` template with CAR pixellisation in equ coordinates.
         
     Parameters
