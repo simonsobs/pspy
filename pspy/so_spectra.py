@@ -100,9 +100,9 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     n_bins = len(bin_hi)
     
     if type == "Dl":
-        fac = (l*(l+1)/(2*np.pi))
+        fac = (l * (l + 1) / (2*np.pi))
     if type == "Cl":
-        fac = l*0+1
+        fac = l * 0 + 1
 
     if spectra is None:
         if mcm_inv is not None:
@@ -110,7 +110,7 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
         binnedPower = np.zeros(len(bin_c))
         for ibin in range(n_bins):
             loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
-            binnedPower[ibin] = (cl[loc]*fac[loc]).mean()
+            binnedPower[ibin] = (cl[loc] * fac[loc]).mean()
         if mbb_inv is None:
             return bin_c, binnedPower
         else:
@@ -121,22 +121,22 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
             mcm_inv = so_mcm.coupling_dict_to_array(mcm_inv)
             for f in spectra:
                 unbin_vec = np.append(unbin_vec, cl[f][2:lmax])
-            cl = vec2spec_dict(lmax-2, np.dot(mcm_inv, unbin_vec), spectra)
-            l = np.arange(2,lmax)
+            cl = vec2spec_dict(lmax - 2, np.dot(mcm_inv, unbin_vec), spectra)
+            l = np.arange(2, lmax)
 
         vec=[]
         for f in spectra:
             binnedPower=np.zeros(len(bin_c))
             for ibin in range(n_bins):
                 loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
-                binnedPower[ibin] = (cl[f][loc]*fac[loc]).mean()
+                binnedPower[ibin] = (cl[f][loc] * fac[loc]).mean()
             
             vec = np.append(vec, binnedPower)
         if mbb_inv is None:
             return bin_c, vec2spec_dict(n_bins, vec, spectra)
         else:
             mbb_inv = so_mcm.coupling_dict_to_array(mbb_inv)
-            return bin_c, vec2spec_dict(n_bins,np.dot(mbb_inv,vec), spectra)
+            return bin_c, vec2spec_dict(n_bins, np.dot(mbb_inv, vec), spectra)
 
     return binCent, binnedPower
 
@@ -155,11 +155,7 @@ def vec2spec_dict(n_bins, vec, spectra):
       the arrangement of the spectra for example:
       ['TT','TE','TB','ET','BT','EE','EB','BE','BB']
     """
-    
-    dict = {}
-    for c,f in enumerate(spectra):
-        dict[f] = vec[c*n_bins:(c+1)*n_bins]
-    return dict
+    return {spec: vec[i * n_bins:(i + 1) * n_bins] for i, spec in enumerate(spectra)}
 
 
 def write_ps(file_name, l, ps, type, spectra=None):
@@ -215,13 +211,11 @@ def read_ps(file_name, spectra=None):
     
     data = np.loadtxt(file_name)
     if spectra is None:
-        return data[:,0], data[:,1]
-    else:
-        ps = {}
-        l = data[:,0]
-        for c,f in enumerate(spectra):
-            ps[f] = data[:,c+1]
-        return l,ps
+        return data[:, 0], data[:, 1]
+
+    l = data[:, 0]
+    ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
+    return l, ps
 
 
 
@@ -281,13 +275,11 @@ def read_ps_hdf5(file, spec_name, spectra=None):
     data = np.array(spec["data"]).T
     
     l = data[:,0]
-    if spectra == None:
-        ps = data[:,1]
+    if spectra is None:
+        ps = data[:, 1]
     else:
-        ps = {}
-        for count,spec in enumerate(spectra):
-            ps[spec] = data[:,count+1]
+        ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
 
-    return l,ps
+    return l, ps
 
 
