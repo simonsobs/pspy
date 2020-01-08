@@ -366,7 +366,7 @@ def bounding_box_from_map(map_car):
         
     Parameters
     ----------
-    map_car : so_map in CAR coordinates
+    map_car : ``so_map`` in CAR coordinates
       the map used to define the box
     """
     
@@ -380,7 +380,7 @@ def from_enmap(emap):
     Parameters
     ----------
     emap : a ndmap object
-      the enmap we want to use to define the so_map
+      the enmap we want to use to define the ``so_map``
     """
 
     map = so_map()
@@ -401,7 +401,7 @@ def from_enmap(emap):
     return map
 
 def healpix2car(map,template,lmax=None):
-    """Project a HEALPIX so_map into a CAR ``so_map``.
+    """Project a HEALPIX ``so_map`` into a CAR ``so_map``.
         
     The projection will be done in harmonic space, you can specify a lmax
     to choose a range of multipoles considered in the projection.
