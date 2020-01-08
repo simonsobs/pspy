@@ -325,7 +325,7 @@ def read_map(file, coordinate=None, fields_healpix=None):
 
     return map
 
-def from_components(T,Q,U):
+def from_components(T, Q, U):
     """Create a (T,Q,U) ``so_map`` object from three fits files.
         
     Parameters
@@ -357,7 +357,7 @@ def from_components(T,Q,U):
     
     return map
 
-def get_submap_car(map,box,mode):
+def get_submap_car(map, box, mode):
     """Cut a CAR submap (using pixell).
         
     Parameters
@@ -379,12 +379,12 @@ def get_submap_car(map,box,mode):
       "exclusive": lower bounds are rounded up, and upper bounds down"""
         
     submap = map.copy()
-    submap.data = map.data.submap(box, mode=mode)
-    submap.geometry = map.data.submap(box, mode=mode).geometry[1:]
+    submap.data = map.data.submap(box, mode = mode)
+    submap.geometry = map.data.submap(box, mode = mode).geometry[1:]
      
     return submap
 
-def get_box(ra0,ra1,dec0,dec1):
+def get_box(ra0, ra1, dec0, dec1):
     """Create box in equatorial coordinates.
         
     Parameters
@@ -436,7 +436,7 @@ def from_enmap(emap):
 
     return map
 
-def healpix2car(map,template,lmax=None):
+def healpix2car(map,template, lmax = None):
     """Project a HEALPIX ``so_map`` into a CAR ``so_map``.
         
     The projection will be done in harmonic space, you can specify a lmax
@@ -493,7 +493,7 @@ def car2car(map, template):
     project.data = enmap.project(map.data, template.data.shape, template.data.wcs)
     return project
 
-def healpix_template(ncomp, nside, coordinate=None):
+def healpix_template(ncomp, nside, coordinate = None):
     """Create a ``so_map`` template with healpix pixellisation.
         
     Parameters
@@ -550,7 +550,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     temp.coordinate = "equ"
     return temp
 
-def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
+def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol = None):
     """Generate a white noise realisation corresponding to the template pixellisation
         
     Parameters
