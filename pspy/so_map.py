@@ -112,14 +112,14 @@ class so_map:
         """
         
         if self.pixel == "HEALPIX":
-            l, ps = ps_lensed_theory_to_dict(clfile,output_type="Cl",startAtZero=True)
+            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", startAtZero=True)
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
             else :
                 self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside ,new=True, verbose=False)
 
         if self.pixel == "CAR":
-            ps = powspec.read_spectrum(clfile)[:self.ncomp,:self.ncomp]
+            ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
             self.data = curvedsky.rand_map(self.data.shape, self.data.wcs, ps)
 
         return self
@@ -203,15 +203,15 @@ class so_map:
                 fields = ["T","Q","U"]
                 min,max = {},{}
                 for field in fields:
-                    min[field],max[field] = None,None
+                    min[field], max[field] = None,None
                 if color_range is not None:
                     for i,field in enumerate(fields):
                         min[field] = -color_range[i]
                         max[field] = +color_range[i]
-                for map,field in zip(self.data,fields):
+                for map, field in zip(self.data, fields):
                     
                     if hp_gnomv is not None:
-                        lon,lat,xsize,reso = hp_gnomv
+                        lon, lat, xsize, reso = hp_gnomv
                         hp.gnomview(map,
                                     min=min[field],
                                     max=max[field],
@@ -254,7 +254,7 @@ class so_map:
                         plot.img.show()
 
             if self.ncomp == 3:
-                fields=["T","Q","U"]
+                fields=["T", "Q", "U"]
     
                 if color_range is not None:
                     max = "%s:%s:%s"%(color_range[0], color_range[1], color_range[2])
@@ -379,8 +379,8 @@ def get_submap_car(map,box,mode):
       "exclusive": lower bounds are rounded up, and upper bounds down"""
         
     submap = map.copy()
-    submap.data = map.data.submap( box, mode=mode)
-    submap.geometry = map.data.submap( box, mode=mode).geometry[1:]
+    submap.data = map.data.submap(box, mode=mode)
+    submap.geometry = map.data.submap(box, mode=mode).geometry[1:]
      
     return submap
 
@@ -393,9 +393,9 @@ def get_box(ra0,ra1,dec0,dec1):
       coordinates of the box in degrees
     """
     
-    box = np.array([[ dec0, ra1], [dec1, ra0]])*np.pi/180
+    box = np.array([[dec0, ra1], [dec1, ra0]])*np.pi/180
     
-    return(box)
+    return box
 
 def bounding_box_from_map(map_car):
     """Get a coordinate box from a map.
