@@ -21,8 +21,13 @@ class so_map:
     """
     
     def __init__(self):
-        pass
-    
+        self.pixel = None
+        self.nside = None
+        self.ncomp = None
+        self.data = None
+        self.geometry = None
+        self.coordinate = None
+
     def copy(self):
         """ Create a copy of the ``so_map`` object.
         """
