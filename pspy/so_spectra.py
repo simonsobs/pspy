@@ -217,8 +217,6 @@ def read_ps(file_name, spectra=None):
     ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
     return l, ps
 
-
-
 def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
     """Write down the power spectra in a hdf5 file.
         
@@ -249,7 +247,6 @@ def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
     group = file.create_group(spec_name)
     array = array_from_dict(l, ps, spectra=spectra)
     group.create_dataset(name="data", data=array, dtype="float")
-
 
 def read_ps_hdf5(file, spec_name, spectra=None):
     """Read the power spectra in a hdf5 file.
