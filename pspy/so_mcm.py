@@ -63,9 +63,9 @@ def mcm_and_bbl_spin0(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
+        win1 = sph_tools.map2alm(win1, niter = niter, lmax = maxl)
         if win2 is not None:
-            win2 = sph_tools.map2alm(win2, niter=niter, lmax=maxl)
+            win2 = sph_tools.map2alm(win2, niter = niter, lmax = maxl)
 
     if win2 is None:
         wcl = hp.alm2cl(win1)
@@ -96,7 +96,7 @@ def mcm_and_bbl_spin0(win1,
     if unbin:
         mcm_inv = np.linalg.inv(mcm)
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, mcm_inv=mcm_inv)
+            save_coupling(save_file, mbb_inv, Bbl, mcm_inv = mcm_inv)
         return mcm_inv, mbb_inv, Bbl
     else:
         if save_file is not None:
@@ -173,9 +173,9 @@ def mcm_and_bbl_spin0and2(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = (sph_tools.map2alm(win1[0],niter=niter,lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
+        win1 = (sph_tools.map2alm(win1[0], niter=niter, lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
         if win2 is not None:
-            win2 = (sph_tools.map2alm(win2[0],niter=niter,lmax=maxl), sph_tools.map2alm(win2[1], niter=niter, lmax=maxl))
+            win2 = (sph_tools.map2alm(win2[0], niter=niter, lmax=maxl), sph_tools.map2alm(win2[1], niter=niter, lmax=maxl))
     if win2 is None:
         win2 = deepcopy(win1)
 
@@ -228,17 +228,17 @@ def mcm_and_bbl_spin0and2(win1,
         Bbl[s] = np.dot(mbb_inv[s], Bbl[s])
 
     if unbin:
-        mcm = get_coupling_dict(mcm[:, :lmax-2, :lmax-2],fac=-1.0)
+        mcm = get_coupling_dict(mcm[:, :lmax-2, :lmax-2], fac=-1.0)
         mcm_inv = {}
         for s in spin_pairs:
             mcm_inv[s] = np.linalg.inv(mcm[s])
 
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs, mcm_inv=mcm_inv)
+            save_coupling(save_file, mbb_inv, Bbl, spin_pairs = spin_pairs, mcm_inv = mcm_inv)
         return mcm_inv, mbb_inv, Bbl
     else:
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs)
+            save_coupling(save_file, mbb_inv, Bbl, spin_pairs = spin_pairs)
         return mbb_inv, Bbl
 
 def coupling_dict_to_array(dict):
@@ -296,7 +296,7 @@ def apply_Bbl(Bbl, ps, spectra=None):
         ps_th = np.dot(Bbl, ps)
     return ps_th
 
-def save_coupling(prefix,mbb_inv,Bbl,spin_pairs=None,mcm_inv=None):
+def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
     """Save the inverse of the mode coupling matrix and the binning matrix in npy format
         
     Parameters
