@@ -13,7 +13,7 @@ def map2alm(map, niter, lmax, theta_range=None):
     
     Parameters
     ----------
-    map:  so_map
+    map: ``so_map``
       the map from which to compute the alm
     niter: integer
       the number of iteration performed while computing the alm
@@ -62,7 +62,7 @@ def alm2map(alms, so_map):
     ----------
     alms: array
       a set of alms, the shape of alms should correspond to so_map.ncomp
-    so_map:  ``so_map``
+    so_map: ``so_map``
       the map template that will contain the results of the harmonic transform
     """
     if so_map.ncomp == 1:
