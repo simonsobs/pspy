@@ -106,14 +106,14 @@ def get_alms(so_map, window, niter, lmax, theta_range=None):
     return alms
 
 
-def get_pure_alms(map,window,niter,lmax):
+def get_pure_alms(so_map, window, niter, lmax):
     
     """Compute pure alms from maps and window function
         
     Parameters
     ----------
         
-    map: so_map
+    so_map: ``so_map``
       the data we wants alms from
     window: so_map or tuple of so_map
       a so map with the window function, if the so map has 3 components
@@ -128,16 +128,16 @@ def get_pure_alms(map,window,niter,lmax):
 
     
     s1_a, s1_b, s2_a, s2_b = so_window.get_spinned_windows(window[1], lmax, niter=niter)
-    p2 = np.array([window[1].data*map.data[1], window[1].data*map.data[2]])
-    p1 = np.array([(s1_a.data*map.data[1] + s1_b.data*map.data[2]), (s1_a.data*map.data[2] - s1_b.data*map.data[1])])
-    p0 = np.array([(s2_a.data*map.data[1] + s2_b.data*map.data[2]), (s2_a.data*map.data[2] - s2_b.data*map.data[1])])
+    p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
+    p1 = np.array([(s1_a.data * so_map.data[1] + s1_b.data * so_map.data[2]), (s1_a.data * so_map.data[2] - s1_b.data * so_map.data[1])])
+    p0 = np.array([(s2_a.data * so_map.data[1] + s2_b.data * so_map.data[2]), (s2_a.data * so_map.data[2] - s2_b.data * so_map.data[1])])
     
     if map.pixel == "CAR":
-        p0 = enmap.samewcs(p0,map.data)
-        p1 = enmap.samewcs(p1,map.data)
-        p2 = enmap.samewcs(p2,map.data)
+        p0 = enmap.samewcs(p0,so_map.data)
+        p1 = enmap.samewcs(p1,so_map.data)
+        p2 = enmap.samewcs(p2,so_map.data)
         
-        alm = curvedsky.map2alm(map.data[0]*window[0].data, lmax = lmax)
+        alm = curvedsky.map2alm(so_map.data[0]*window[0].data, lmax = lmax)
         s2eblm = curvedsky.map2alm(p2, spin=2, lmax = lmax)
         s1eblm = curvedsky.map2alm(p1, spin=1, lmax = lmax)
         s0eblm = s1eblm.copy()
@@ -145,7 +145,7 @@ def get_pure_alms(map,window,niter,lmax):
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax = lmax)
     
     if map.pixel == "HEALPIX":
-        alm = hp.sphtfunc.map2alm(map.data[0]*window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
+        alm = hp.sphtfunc.map2alm(so_map.data[0]*window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
         s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax= lmax)
         s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax= lmax)
         s0eblm= s1eblm.copy()
