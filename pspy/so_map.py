@@ -19,7 +19,6 @@ from pspy.pspy_utils import ps_lensed_theory_to_dict
 class so_map:
     """Class defining a ``so_map`` object.
     """
-    
     def __init__(self):
         self.pixel = None
         self.nside = None
