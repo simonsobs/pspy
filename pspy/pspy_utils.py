@@ -4,7 +4,7 @@ Utils for pspy.
 import numpy as np
 import os
 
-def ps_lensed_theory_to_dict(filename,output_type,lmax=None,startAtZero=False):
+def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero = False):
     """Read a lensed power spectrum from CAMB and return a dictionnary
 
     Parameters
@@ -15,7 +15,7 @@ def ps_lensed_theory_to_dict(filename,output_type,lmax=None,startAtZero=False):
       the maximum multipole (spectra will be cut at)
     output_type :  string
       'Cl' or 'Dl'
-    startAtZero : boolean
+    start_at_zero : boolean
       if True, ps start at l=0 and cl(l=0) and cl(l=1) are set to 0
 
     """
@@ -34,9 +34,9 @@ def ps_lensed_theory_to_dict(filename,output_type,lmax=None,startAtZero=False):
             ps[f] = ps[f][:lmax]
         if output_type == "Cl":
             ps[f] /= scale
-        if startAtZero:
+        if start_at_zero:
             ps[f] = np.append(np.array([0,0]),ps[f])
-    if startAtZero:
+    if start_at_zero:
         l = np.append( np.array([0,1]),l)
     return l, ps
 

@@ -112,7 +112,7 @@ class so_map:
         """
         
         if self.pixel == "HEALPIX":
-            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", startAtZero=True)
+            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
             else :
