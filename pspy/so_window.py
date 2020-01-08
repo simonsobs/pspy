@@ -150,7 +150,7 @@ def get_spinned_windows(w,lmax,niter):
         
     Parameters
     ----------
-    w: so_map
+    w: ``so_map``
       map of the window function
     lmax: integer
       maximum value of the multipole for the harmonic transform
