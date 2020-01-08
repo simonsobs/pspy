@@ -22,9 +22,9 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero =
 
     fields = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
     ps = {}
-    l, ps["TT"], ps["EE"], ps["BB"], ps["TE"] = np.loadtxt(filename,unpack=True)
+    l, ps["TT"], ps["EE"], ps["BB"], ps["TE"] = np.loadtxt(filename, unpack=True)
     ps["ET"] = ps["TE"].copy()
-    ps["TB"], ps["BT"], ps["EB"], ps["BE"] = np.zeros((4,len(l)))
+    ps["TB"], ps["BT"], ps["EB"], ps["BE"] = np.zeros((4, len(l)))
 
     if lmax is not None:
         l = l[:lmax]
@@ -35,9 +35,9 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero =
         if output_type == "Cl":
             ps[f] /= scale
         if start_at_zero:
-            ps[f] = np.append(np.array([0,0]),ps[f])
+            ps[f] = np.append(np.array([0,0]), ps[f])
     if start_at_zero:
-        l = np.append( np.array([0,1]),l)
+        l = np.append( np.array([0,1]), l)
     return l, ps
 
 def get_nlth_dict(rms_uKarcmin_T,
@@ -65,7 +65,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     """
 
     if beamfile is not None:
-        l, bl = np.loadtxt(beamfile,unpack=True)
+        l, bl = np.loadtxt(beamfile, unpack=True)
     else:
         bl = np.ones(lmax+2)
 
@@ -90,7 +90,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     return nl_th
 
 
-def create_binning_file(bin_size,n_bins,lmax=None, file_name=None):
+def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     """ Create a (constant) binning file, and optionnaly write it to disk
 
     Parameters
@@ -134,13 +134,13 @@ def read_binning_file(file_name, lmax):
       the maximum multipole to consider
     """
     bin_low, bin_hi, bin_cent = np.loadtxt(file_name,unpack=True)
-    id = np.where(bin_hi <lmax)
-    bin_low, bin_hi, bin_cent=bin_low[id], bin_hi[id], bin_cent[id]
+    id = np.where(bin_hi < lmax)
+    bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
     if bin_low[0] < 2:
         bin_low[0] = 2
     bin_hi = bin_hi.astype(np.int)
     bin_low = bin_low.astype(np.int)
-    bin_size = bin_hi-bin_low+1
+    bin_size = bin_hi - bin_low + 1
     return bin_low, bin_hi, bin_cent, bin_size
 
 
@@ -157,7 +157,7 @@ def create_directory(name):
     except:
         pass
 
-def naive_binning(l,fl,binning_file,lmax):
+def naive_binning(l, fl, binning_file, lmax):
     """bin a function of l given a binning file and lmax
 
     Parameters
@@ -173,7 +173,7 @@ def naive_binning(l,fl,binning_file,lmax):
 
     """
 
-    bin_low, bin_hi, bin_cent, bin_size = read_binning_file(binning_file,lmax)
+    bin_low, bin_hi, bin_cent, bin_size = read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
     fl_bin = np.zeros(len(bin_cent))
     for ibin in range(n_bins):
