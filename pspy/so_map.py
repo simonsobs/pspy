@@ -116,7 +116,7 @@ class so_map:
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
             else :
-                self.data = hp.sphtfunc.synfast((ps["TT"],ps["EE"],ps["BB"],ps["TE"]), self.nside ,new=True, verbose=False)
+                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside ,new=True, verbose=False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp,:self.ncomp]
@@ -244,7 +244,7 @@ class so_map:
                 else:
                     max = "%s"%(np.max(self.data))
                 
-                plots = enplot.get_plots(self.data,color=color,range=max,colorbar=1,ticks=ticks_spacing_car)
+                plots = enplot.get_plots(self.data, color=color, range=max, colorbar=1, ticks=ticks_spacing_car)
                 
 
                 for plot in plots:
@@ -261,7 +261,7 @@ class so_map:
                 else:
                     max = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
 
-                plots = enplot.get_plots(self.data,color=color,range=max,colorbar=1,ticks=ticks_spacing_car)
+                plots = enplot.get_plots(self.data, color=color, range=max, colorbar=1, ticks=ticks_spacing_car)
     
                 for (plot,field) in zip(plots,fields):
                     if file_name is not None:
@@ -291,13 +291,13 @@ def read_map(file,coordinate=None,fields_healpix=None):
         map.pixel = "HEALPIX"
         if fields_healpix is None:
             map.ncomp = header["TFIELDS"]
-            map.data = hp.fitsfunc.read_map(file,field=np.arange(map.ncomp),verbose=False)
+            map.data = hp.fitsfunc.read_map(file, field=np.arange(map.ncomp), verbose=False)
         else:
             try:
                 map.ncomp = len(fields_healpix)
             except:
                 map.ncomp = 1
-            map.data = hp.fitsfunc.read_map(file,verbose=False,field=fields_healpix)
+            map.data = hp.fitsfunc.read_map(file, verbose=False, field=fields_healpix)
 
         map.nside = hp.pixelfunc.get_nside(map.data)
         map.geometry = "healpix geometry"
@@ -379,7 +379,7 @@ def get_submap_car(map,box,mode):
       "exclusive": lower bounds are rounded up, and upper bounds down"""
         
     submap = map.copy()
-    submap.data = map.data.submap( box , mode=mode)
+    submap.data = map.data.submap( box, mode=mode)
     submap.geometry = map.data.submap( box, mode=mode).geometry[1:]
      
     return submap
@@ -478,7 +478,7 @@ def healpix2car(map,template,lmax=None):
 
     return project
 
-def car2car(map,template):
+def car2car(map, template):
     """Project a CAR map into another CAR map with different pixellisation
     
     Parameters
@@ -490,10 +490,10 @@ def car2car(map,template):
     """
     
     project = template.copy()
-    project.data = enmap.project(map.data,template.data.shape,template.data.wcs)
+    project.data = enmap.project(map.data, template.data.shape, template.data.wcs)
     return project
 
-def healpix_template(ncomp,nside,coordinate=None):
+def healpix_template(ncomp, nside, coordinate=None):
     
     """Create a ``so_map`` template with healpix pixellisation.
         
@@ -521,7 +521,7 @@ def healpix_template(ncomp,nside,coordinate=None):
     temp.coordinate = coordinate
     return temp
 
-def car_template(ncomp,ra0,ra1,dec0,dec1,res):
+def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     
     """Create a ``so_map`` template with CAR pixellisation in equ coordinates.
         
@@ -552,7 +552,7 @@ def car_template(ncomp,ra0,ra1,dec0,dec1,res):
     temp.coordinate = "equ"
     return temp
 
-def white_noise(template,rms_uKarcmin_T,rms_uKarcmin_pol=None):
+def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     """Generate a white noise realisation corresponding to the template pixellisation
         
     Parameters
