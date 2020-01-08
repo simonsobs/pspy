@@ -72,10 +72,10 @@ class so_map:
         upgrade = self.copy()
         if self.pixel == "HEALPIX":
             nside_out = self.nside*factor
-            upgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out=nside_out)
+            upgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out = nside_out)
             upgrade.nside = nside_out
         if self.pixel=="CAR":
-            upgrade.data = enmap.upgrade(self.data,factor)
+            upgrade.data = enmap.upgrade(self.data, factor)
             upgrade.geometry = upgrade.data.geometry[1:]
         return upgrade
 
@@ -94,10 +94,10 @@ class so_map:
         downgrade = self.copy()
         if self.pixel == "HEALPIX":
             nside_out = self.nside / factor
-            downgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out=nside_out)
+            downgrade.data = hp.pixelfunc.ud_grade(self.data, nside_out = nside_out)
             downgrade.nside = nside_out
         if self.pixel == "CAR":
-            downgrade.data = enmap.downgrade(self.data,factor)
+            downgrade.data = enmap.downgrade(self.data, factor)
             downgrade.geometry = downgrade.data.geometry[1:]
         return downgrade
     
@@ -116,7 +116,7 @@ class so_map:
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside ,new=True, verbose=False)
             else :
-                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside ,new=True, verbose=False)
+                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True, verbose=False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
