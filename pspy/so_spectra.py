@@ -51,9 +51,9 @@ def get_spectra(alm1, alm2=None, spectra=None):
         # spectra_healpix=[TT,EE,BB,ET,BE,BT]
         spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[3], spectra[7], spectra[4]]
         for i, spec in enumerate(spectra_healpix):
-                cl_dict[spec] = cls[i]
+            cl_dict[spec] = cls[i]
 
-        return l, cl_dict
+    return l, cl_dict
 
 def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm_inv=None):
     """Bin the power spectra according to a binning file and optionnaly deconvolve the mode coupling matrix
@@ -137,7 +137,6 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     mbb_inv = so_mcm.coupling_dict_to_array(mbb_inv)
     return bin_c, vec2spec_dict(n_bins, np.dot(mbb_inv, vec), spectra)
 
-    return binCent, binnedPower
 
 def vec2spec_dict(n_bins, vec, spectra):
     """Take a vector of power spectra and return a power spectra dictionnary.
