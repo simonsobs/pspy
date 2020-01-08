@@ -30,15 +30,15 @@ def get_spectra(alm1, alm2=None, spectra=None):
         if alm2 is None:
             cls = hp.sphtfunc.alm2cl(alm1)
         else:
-            cls = hp.sphtfunc.alm2cl(alm1,alm2)
+            cls = hp.sphtfunc.alm2cl(alm1, alm2)
         l = np.arange(len(cls))
         return l, cls
     else:
         cl_dict = {}
-        cls = hp.sphtfunc.alm2cl(alm1,alm2)
+        cls = hp.sphtfunc.alm2cl(alm1, alm2)
         l = np.arange(len(cls[0]))
         """ spectra_healpix=[TT,EE,BB,TE,EB,TB] """
-        spectra_healpix = [spectra[0],spectra[5],spectra[8],spectra[1],spectra[6],spectra[2]]
+        spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[1], spectra[6], spectra[2]]
         for c,f in enumerate(spectra_healpix):
             cl_dict[f] = cls[c]
 
@@ -49,9 +49,9 @@ def get_spectra(alm1, alm2=None, spectra=None):
             cl_dict[spectra[4]] = cl_dict[spectra[2]]
         else:
             #here we need to recompute cls inverting the order of the alm to get ET,BT and BE
-            cls = hp.sphtfunc.alm2cl(alm2,alm1)
+            cls = hp.sphtfunc.alm2cl(alm2, alm1)
             """ spectra_healpix=[TT,EE,BB,ET,BE,BT] """
-            spectra_healpix = [spectra[0],spectra[5],spectra[8],spectra[3],spectra[7],spectra[4]]
+            spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[3], spectra[7], spectra[4]]
             for c,f in enumerate(spectra_healpix):
                 cl_dict[f] = cls[c]
 
@@ -106,7 +106,7 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
 
     if spectra is None:
         if mcm_inv is not None:
-            cl = np.dot(mcm_inv,cl)
+            cl = np.dot(mcm_inv, cl)
         binnedPower = np.zeros(len(bin_c))
         for ibin in range(n_bins):
             loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
@@ -121,7 +121,7 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
             mcm_inv = so_mcm.coupling_dict_to_array(mcm_inv)
             for f in spectra:
                 unbin_vec = np.append(unbin_vec, cl[f][2:lmax])
-            cl = vec2spec_dict(lmax-2, np.dot(mcm_inv,unbin_vec), spectra)
+            cl = vec2spec_dict(lmax-2, np.dot(mcm_inv, unbin_vec), spectra)
             l = np.arange(2,lmax)
 
         vec=[]
