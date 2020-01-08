@@ -33,27 +33,25 @@ def get_spectra(alm1, alm2=None, spectra=None):
             cls = hp.sphtfunc.alm2cl(alm1, alm2)
         l = np.arange(len(cls))
         return l, cls
-    else:
-        cl_dict = {}
-        cls = hp.sphtfunc.alm2cl(alm1, alm2)
-        l = np.arange(len(cls[0]))
-        """ spectra_healpix=[TT,EE,BB,TE,EB,TB] """
-        spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[1], spectra[6], spectra[2]]
-        for c,f in enumerate(spectra_healpix):
-            cl_dict[f] = cls[c]
+        
+    cls = hp.sphtfunc.alm2cl(alm1, alm2)
+    l = np.arange(len(cls[0]))
+    """ spectra_healpix=[TT,EE,BB,TE,EB,TB] """
+    spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[1], spectra[6], spectra[2]]
+    cl_dict = {spec: cls[i] for i, spec in enumerate(spectra_healpix)}
 
-        if alm2 is None:
-            #here we set ET=TE, BE=EB and BT=TB
-            cl_dict[spectra[3]] = cl_dict[spectra[1]]
-            cl_dict[spectra[7]] = cl_dict[spectra[6]]
-            cl_dict[spectra[4]] = cl_dict[spectra[2]]
-        else:
-            #here we need to recompute cls inverting the order of the alm to get ET,BT and BE
-            cls = hp.sphtfunc.alm2cl(alm2, alm1)
-            """ spectra_healpix=[TT,EE,BB,ET,BE,BT] """
-            spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[3], spectra[7], spectra[4]]
-            for c,f in enumerate(spectra_healpix):
-                cl_dict[f] = cls[c]
+    if alm2 is None:
+        #here we set ET=TE, BE=EB and BT=TB
+        cl_dict[spectra[3]] = cl_dict[spectra[1]]
+        cl_dict[spectra[7]] = cl_dict[spectra[6]]
+        cl_dict[spectra[4]] = cl_dict[spectra[2]]
+    else:
+        #here we need to recompute cls inverting the order of the alm to get ET,BT and BE
+        cls = hp.sphtfunc.alm2cl(alm2, alm1)
+        # spectra_healpix=[TT,EE,BB,ET,BE,BT]
+        spectra_healpix = [spectra[0], spectra[5], spectra[8], spectra[3], spectra[7], spectra[4]]
+        for i, spec in enumerate(spectra_healpix):
+                cl_dict[spec] = cls[i]
 
         return l, cl_dict
 
@@ -93,8 +91,8 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     #TODO: rework this function logic
     
     if mbb_inv is not None and mcm_inv is not None:
-        print ("Error: you have to choose between binned or raw mcm")
-        sys.exit()
+        raise ValueError("You have to choose between binned or raw mcm")
+
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
@@ -115,28 +113,29 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
             return bin_c, binnedPower
         else:
             return bin_c, np.dot(mbb_inv,binnedPower)
-    else:
-        if mcm_inv is not None:
-            unbin_vec=[]
-            mcm_inv = so_mcm.coupling_dict_to_array(mcm_inv)
-            for f in spectra:
-                unbin_vec = np.append(unbin_vec, cl[f][2:lmax])
-            cl = vec2spec_dict(lmax - 2, np.dot(mcm_inv, unbin_vec), spectra)
-            l = np.arange(2, lmax)
 
-        vec=[]
+    if mcm_inv is not None:
+        unbin_vec=[]
+        mcm_inv = so_mcm.coupling_dict_to_array(mcm_inv)
         for f in spectra:
-            binnedPower=np.zeros(len(bin_c))
-            for ibin in range(n_bins):
-                loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
-                binnedPower[ibin] = (cl[f][loc] * fac[loc]).mean()
+            unbin_vec = np.append(unbin_vec, cl[f][2:lmax])
+        cl = vec2spec_dict(lmax - 2, np.dot(mcm_inv, unbin_vec), spectra)
+        l = np.arange(2, lmax)
+
+    vec=[]
+    for f in spectra:
+        binnedPower=np.zeros(len(bin_c))
+        for ibin in range(n_bins):
+            loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
+            binnedPower[ibin] = (cl[f][loc] * fac[loc]).mean()
             
-            vec = np.append(vec, binnedPower)
-        if mbb_inv is None:
-            return bin_c, vec2spec_dict(n_bins, vec, spectra)
-        else:
-            mbb_inv = so_mcm.coupling_dict_to_array(mbb_inv)
-            return bin_c, vec2spec_dict(n_bins, np.dot(mbb_inv, vec), spectra)
+        vec = np.append(vec, binnedPower)
+
+    if mbb_inv is None:
+        return bin_c, vec2spec_dict(n_bins, vec, spectra)
+
+    mbb_inv = so_mcm.coupling_dict_to_array(mbb_inv)
+    return bin_c, vec2spec_dict(n_bins, np.dot(mbb_inv, vec), spectra)
 
     return binCent, binnedPower
 
