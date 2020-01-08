@@ -136,7 +136,7 @@ def apod_rectangle(binary,radius):
             win_x.data[:, Nx - i - 1] = win_x.data[:, i]
         for j in range(lenApod_y):
             r=float(j)
-            win_y.data[j, :] = 1. / 2*(Id[j, :] - np.cos(-np.pi * r / lenApod_y))
+            win_y.data[j, :] = 1. / 2 * (Id[j, :] - np.cos(-np.pi * r / lenApod_y))
             win_y.data[Ny - j - 1, :] = win_y.data[j, :]
 
         win.data = win_x.data * win_y.data
