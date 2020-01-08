@@ -192,7 +192,7 @@ def mcm_and_bbl_spin0and2(win1,
         for j,s2 in enumerate(spin):
             wcl[s1+s2] = hp.alm2cl(win1[i], win2[j])
             #wcl[s1+s2]=wcl[s1+s2][:lmax]*(2*np.arange(lmax)+1)
-            wcl[s1+s2] = wcl[s1+s2] * (2 *np.arange(len(wcl[s1 + s2])) + 1)
+            wcl[s1+s2] = wcl[s1+s2] * (2 * np.arange(len(wcl[s1 + s2])) + 1)
             wbl[s1+s2] = bl1[i] * bl2[j]
 
     mcm = np.zeros((5, maxl, maxl))
