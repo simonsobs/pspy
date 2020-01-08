@@ -351,7 +351,7 @@ def from_components(T, Q, U):
     Q = enmap.read_map(Q)
     U = enmap.read_map(U)
     shape, wcs = T.geometry
-    shape = ((ncomp,)+shape)
+    shape = ((ncomp,) + shape)
     new_map = so_map()
     new_map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     new_map.data[0] = T
