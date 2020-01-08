@@ -192,7 +192,7 @@ def mcm_and_bbl_spin0and2(win1,
         for j,s2 in enumerate(spin):
             wcl[s1+s2] = hp.alm2cl(win1[i], win2[j])
             #wcl[s1+s2]=wcl[s1+s2][:lmax]*(2*np.arange(lmax)+1)
-            wcl[s1+s2] = wcl[s1+s2] * (2 *np.arange(len(wcl[s1+s2])) + 1)
+            wcl[s1+s2] = wcl[s1+s2] * (2 *np.arange(len(wcl[s1 + s2])) + 1)
             wbl[s1+s2] = bl1[i] * bl2[j]
 
     mcm = np.zeros((5, maxl, maxl))
@@ -218,8 +218,8 @@ def mcm_and_bbl_spin0and2(win1,
         mcm_fortran.bin_mcm((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (mbb_array[i,:,:]).T, doDl)
         mcm_fortran.binning_matrix((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (Bbl_array[i,:,:]).T, doDl)
 
-    mbb = get_coupling_dict(mbb_array, fac = -1.0)
-    Bbl = get_coupling_dict(Bbl_array, fac = 1.0)
+    mbb = get_coupling_dict(mbb_array, fac=-1.0)
+    Bbl = get_coupling_dict(Bbl_array, fac=1.0)
 
     spin_pairs = ["spin0xspin0", "spin0xspin2", "spin2xspin0", "spin2xspin2"]
     mbb_inv = {}
@@ -228,17 +228,17 @@ def mcm_and_bbl_spin0and2(win1,
         Bbl[s] = np.dot(mbb_inv[s], Bbl[s])
 
     if unbin:
-        mcm = get_coupling_dict(mcm[:, :lmax-2, :lmax-2], fac=-1.0)
+        mcm = get_coupling_dict(mcm[:, :lmax - 2, :lmax - 2], fac=-1.0)
         mcm_inv = {}
         for s in spin_pairs:
             mcm_inv[s] = np.linalg.inv(mcm[s])
 
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, spin_pairs = spin_pairs, mcm_inv = mcm_inv)
+            save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs, mcm_inv=mcm_inv)
         return mcm_inv, mbb_inv, Bbl
     else:
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, spin_pairs = spin_pairs)
+            save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs)
         return mbb_inv, Bbl
 
 def coupling_dict_to_array(dict):
