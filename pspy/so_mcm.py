@@ -188,12 +188,12 @@ def mcm_and_bbl_spin0and2(win1,
     wbl = {}
     spin = ["0","2"]
 
-    for i,s1 in enumerate(spin):
-        for j,s2 in enumerate(spin):
-            wcl[s1+s2] = hp.alm2cl(win1[i], win2[j])
+    for i, spin1 in enumerate(spin):
+        for j, spin2 in enumerate(spin):
+            wcl[spin1 + spin2] = hp.alm2cl(win1[i], win2[j])
             #wcl[s1+s2]=wcl[s1+s2][:lmax]*(2*np.arange(lmax)+1)
-            wcl[s1+s2] = wcl[s1+s2] * (2 * np.arange(len(wcl[s1 + s2])) + 1)
-            wbl[s1+s2] = bl1[i] * bl2[j]
+            wcl[spin1 + spin2] *= (2 * np.arange(len(wcl[spin1 + spin2])) + 1)
+            wbl[spin1 + spin2] = bl1[i] * bl2[j]
 
     mcm = np.zeros((5, maxl, maxl))
 
@@ -341,11 +341,11 @@ def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
     """
 
     if spin_pairs is not None:
-        for s in spin_pairs:
-            np.save(prefix + "_mbb_inv_%s.npy"%s, mbb_inv[s])
-            np.save(prefix + "_Bbl_%s.npy"%s, Bbl[s])
+        for spin in spin_pairs:
+            np.save(prefix + "_mbb_inv_%s.npy" % spin, mbb_inv[spin])
+            np.save(prefix + "_Bbl_%s.npy" % spin, Bbl[spin])
             if mcm_inv is not None:
-                np.save(prefix + "_mcm_inv_%s.npy"%s, mcm_inv[s])
+                np.save(prefix + "_mcm_inv_%s.npy" % spin, mcm_inv[spin])
     else:
         np.save(prefix + "_mbb_inv.npy", mbb_inv)
         np.save(prefix + "_Bbl.npy", Bbl)
@@ -371,11 +371,11 @@ def read_coupling(prefix, spin_pairs=None, unbin=None):
         Bbl = {}
         mbb_inv = {}
         mcm_inv = {}
-        for s in spin_pairs:
+        for spin in spin_pairs:
             if unbin:
-                mcm_inv[s] = np.load(prefix + "_mcm_inv_%s.npy"%s)
-            mbb_inv[s] = np.load(prefix + "_mbb_inv_%s.npy"%s)
-            Bbl[s] = np.load(prefix + "_Bbl_%s.npy"%s)
+                mcm_inv[spin] = np.load(prefix + "_mcm_inv_%s.npy" % spin)
+            mbb_inv[spin] = np.load(prefix + "_mbb_inv_%s.npy" % spin)
+            Bbl[spin] = np.load(prefix + "_Bbl_%s.npy" % spin)
     else:
         if unbin:
             mcm_inv = np.load(prefix + "_mcm_inv.npy")
