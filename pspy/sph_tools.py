@@ -36,7 +36,7 @@ def map2alm(map, niter, lmax, theta_range=None):
                                             theta_max=theta_range[1])
             if niter != 0:
                 map_copy = map.copy()
-                for k in range(niter):
+                for _ in range(niter):
                     alm += curvedsky.map2alm_healpix(map.data-curvedsky.alm2map_healpix(alm,map_copy.data),
                                                      lmax=lmax,
                                                      theta_min=theta_range[0],
@@ -47,7 +47,7 @@ def map2alm(map, niter, lmax, theta_range=None):
         alm = curvedsky.map2alm(map.data, lmax= lmax)
         if niter != 0:
             map_copy = map.copy()
-            for k in range(niter):
+            for _ in range(niter):
                 alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm, map_copy.data), lmax=lmax)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
