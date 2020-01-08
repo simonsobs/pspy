@@ -627,11 +627,11 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     
     if binary.pixel=="CAR":
         pixSize_arcmin = np.sqrt(binary.data.pixsize() * (60 * 180 / np.pi)**2)
-        random_index1 = np.random.randint(0, binary.data.shape[0], size = n_holes)
-        random_index2 = np.random.randint(0, binary.data.shape[1], size = n_holes)
+        random_index1 = np.random.randint(0, binary.data.shape[0], size=n_holes)
+        random_index2 = np.random.randint(0, binary.data.shape[1], size=n_holes)
         mask.data[random_index1,random_index2] = 0
         dist = distance_transform_edt(mask.data)
-        mask.data[dist*pixSize_arcmin < hole_radius_arcmin] = 0
+        mask.data[dist * pixSize_arcmin < hole_radius_arcmin] = 0
 
     return mask
 
