@@ -65,7 +65,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     """
 
     if beamfile is not None:
-        l , bl = np.loadtxt(beamfile,unpack=True)
+        l, bl = np.loadtxt(beamfile,unpack=True)
     else:
         bl = np.ones(lmax+2)
 
@@ -87,7 +87,7 @@ def get_nlth_dict(rms_uKarcmin_T,
         if type == "Dl":
             for spec in spectra:
                 nl_th[spec] *= lth*(lth+1)/(2*np.pi)
-    return(nl_th)
+    return nl_th
 
 
 def create_binning_file(bin_size,n_bins,lmax=None, file_name=None):
@@ -111,7 +111,7 @@ def create_binning_file(bin_size,n_bins,lmax=None, file_name=None):
     
     if lmax is not None:
         id = np.where(bin_hi <lmax)
-        bin_low, bin_hi, bin_cent=bin_low[id], bin_hi[id], bin_cent[id]
+        bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
 
     if file_name is None:
         return bin_low, bin_hi, bin_cent
