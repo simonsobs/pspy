@@ -120,8 +120,8 @@ class so_map:
             else:
                 self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
                                                 self.nside,
-                                                new=True,
-                                                verbose=False)
+                                                new = True,
+                                                verbose = False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
@@ -180,22 +180,22 @@ class so_map:
                 if hp_gnomv is not None:
                     lon, lat, xsize, reso = hp_gnomv
                     hp.gnomview(self.data,
-                                min=min_range,
-                                max=max_range,
-                                cmap=cmap,
-                                notext=True,
-                                title=title,
-                                cbar=cbar,
-                                rot=(lon,lat,0),
-                                xsize=xsize,reso=reso)
+                                min = min_range,
+                                max = max_range,
+                                cmap = cmap,
+                                notext = True,
+                                title = title,
+                                cbar = cbar,
+                                rot = (lon,lat,0),
+                                xsize = xsize,reso=reso)
                 else:
                     hp.mollview(self.data,
-                                min=min_range,
-                                max=max_range,
-                                cmap=cmap,
-                                notext=True,
-                                title=title,
-                                cbar=cbar)
+                                min = min_range,
+                                max = max_range,
+                                cmap = cmap,
+                                notext = True,
+                                title = title,
+                                cbar = cbar)
                 if file_name is not None:
                     plt.savefig(file_name+".png", bbox_inches="tight")
                     plt.clf()
@@ -215,23 +215,23 @@ class so_map:
                     if hp_gnomv is not None:
                         lon, lat, xsize, reso = hp_gnomv
                         hp.gnomview(data,
-                                    min=min_ranges[field],
-                                    max=max_ranges[field],
-                                    cmap=cmap,
-                                    notext=True,
-                                    title=field + "" + title,
-                                    cbar=cbar,
-                                    rot=(lon,lat,0),
-                                    xsize=xsize,
-                                    reso=reso)
+                                    min = min_ranges[field],
+                                    max = max_ranges[field],
+                                    cmap = cmap,
+                                    notext = True,
+                                    title = field + "" + title,
+                                    cbar = cbar,
+                                    rot = (lon,lat,0),
+                                    xsize = xsize,
+                                    reso = reso)
                     else:
                         hp.mollview(data,
-                                    min=min_ranges[field],
-                                    max=max_ranges[field],
-                                    cmap=cmap,
-                                    notext=True,
-                                    title=field + "" + title,
-                                    cbar=cbar)
+                                    min = min_ranges[field],
+                                    max = max_ranges[field],
+                                    cmap = cmap,
+                                    notext = True,
+                                    title = field + "" + title,
+                                    cbar = cbar)
                     if file_name is not None:
                         plt.savefig(file_name+"_%s"%field+".png", bbox_inches="tight")
                         plt.clf()
