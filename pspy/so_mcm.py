@@ -148,7 +148,7 @@ def mcm_and_bbl_spin0and2(win1,
       lmax_pad should always be greater than lmax
     """
     
-    def get_coupling_dict(array,fac=1.0):
+    def get_coupling_dict(array, fac=1.0):
         ncomp, dim1, dim2 = array.shape
         dict={}
         dict["spin0xspin0"] = array[0, :, :]
