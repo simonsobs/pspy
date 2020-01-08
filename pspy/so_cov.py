@@ -45,8 +45,8 @@ def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
             sq_win_n0n1.data *= win[n1].data
             sq_win_n2n3 = win[n2].copy()
             sq_win_n2n3.data *= win[n3].data
-            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1, niter = niter, lmax = lmax)
-            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3, niter = niter, lmax = lmax)
+            alm_n0n1 = sph_tools.map2alm(sq_win_n0n1, niter=niter, lmax=lmax)
+            alm_n2n3 = sph_tools.map2alm(sq_win_n2n3, niter=niter, lmax=lmax)
             wcl[n0+n1+n2+n3] = hp.alm2cl(alm_n0n1, alm_n2n3)
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2*l+1)/(4*np.pi)
