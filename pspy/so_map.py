@@ -191,7 +191,7 @@ class so_map:
                     
                     if hp_gnomv is not None:
                         lon,lat,xsize,reso = hp_gnomv
-                        hp.gnomview(self.data,min=min,max=max,cmap=cmap, notext=True,title=title,cbar=cbar,rot=(lon,lat,0),xsize=xsize,reso=reso)
+                        hp.gnomview(map,min=min[l1],max=max[l1],cmap=cmap, notext=True,title=title,cbar=cbar,rot=(lon,lat,0),xsize=xsize,reso=reso)
                     else:
                         hp.mollview(map,min=min[l1],max=max[l1],cmap=cmap, notext=True,title=l1+''+title,cbar=cbar)
                     if file_name is not None:
@@ -569,7 +569,7 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     
     mask = binary.copy()
     if binary.pixel == "HEALPIX":
-        id = np.where(binary.data==1)
+        id = np.where(binary.data == 1)
         for i in range(n_holes):
             random_index1 = np.random.choice(id[0])
             vec=hp.pixelfunc.pix2vec(binary.nside, random_index1)
