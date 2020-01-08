@@ -257,7 +257,7 @@ def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
     group.create_dataset(name="data", data=array, dtype="float")
 
 
-def read_ps_hdf5(file,spec_name,spectra=None):
+def read_ps_hdf5(file, spec_name, spectra=None):
     """Read the power spectra in a hdf5 file.
         
     Parameters
