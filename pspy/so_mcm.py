@@ -284,13 +284,13 @@ def apply_Bbl(Bbl, ps, spectra=None):
     if spectra is not None:
         Bbl_array = coupling_dict_to_array(Bbl)
         ps_vec = ps[spectra[0]]
-        for f in spectra[1:]:
-            ps_vec = np.append(ps_vec, ps[f])
+        for spec in spectra[1:]:
+            ps_vec = np.append(ps_vec, ps[spec])
         ps_b = np.dot(Bbl_array, ps_vec)
         n_bins = int(Bbl_array.shape[0] / 9)
         ps_th = {}
-        for i,f in enumerate(spectra):
-            ps_th[f] = ps_b[i * n_bins:(i + 1) * n_bins]
+        for i, spec in enumerate(spectra):
+            ps_th[spec] = ps_b[i * n_bins:(i + 1) * n_bins]
     else:
         ps_th = np.dot(Bbl, ps)
     return ps_th
