@@ -346,7 +346,7 @@ def from_components(T, Q, U):
       name of the U fits file
     """
     
-    ncomp=3
+    ncomp = 3
     T = enmap.read_map(T)
     Q = enmap.read_map(Q)
     U = enmap.read_map(U)
