@@ -152,7 +152,7 @@ def read_coupling(file):
         win_list=["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
                   "TaTcPbPd", "TaPdPbTc", "TaTcTbPd", "TaPdTbTc",
                   "TaPcTbPd", "TaPdTbPc", "PaTcPbPd", "PaPdPbTc"]
-        indexlist=[0,0,1,1,2,0,0,0,0,0,2,2]
+        indexlist=[0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 2, 2]
     elif coupling.shape[0] == 2:
         win_list = ["TaTcTbTd", "TaTdTbTc"]
         indexlist = [0,1]
