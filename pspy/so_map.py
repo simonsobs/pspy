@@ -124,7 +124,14 @@ class so_map:
 
         return self
 
-    def plot(self,color="planck",color_range=None,file_name=None,ticks_spacing_car=1,title='',cbar=True,hp_gnomv=None):
+    def plot(self,
+             color="planck",
+             color_range=None,
+             file_name=None,
+             ticks_spacing_car=1,
+             title="",
+             cbar=True,
+             hp_gnomv=None):
         """Plot a ``so_map``.
             
         Parameters
@@ -169,9 +176,23 @@ class so_map:
             
                 if hp_gnomv is not None:
                     lon,lat,xsize,reso = hp_gnomv
-                    hp.gnomview(self.data,min=min,max=max,cmap=cmap, notext=True,title=title,cbar=cbar,rot=(lon,lat,0),xsize=xsize,reso=reso)
+                    hp.gnomview(self.data,
+                                min=min,
+                                max=max,
+                                cmap=cmap,
+                                notext=True,
+                                title=title,
+                                cbar=cbar,
+                                rot=(lon,lat,0),
+                                xsize=xsize,reso=reso)
                 else:
-                    hp.mollview(self.data,min=min,max=max,cmap=cmap, notext=True,title=title,cbar=cbar)
+                    hp.mollview(self.data,
+                                min=min,
+                                max=max,
+                                cmap=cmap,
+                                notext=True,
+                                title=title,
+                                cbar=cbar)
                 if file_name is not None:
                     plt.savefig(file_name+'.png', bbox_inches='tight')
                     plt.clf()
@@ -181,21 +202,36 @@ class so_map:
             else:
                 fields = ["T","Q","U"]
                 min,max = {},{}
-                for l1 in fields:
-                    min[l1],max[l1] = None,None
+                for field in fields:
+                    min[field],max[field] = None,None
                 if color_range is not None:
-                    for i,l1 in enumerate(fields):
-                        min[l1] = -color_range[i]
-                        max[l1] = +color_range[i]
-                for map,l1 in zip(self.data,fields):
+                    for i,field in enumerate(fields):
+                        min[field] = -color_range[i]
+                        max[field] = +color_range[i]
+                for map,field in zip(self.data,fields):
                     
                     if hp_gnomv is not None:
                         lon,lat,xsize,reso = hp_gnomv
-                        hp.gnomview(map,min=min[l1],max=max[l1],cmap=cmap, notext=True,title=title,cbar=cbar,rot=(lon,lat,0),xsize=xsize,reso=reso)
+                        hp.gnomview(map,
+                                    min=min[field],
+                                    max=max[field],
+                                    cmap=cmap,
+                                    notext=True,
+                                    title=title,
+                                    cbar=cbar,
+                                    rot=(lon,lat,0),
+                                    xsize=xsize,
+                                    reso=reso)
                     else:
-                        hp.mollview(map,min=min[l1],max=max[l1],cmap=cmap, notext=True,title=l1+''+title,cbar=cbar)
+                        hp.mollview(map,
+                                    min=min[field],
+                                    max=max[field],
+                                    cmap=cmap,
+                                    notext=True,
+                                    title=l1+''+title,
+                                    cbar=cbar)
                     if file_name is not None:
-                        plt.savefig(file_name+"_%s"%l1+".png", bbox_inches='tight')
+                        plt.savefig(file_name+"_%s"%field+".png", bbox_inches="tight")
                         plt.clf()
                         plt.close
                     else:
@@ -227,9 +263,9 @@ class so_map:
 
                 plots = enplot.get_plots(self.data,color=color,range=max,colorbar=1,ticks=ticks_spacing_car)
     
-                for (plot,l1) in zip(plots,fields):
+                for (plot,field) in zip(plots,fields):
                     if file_name is not None:
-                        enplot.write(file_name+"_%s"%l1+".png", plot)
+                        enplot.write(file_name+"_%s"%field+".png", plot)
                     else:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
@@ -431,7 +467,14 @@ def healpix2car(map,template,lmax=None):
         lmax = 3*map.nside-1
     if lmax is None:
         lmax = 3*map.nside-1
-    project.data = reproject.enmap_from_healpix(map.data, template.data.shape, template.data.wcs, ncomp=map.ncomp, unit=1, lmax=lmax,rot=rot, first=0)
+    project.data = reproject.enmap_from_healpix(map.data,
+                                                template.data.shape,
+                                                template.data.wcs,
+                                                ncomp=map.ncomp,
+                                                unit=1,
+                                                lmax=lmax,
+                                                rot=rot,
+                                                first=0)
 
     return project
 
