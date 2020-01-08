@@ -247,10 +247,10 @@ class so_map:
                     max_range = "%s"%(np.max(self.data))
                 
                 plots = enplot.get_plots(self.data,
-                                         color=color,
-                                         range=max_range,
-                                         colorbar=1,
-                                         ticks=ticks_spacing_car)
+                                         color = color,
+                                         range = max_range,
+                                         colorbar = 1,
+                                         ticks = ticks_spacing_car)
                 
                 for plot in plots:
                     if file_name is not None:
@@ -267,10 +267,10 @@ class so_map:
                     max_range = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
 
                 plots = enplot.get_plots(self.data,
-                                         color=color,
-                                         range=max_range,
-                                         colorbar=1,
-                                         ticks=ticks_spacing_car)
+                                         color = color,
+                                         range = max_range,
+                                         colorbar = 1,
+                                         ticks = ticks_spacing_car)
     
                 for (plot, field) in zip(plots, fields):
                     if file_name is not None:
@@ -479,11 +479,11 @@ def healpix2car(map, template, lmax = None):
     project.data = reproject.enmap_from_healpix(map.data,
                                                 template.data.shape,
                                                 template.data.wcs,
-                                                ncomp=map.ncomp,
-                                                unit=1,
-                                                lmax=lmax,
-                                                rot=rot,
-                                                first=0)
+                                                ncomp = map.ncomp,
+                                                unit = 1,
+                                                lmax = lmax,
+                                                rot = rot,
+                                                first = 0)
 
     return project
 
@@ -518,7 +518,7 @@ def healpix_template(ncomp, nside, coordinate = None):
     temp = so_map()
     
     if ncomp==3:
-        temp.data = np.zeros((3,12*nside**2))
+        temp.data = np.zeros((3, 12*nside**2))
     else:
         temp.data = np.zeros((12*nside**2))
 
@@ -575,32 +575,32 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol = None):
     """
     
     noise = template.copy()
-    rad_to_arcmin = 60*180/np.pi
+    rad_to_arcmin = 60*180 / np.pi
     if noise.pixel == "HEALPIX":
         nside = noise.nside
-        pixArea = hp.pixelfunc.nside2pixarea(nside)*rad_to_arcmin**2
+        pixArea = hp.pixelfunc.nside2pixarea(nside) * rad_to_arcmin**2
     if noise.pixel == "CAR":
-        pixArea = noise.data.pixsizemap()*rad_to_arcmin**2
+        pixArea = noise.data.pixsizemap() * rad_to_arcmin**2
     if noise.ncomp == 1:
         if noise.pixel == "HEALPIX":
             size = len(noise.data)
-            noise.data = np.random.randn(size)*rms_uKarcmin_T/np.sqrt(pixArea)
+            noise.data = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pixArea)
         if noise.pixel == "CAR":
             size = noise.data.shape
-            noise.data = np.random.randn(size[0],size[1])*rms_uKarcmin_T/np.sqrt(pixArea)
+            noise.data = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pixArea)
     if noise.ncomp == 3:
         if rms_uKarcmin_pol is None:
-            rms_uKarcmin_pol = rms_uKarcmin_T*np.sqrt(2)
+            rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         if noise.pixel == "HEALPIX":
             size = len(noise.data[0])
-            noise.data[0] = np.random.randn(size)*rms_uKarcmin_T/np.sqrt(pixArea)
-            noise.data[1] = np.random.randn(size)*rms_uKarcmin_pol/np.sqrt(pixArea)
-            noise.data[2] = np.random.randn(size)*rms_uKarcmin_pol/np.sqrt(pixArea)
+            noise.data[0] = np.random.randn(size) * rms_uKarcmin_T / np.sqrt(pixArea)
+            noise.data[1] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pixArea)
+            noise.data[2] = np.random.randn(size) * rms_uKarcmin_pol / np.sqrt(pixArea)
         if noise.pixel == "CAR":
             size = noise.data[0].shape
-            noise.data[0] = np.random.randn(size[0], size[1])*rms_uKarcmin_T/np.sqrt(pixArea)
-            noise.data[1] = np.random.randn(size[0], size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
-            noise.data[2] = np.random.randn(size[0], size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
+            noise.data[0] = np.random.randn(size[0], size[1]) * rms_uKarcmin_T / np.sqrt(pixArea)
+            noise.data[1] = np.random.randn(size[0], size[1]) * rms_uKarcmin_pol / np.sqrt(pixArea)
+            noise.data[2] = np.random.randn(size[0], size[1]) * rms_uKarcmin_pol / np.sqrt(pixArea)
 
     return noise
 
