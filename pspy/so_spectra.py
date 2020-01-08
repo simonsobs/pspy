@@ -98,7 +98,7 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     n_bins = len(bin_hi)
     
     if type == "Dl":
-        fac = (l * (l + 1) / (2*np.pi))
+        fac = (l * (l + 1) / (2 * np.pi))
     if type == "Cl":
         fac = l * 0 + 1
 
