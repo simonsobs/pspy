@@ -118,7 +118,7 @@ def apod_rectangle(binary,radius):
     else:
         shape = binary.data.shape
         wcs = binary.data.wcs
-        Ny,Nx = shape
+        Ny, Nx = shape
         pixScaleY, pixScaleX = enmap.pixshape(shape, wcs)
         win = binary.copy()
         win.data = win.data * 0 + 1
@@ -163,7 +163,7 @@ def get_spinned_windows(w,lmax,niter):
     if w.pixel == "CAR":
         template = enmap.samewcs(template,w.data)
     
-    wlm = sph_tools.map2alm(w,lmax=lmax,niter=niter)
+    wlm = sph_tools.map2alm(w, lmax=lmax, niter=niter)
     ell = np.arange(lmax)
     filter_1 = -np.sqrt((ell + 1) * ell)
     filter_2 = -np.sqrt((ell + 2) * (ell + 1) * ell * (ell - 1))
