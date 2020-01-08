@@ -33,15 +33,15 @@ class so_map:
         """ Print information about the ``so_map`` object.
         """
         
-        print ("pixellisation:", self.pixel)
-        print ("number of components:", self.ncomp)
+        print("pixellisation:", self.pixel)
+        print("number of components:", self.ncomp)
         if self.ncomp==1:
-            print ("number of pixels:", self.data.shape[:])
+            print("number of pixels:", self.data.shape[:])
         else:
-            print ("number of pixels:", self.data.shape[1:])
-        print ("nside:", self.nside)
-        print ("geometry:", self.geometry)
-        print ("coordinates:", self.coordinate)
+            print("number of pixels:", self.data.shape[1:])
+        print("nside:", self.nside)
+        print("geometry:", self.geometry)
+        print("coordinates:", self.coordinate)
     
     def write_map(self,file_name):
         """Write the ``so_map`` to disk.
