@@ -63,9 +63,9 @@ def mcm_and_bbl_spin0(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = sph_tools.map2alm(win1, niter = niter, lmax = maxl)
+        win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
         if win2 is not None:
-            win2 = sph_tools.map2alm(win2, niter = niter, lmax = maxl)
+            win2 = sph_tools.map2alm(win2, niter=niter, lmax=maxl)
 
     if win2 is None:
         wcl = hp.alm2cl(win1)
@@ -96,7 +96,7 @@ def mcm_and_bbl_spin0(win1,
     if unbin:
         mcm_inv = np.linalg.inv(mcm)
         if save_file is not None:
-            save_coupling(save_file, mbb_inv, Bbl, mcm_inv = mcm_inv)
+            save_coupling(save_file, mbb_inv, Bbl, mcm_inv=mcm_inv)
         return mcm_inv, mbb_inv, Bbl
     else:
         if save_file is not None:
@@ -157,8 +157,8 @@ def mcm_and_bbl_spin0and2(win1,
         dict["spin2xspin2"] = np.zeros((4 * dim1, 4 * dim2))
         for i in range(4):
             dict["spin2xspin2"][i * dim1:(i+1) * dim1, i * dim2:(i+1) * dim2] = array[3, :, :]
-        dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = array[4, :, :]*fac
-        dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = array[4, :, :]*fac
+        dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = array[4, :, :] * fac
+        dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = array[4, :, :] * fac
         dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
         dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
         return dict
@@ -173,9 +173,9 @@ def mcm_and_bbl_spin0and2(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = (sph_tools.map2alm(win1[0], niter = niter, lmax = maxl), sph_tools.map2alm(win1[1], niter = niter, lmax = maxl))
+        win1 = (sph_tools.map2alm(win1[0], niter=niter, lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
         if win2 is not None:
-            win2 = (sph_tools.map2alm(win2[0], niter = niter, lmax = maxl), sph_tools.map2alm(win2[1], niter = niter, lmax = maxl))
+            win2 = (sph_tools.map2alm(win2[0], niter=niter, lmax=maxl), sph_tools.map2alm(win2[1], niter=niter, lmax=maxl))
     if win2 is None:
         win2 = deepcopy(win1)
 
