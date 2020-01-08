@@ -40,10 +40,7 @@ class so_map:
         
         print("pixellisation:", self.pixel)
         print("number of components:", self.ncomp)
-        if self.ncomp==1:
-            print("number of pixels:", self.data.shape[:])
-        else:
-            print("number of pixels:", self.data.shape[1:])
+        print("number of pixels:", self.data.shape[:] if self.ncomp == 1 else self.data.shape[1:])
         print("nside:", self.nside)
         print("geometry:", self.geometry)
         print("coordinates:", self.coordinate)
