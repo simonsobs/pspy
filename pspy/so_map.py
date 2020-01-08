@@ -232,7 +232,7 @@ class so_map:
                                     title=field + "" + title,
                                     cbar=cbar)
                     if file_name is not None:
-                        plt.savefig(file_name+"_%s"%field+".png", bbox_inches="tight")
+                        plt.savefig(file_name + "_%s"%field+".png", bbox_inches="tight")
                         plt.clf()
                         plt.close
                     else:
@@ -253,7 +253,7 @@ class so_map:
                 
                 for plot in plots:
                     if file_name is not None:
-                        enplot.write(file_name+".png", plot)
+                        enplot.write(file_name + ".png", plot)
                     else:
                         plot.img.show()
 
