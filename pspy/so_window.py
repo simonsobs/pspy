@@ -2,11 +2,11 @@
 routines for window function generation
 """
 
-import healpy as hp, pylab as plt, numpy as np, astropy.io.fits as pyfits
-from pixell import enmap,curvedsky
+import healpy as hp
+import numpy as np
+from pixell import enmap, curvedsky
 from pspy import sph_tools
-import scipy
-import os, sys
+from scipy.ndimage import distance_transform_edt
 
 def get_distance(binary):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
@@ -23,7 +23,7 @@ def get_distance(binary):
         dist.data *= 180/np.pi
     if binary.pixel == "CAR":
         pixSize_arcmin = np.sqrt(binary.data.pixsize()*(60*180/np.pi)**2)
-        dist.data[:] = scipy.ndimage.distance_transform_edt(binary.data)
+        dist.data[:] = distance_transform_edt(binary.data)
         dist.data[:] *= pixSize_arcmin/60
 
     return dist
@@ -42,19 +42,18 @@ def create_apodization(binary, apo_type, apo_radius_degree):
     """
 
     if apo_type == "C1":
-        window=apod_C1(binary,apo_radius_degree)
+        window = apod_C1(binary, apo_radius_degree)
     if apo_type == "C2":
-        window=apod_C2(binary,apo_radius_degree)
+        window = apod_C2(binary, apo_radius_degree)
     if apo_type == "Rectangle":
         if binary.pixel == "HEALPIX":
-            print("no rectangle apod for healpix map")
-            sys.exit()
+            raise ValueError("No rectangle apodization for HEALPIX map")
         if binary.pixel == "CAR":
-            window= apod_rectangle(binary,apo_radius_degree)
+            window = apod_rectangle(binary, apo_radius_degree)
 
     return window
 
-def apod_C2(binary,radius):
+def apod_C2(binary, radius):
     """Create a C2 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
@@ -71,8 +70,8 @@ def apod_C2(binary,radius):
     else:
         dist = get_distance(binary)
         win = binary.copy()
-        id = np.where(dist.data> radius)
-        win.data = dist.data/radius-np.sin(2*np.pi*dist.data/radius)/(2*np.pi)
+        id = np.where(dist.data > radius)
+        win.data = dist.data/radius - np.sin(2*np.pi*dist.data/radius)/(2*np.pi)
         win.data[id] = 1
         
     return win
@@ -94,7 +93,7 @@ def apod_C1(binary,radius):
     else:
         dist = get_distance(binary)
         win = binary.copy()
-        id = np.where(dist.data> radius)
+        id = np.where(dist.data > radius)
         win.data = 1./2-1./2*np.cos(-np.pi*dist.data/radius)
         win.data[id] = 1
     
@@ -159,7 +158,7 @@ def get_spinned_windows(w,lmax,niter):
     """
 
     template = np.array([w.data.copy(), w.data.copy()])
-    s1_a, s1_b, s2_a, s2_b= w.copy(), w.copy(), w.copy(), w.copy()
+    s1_a, s1_b, s2_a, s2_b = w.copy(), w.copy(), w.copy(), w.copy()
     
     if w.pixel == "CAR":
         template = enmap.samewcs(template,w.data)
