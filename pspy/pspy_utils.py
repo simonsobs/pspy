@@ -37,7 +37,7 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero =
         if start_at_zero:
             ps[f] = np.append(np.array([0, 0]), ps[f])
     if start_at_zero:
-        l = np.append( np.array([0, 1]), l)
+        l = np.append(np.array([0, 1]), l)
     return l, ps
 
 def get_nlth_dict(rms_uKarcmin_T,
