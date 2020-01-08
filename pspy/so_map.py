@@ -581,7 +581,7 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
         if noise.pixel == "CAR":
             size = noise.data.shape
             noise.data = np.random.randn(size[0],size[1])*rms_uKarcmin_T/np.sqrt(pixArea)
-    if noise.ncomp==3:
+    if noise.ncomp == 3:
         if rms_uKarcmin_pol is None:
             rms_uKarcmin_pol = rms_uKarcmin_T*np.sqrt(2)
         if noise.pixel == "HEALPIX":
@@ -590,10 +590,10 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
             noise.data[1] = np.random.randn(size)*rms_uKarcmin_pol/np.sqrt(pixArea)
             noise.data[2] = np.random.randn(size)*rms_uKarcmin_pol/np.sqrt(pixArea)
         if noise.pixel == "CAR":
-            size=noise.data[0].shape
-            noise.data[0] = np.random.randn(size[0],size[1])*rms_uKarcmin_T/np.sqrt(pixArea)
-            noise.data[1] = np.random.randn(size[0],size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
-            noise.data[2] = np.random.randn(size[0],size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
+            size = noise.data[0].shape
+            noise.data[0] = np.random.randn(size[0], size[1])*rms_uKarcmin_T/np.sqrt(pixArea)
+            noise.data[1] = np.random.randn(size[0], size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
+            noise.data[2] = np.random.randn(size[0], size[1])*rms_uKarcmin_pol/np.sqrt(pixArea)
 
     return noise
 
@@ -621,11 +621,11 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     
     if binary.pixel=="CAR":
         pixSize_arcmin = np.sqrt(binary.data.pixsize()*(60*180/np.pi)**2)
-        random_index1 = np.random.randint(0, binary.data.shape[0],size=n_holes)
-        random_index2 = np.random.randint(0, binary.data.shape[1],size=n_holes)
+        random_index1 = np.random.randint(0, binary.data.shape[0], size=n_holes)
+        random_index2 = np.random.randint(0, binary.data.shape[1], size=n_holes)
         mask.data[random_index1,random_index2] = 0
         dist = distance_transform_edt(mask.data)
-        mask.data[dist*pixSize_arcmin <hole_radius_arcmin] = 0
+        mask.data[dist*pixSize_arcmin < hole_radius_arcmin] = 0
 
     return mask
 
