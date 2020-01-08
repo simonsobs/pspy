@@ -114,14 +114,14 @@ class so_map:
         """
         
         if self.pixel == "HEALPIX":
-            l, ps = ps_lensed_theory_to_dict(clfile, output_type = "Cl", start_at_zero = True)
+            l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
                 self.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
             else:
                 self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
                                                 self.nside,
-                                                new = True,
-                                                verbose = False)
+                                                new=True,
+                                                verbose=False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
@@ -180,22 +180,22 @@ class so_map:
                 if hp_gnomv is not None:
                     lon, lat, xsize, reso = hp_gnomv
                     hp.gnomview(self.data,
-                                min = min_range,
-                                max = max_range,
-                                cmap = cmap,
-                                notext = True,
-                                title = title,
-                                cbar = cbar,
-                                rot = (lon,lat,0),
-                                xsize = xsize,reso=reso)
+                                min=min_range,
+                                max=max_range,
+                                cmap=cmap,
+                                notext=True,
+                                title=title,
+                                cbar=cbar,
+                                rot=(lon,lat,0),
+                                xsize=xsize,reso=reso)
                 else:
                     hp.mollview(self.data,
-                                min = min_range,
-                                max = max_range,
-                                cmap = cmap,
-                                notext = True,
-                                title = title,
-                                cbar = cbar)
+                                min=min_range,
+                                max=max_range,
+                                cmap=cmap,
+                                notext=True,
+                                title=title,
+                                cbar=cbar)
                 if file_name is not None:
                     plt.savefig(file_name+".png", bbox_inches="tight")
                     plt.clf()
@@ -215,23 +215,23 @@ class so_map:
                     if hp_gnomv is not None:
                         lon, lat, xsize, reso = hp_gnomv
                         hp.gnomview(data,
-                                    min = min_ranges[field],
-                                    max = max_ranges[field],
-                                    cmap = cmap,
-                                    notext = True,
-                                    title = field + "" + title,
-                                    cbar = cbar,
-                                    rot = (lon,lat,0),
-                                    xsize = xsize,
-                                    reso = reso)
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
+                                    cmap=cmap,
+                                    notext=True,
+                                    title=field + "" + title,
+                                    cbar=cbar,
+                                    rot=(lon,lat,0),
+                                    xsize=xsize,
+                                    reso=reso)
                     else:
                         hp.mollview(data,
-                                    min = min_ranges[field],
-                                    max = max_ranges[field],
-                                    cmap = cmap,
-                                    notext = True,
-                                    title = field + "" + title,
-                                    cbar = cbar)
+                                    min=min_ranges[field],
+                                    max=max_ranges[field],
+                                    cmap=cmap,
+                                    notext=True,
+                                    title=field + "" + title,
+                                    cbar=cbar)
                     if file_name is not None:
                         plt.savefig(file_name+"_%s"%field+".png", bbox_inches="tight")
                         plt.clf()
@@ -247,10 +247,10 @@ class so_map:
                     max_range = "%s"%(np.max(self.data))
                 
                 plots = enplot.get_plots(self.data,
-                                         color = color,
-                                         range = max_range,
-                                         colorbar = 1,
-                                         ticks = ticks_spacing_car)
+                                         color=color,
+                                         range=max_range,
+                                         colorbar=1,
+                                         ticks=ticks_spacing_car)
                 
                 for plot in plots:
                     if file_name is not None:
@@ -267,10 +267,10 @@ class so_map:
                     max_range = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
 
                 plots = enplot.get_plots(self.data,
-                                         color = color,
-                                         range = max_range,
-                                         colorbar = 1,
-                                         ticks = ticks_spacing_car)
+                                         color=color,
+                                         range=max_range,
+                                         colorbar=1,
+                                         ticks=ticks_spacing_car)
     
                 for (plot, field) in zip(plots, fields):
                     if file_name is not None:
@@ -388,8 +388,8 @@ def get_submap_car(map, box, mode):
       "exclusive": lower bounds are rounded up, and upper bounds down"""
         
     submap = map.copy()
-    submap.data = map.data.submap(box, mode = mode)
-    submap.geometry = map.data.submap(box, mode = mode).geometry[1:]
+    submap.data = map.data.submap(box, mode=mode)
+    submap.geometry = map.data.submap(box, mode=mode).geometry[1:]
      
     return submap
 
@@ -479,11 +479,11 @@ def healpix2car(map, template, lmax = None):
     project.data = reproject.enmap_from_healpix(map.data,
                                                 template.data.shape,
                                                 template.data.wcs,
-                                                ncomp = map.ncomp,
-                                                unit = 1,
-                                                lmax = lmax,
-                                                rot = rot,
-                                                first = 0)
+                                                ncomp=map.ncomp,
+                                                unit=1,
+                                                lmax=lmax,
+                                                rot=rot,
+                                                first=0)
 
     return project
 
