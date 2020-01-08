@@ -5,8 +5,10 @@ routines for window function generation
 import healpy as hp
 import numpy as np
 from pixell import enmap, curvedsky
-from pspy import sph_tools
 from scipy.ndimage import distance_transform_edt
+
+from pspy import sph_tools
+
 
 def get_distance(binary):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
@@ -70,9 +72,9 @@ def apod_C2(binary, radius):
     else:
         dist = get_distance(binary)
         win = binary.copy()
-        id = np.where(dist.data > radius)
+        idx = np.where(dist.data > radius)
         win.data = dist.data / radius - np.sin(2 * np.pi * dist.data / radius) / (2 * np.pi)
-        win.data[id] = 1
+        win.data[idx] = 1
         
     return win
 
@@ -93,9 +95,9 @@ def apod_C1(binary, radius):
     else:
         dist = get_distance(binary)
         win = binary.copy()
-        id = np.where(dist.data > radius)
+        idx = np.where(dist.data > radius)
         win.data = 1./2 - 1./2 * np.cos(-np.pi * dist.data / radius)
-        win.data[id] = 1
+        win.data[idx] = 1
     
     return win
 
@@ -119,24 +121,24 @@ def apod_rectangle(binary,radius):
         shape = binary.data.shape
         wcs = binary.data.wcs
         Ny, Nx = shape
-        pixScaleY, pixScaleX = enmap.pixshape(shape, wcs)
+        pix_scale_y, pix_scale_x = enmap.pixshape(shape, wcs)
         win = binary.copy()
         win.data = win.data * 0 + 1
         win_x = win.copy()
         win_y = win.copy()
-        Id = np.ones((Ny,Nx))
-        degToPix_x = np.pi / 180 / pixScaleX
-        degToPix_y = np.pi / 180 / pixScaleY
-        lenApod_x = int(radius*degToPix_x)
-        lenApod_y = int(radius*degToPix_y)
+        ones = np.ones((Ny,Nx))
+        deg_to_pix_x = np.pi / 180 / pix_scale_x
+        deg_to_pix_y = np.pi / 180 / pix_scale_y
+        lenApod_x = int(radius * deg_to_pix_x)
+        lenApod_y = int(radius * deg_to_pix_y)
     
         for i in range(lenApod_x):
-            r=float(i)
-            win_x.data[:, i] = 1. / 2 * (Id[:, i] - np.cos(-np.pi * r / lenApod_x))
+            r = float(i)
+            win_x.data[:, i] = 1. / 2 * (ones[:, i] - np.cos(-np.pi * r / lenApod_x))
             win_x.data[:, Nx - i - 1] = win_x.data[:, i]
         for j in range(lenApod_y):
-            r=float(j)
-            win_y.data[j, :] = 1. / 2 * (Id[j, :] - np.cos(-np.pi * r / lenApod_y))
+            r = float(j)
+            win_y.data[j, :] = 1. / 2 * (ones[j, :] - np.cos(-np.pi * r / lenApod_y))
             win_y.data[Ny - j - 1, :] = win_y.data[j, :]
 
         win.data = win_x.data * win_y.data
