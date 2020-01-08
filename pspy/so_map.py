@@ -352,20 +352,20 @@ def from_components(T, Q, U):
     U = enmap.read_map(U)
     shape, wcs = T.geometry
     shape = ((ncomp,)+shape)
-    map = so_map()
-    map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
-    map.data[0] = T
-    map.data[1] = Q
-    map.data[2] = U
-    map.pixel = "CAR"
-    map.nside = None
-    map.ncomp = ncomp
-    map.geometry = T.geometry[1:]
-    map.coordinate = "equ"
+    new_map = so_map()
+    new_map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
+    new_map.data[0] = T
+    new_map.data[1] = Q
+    new_map.data[2] = U
+    new_map.pixel = "CAR"
+    new_map.nside = None
+    new_map.ncomp = ncomp
+    new_map.geometry = T.geometry[1:]
+    new_map.coordinate = "equ"
     
-    return map
+    return new_map
 
-def get_submap_car(map, box, mode):
+def get_submap_car(map_car, box, mode):
     """Cut a CAR submap (using pixell).
         
     Parameters
@@ -386,9 +386,9 @@ def get_submap_car(map, box, mode):
       "inclusive": lower bounds are rounded down, and upper bounds up
       "exclusive": lower bounds are rounded up, and upper bounds down"""
         
-    submap = map.copy()
-    submap.data = map.data.submap(box, mode=mode)
-    submap.geometry = map.data.submap(box, mode=mode).geometry[1:]
+    submap = map_car.copy()
+    submap.data = map_car.data.submap(box, mode=mode)
+    submap.geometry = map_car.data.submap(box, mode=mode).geometry[1:]
      
     return submap
 
@@ -427,24 +427,24 @@ def from_enmap(emap):
       the enmap we want to use to define the ``so_map``
     """
 
-    map = so_map()
+    new_map = so_map()
     hdulist = emap.wcs.to_fits()
     header = hdulist[0].header
-    map.pixel = (header["CTYPE1"][-3:])
+    new_map.pixel = (header["CTYPE1"][-3:])
     try:
-        map.ncomp = header["NAXIS3"]
+        new_map.ncomp = header["NAXIS3"]
     except:
-        map.ncomp = 1
-    map.data = emap.copy()
-    map.nside = None
-    map.geometry = map.data.geometry[1:]
-    map.coordinate = header["RADESYS"]
-    if map.coordinate == "ICRS":
-        map.coordinate = "equ"
+        new_map.ncomp = 1
+    new_map.data = emap.copy()
+    new_map.nside = None
+    new_map.geometry = new_map.data.geometry[1:]
+    new_map.coordinate = header["RADESYS"]
+    if new_map.coordinate == "ICRS":
+        new_map.coordinate = "equ"
 
-    return map
+    return new_map
 
-def healpix2car(map, template, lmax = None):
+def healpix2car(healpix_map, template, lmax=None):
     """Project a HEALPIX ``so_map`` into a CAR ``so_map``.
         
     The projection will be done in harmonic space, you can specify a lmax
@@ -453,7 +453,7 @@ def healpix2car(map, template, lmax = None):
 
     Parameters
     ----------
-    map : ``so_map`` in healpix pixellisation
+    healpix_map : ``so_map`` in healpix pixellisation
       the map to be projected
     template: ``so_map`` in CAR pixellisation
       the template that will be projected onto
@@ -463,22 +463,22 @@ def healpix2car(map, template, lmax = None):
     
     project = template.copy()
             
-    if map.coordinate is None or template.coordinate is None:
+    if healpix_map.coordinate is None or template.coordinate is None:
         rot = None
-    elif map.coordinate == template.coordinate:
+    elif healpix_map.coordinate == template.coordinate:
         rot = None
     else:
-        print("will rotate from %s to %s coordinate system"%(map.coordinate, template.coordinate))
-        rot = "%s,%s"%(map.coordinate, template.coordinate)
-    if lmax > 3*map.nside-1:
+        print("will rotate from %s to %s coordinate system"%(healpix_map.coordinate, template.coordinate))
+        rot = "%s,%s"%(healpix_map.coordinate, template.coordinate)
+    if lmax > 3 * healpix_map.nside - 1:
         print("WARNING: your lmax is too large, setting it to 3*nside-1 now")
-        lmax = 3*map.nside-1
+        lmax = 3 * healpix_map.nside - 1
     if lmax is None:
-        lmax = 3*map.nside-1
-    project.data = reproject.enmap_from_healpix(map.data,
+        lmax = 3 * healpix_map.nside - 1
+    project.data = reproject.enmap_from_healpix(healpix_map.data,
                                                 template.data.shape,
                                                 template.data.wcs,
-                                                ncomp=map.ncomp,
+                                                ncomp=healpix_map.ncomp,
                                                 unit=1,
                                                 lmax=lmax,
                                                 rot=rot,
@@ -486,7 +486,7 @@ def healpix2car(map, template, lmax = None):
 
     return project
 
-def car2car(map, template):
+def car2car(map_car, template):
     """Project a CAR map into another CAR map with different pixellisation
     
     Parameters
@@ -498,7 +498,7 @@ def car2car(map, template):
     """
     
     project = template.copy()
-    project.data = enmap.project(map.data, template.data.shape, template.data.wcs)
+    project.data = enmap.project(map_car.data, template.data.shape, template.data.wcs)
     return project
 
 def healpix_template(ncomp, nside, coordinate = None):
