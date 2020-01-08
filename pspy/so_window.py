@@ -20,11 +20,11 @@ def get_distance(binary):
     dist = binary.copy()
     if binary.pixel == "HEALPIX":
         dist.data = enmap.distance_transform_healpix(binary.data, method="heap")
-        dist.data *= 180/np.pi
+        dist.data *= 180 / np.pi
     if binary.pixel == "CAR":
-        pixSize_arcmin = np.sqrt(binary.data.pixsize()*(60*180/np.pi)**2)
+        pixSize_arcmin = np.sqrt(binary.data.pixsize() * (60 * 180 / np.pi)**2)
         dist.data[:] = distance_transform_edt(binary.data)
-        dist.data[:] *= pixSize_arcmin/60
+        dist.data[:] *= pixSize_arcmin / 60
 
     return dist
 
@@ -71,12 +71,12 @@ def apod_C2(binary, radius):
         dist = get_distance(binary)
         win = binary.copy()
         id = np.where(dist.data > radius)
-        win.data = dist.data/radius - np.sin(2*np.pi*dist.data/radius)/(2*np.pi)
+        win.data = dist.data / radius - np.sin(2 * np.pi * dist.data / radius) / (2 * np.pi)
         win.data[id] = 1
         
     return win
 
-def apod_C1(binary,radius):
+def apod_C1(binary, radius):
     """Create a C1 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
@@ -94,7 +94,7 @@ def apod_C1(binary,radius):
         dist = get_distance(binary)
         win = binary.copy()
         id = np.where(dist.data > radius)
-        win.data = 1./2-1./2*np.cos(-np.pi*dist.data/radius)
+        win.data = 1./2 - 1./2 * np.cos(-np.pi * dist.data / radius)
         win.data[id] = 1
     
     return win
@@ -121,25 +121,25 @@ def apod_rectangle(binary,radius):
         Ny,Nx = shape
         pixScaleY, pixScaleX = enmap.pixshape(shape, wcs)
         win = binary.copy()
-        win.data = win.data*0+1
+        win.data = win.data * 0 + 1
         win_x = win.copy()
         win_y = win.copy()
         Id = np.ones((Ny,Nx))
-        degToPix_x = np.pi/180/pixScaleX
-        degToPix_y = np.pi/180/pixScaleY
+        degToPix_x = np.pi / 180 / pixScaleX
+        degToPix_y = np.pi / 180 / pixScaleY
         lenApod_x = int(radius*degToPix_x)
         lenApod_y = int(radius*degToPix_y)
     
         for i in range(lenApod_x):
             r=float(i)
-            win_x.data[:,i] = 1./2*(Id[:,i]-np.cos(-np.pi*r/lenApod_x))
-            win_x.data[:,Nx-i-1] = win_x.data[:,i]
+            win_x.data[:, i] = 1. / 2 * (Id[:, i] - np.cos(-np.pi * r / lenApod_x))
+            win_x.data[:, Nx - i - 1] = win_x.data[:, i]
         for j in range(lenApod_y):
             r=float(j)
-            win_y.data[j,:] = 1./2*(Id[j,:]-np.cos(-np.pi*r/lenApod_y))
-            win_y.data[Ny-j-1,:] = win_y.data[j,:]
+            win_y.data[j, :] = 1. / 2*(Id[j, :] - np.cos(-np.pi * r / lenApod_y))
+            win_y.data[Ny - j - 1, :] = win_y.data[j, :]
 
-        win.data = win_x.data*win_y.data
+        win.data = win_x.data * win_y.data
 
         return win
 
@@ -165,13 +165,13 @@ def get_spinned_windows(w,lmax,niter):
     
     wlm = sph_tools.map2alm(w,lmax=lmax,niter=niter)
     ell = np.arange(lmax)
-    filter_1 = -np.sqrt((ell+1)*ell)
-    filter_2 = -np.sqrt((ell+2)*(ell+1)*ell*(ell-1))
+    filter_1 = -np.sqrt((ell + 1) * ell)
+    filter_2 = -np.sqrt((ell + 2) * (ell + 1) * ell * (ell - 1))
 
     filter_1[:1] = 0
     filter_2[:2] = 0
-    wlm1_e = hp.almxfl(wlm,filter_1)
-    wlm2_e = hp.almxfl(wlm,filter_2)
+    wlm1_e = hp.almxfl(wlm, filter_1)
+    wlm2_e = hp.almxfl(wlm, filter_2)
     wlm1_b = np.zeros_like(wlm1_e)
     wlm2_b = np.zeros_like(wlm2_e)
 
@@ -179,8 +179,8 @@ def get_spinned_windows(w,lmax,niter):
     w2 = template.copy()
     
     if w.pixel == "HEALPIX":
-        curvedsky.alm2map_healpix(np.array([wlm1_e,wlm1_b]), w1, spin=1)
-        curvedsky.alm2map_healpix(np.array([wlm2_e,wlm2_b]), w2, spin=2)
+        curvedsky.alm2map_healpix(np.array([wlm1_e, wlm1_b]), w1, spin=1)
+        curvedsky.alm2map_healpix(np.array([wlm2_e, wlm2_b]), w2, spin=2)
     if w.pixel=="CAR":
         curvedsky.alm2map(np.array([wlm1_e,wlm1_b]), w1, spin=1)
         curvedsky.alm2map(np.array([wlm2_e,wlm2_b]), w2, spin=2)
