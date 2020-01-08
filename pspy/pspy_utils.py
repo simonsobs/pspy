@@ -89,7 +89,6 @@ def get_nlth_dict(rms_uKarcmin_T,
                 nl_th[spec] *= lth*(lth+1)/(2*np.pi)
     return nl_th
 
-
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     """ Create a (constant) binning file, and optionnaly write it to disk
 
@@ -121,7 +120,6 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
             f.write("%0.2f %0.2f %0.2f\n"%(bin_low[i], bin_hi[i], bin_cent[i]))
         f.close()
 
-
 def read_binning_file(file_name, lmax):
     """Read a binningFile and truncate it to lmax, if bin_low lower than 2, set it to 2.
     format is bin_low, bin_high, bin_mean
@@ -142,7 +140,6 @@ def read_binning_file(file_name, lmax):
     bin_low = bin_low.astype(np.int)
     bin_size = bin_hi - bin_low + 1
     return bin_low, bin_hi, bin_cent, bin_size
-
 
 def create_directory(name):
     """Create a directory
