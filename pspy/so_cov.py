@@ -287,7 +287,7 @@ def extract_TTTEEE_mbb(mbb_inv):
     
     mbb_inv_array = so_mcm.coupling_dict_to_array(mbb_inv)
     mbb_array = np.linalg.inv(mbb_inv_array)
-    n_bins = int(mbb_array.shape[0]/9)
+    n_bins = int(mbb_array.shape[0] / 9)
     mbb_array_select = np.zeros((3*n_bins, 3*n_bins))
     mbb_array_select[:n_bins, :n_bins] = mbb_array[:n_bins, :n_bins]
     mbb_array_select[n_bins:2*n_bins, n_bins:2*n_bins] = mbb_array[n_bins:2*n_bins, n_bins:2*n_bins]
@@ -331,7 +331,7 @@ def selectblock(cov, spectra, n_bins, block='TTTT'):
         blockindex = {}
         for c1,s1 in enumerate(spectra):
             for c2,s2 in enumerate(spectra):
-                blockindex[s1+s2] = [c1 * n_bins, c2 * n_bins]
+                blockindex[s1 + s2] = [c1 * n_bins, c2 * n_bins]
     id1 = blockindex[block][0]
     id2 = blockindex[block][1]
     cov_select = cov[id1:id1 + n_bins, id2:id2 + n_bins]
