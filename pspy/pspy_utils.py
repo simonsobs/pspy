@@ -4,7 +4,7 @@ Utils for pspy.
 import numpy as np
 import os
 
-def ps_lensed_theory_to_dict(filename, output_type, lmax = None, start_at_zero = False):
+def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=False):
     """Read a lensed power spectrum from CAMB and return a dictionnary
 
     Parameters
