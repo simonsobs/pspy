@@ -618,9 +618,9 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     
     mask = binary.copy()
     if binary.pixel == "HEALPIX":
-        id = np.where(binary.data == 1)
+        idx = np.where(binary.data == 1)
         for i in range(n_holes):
-            random_index1 = np.random.choice(id[0])
+            random_index1 = np.random.choice(idx[0])
             vec=hp.pixelfunc.pix2vec(binary.nside, random_index1)
             disc = hp.query_disc(binary.nside, vec, hole_radius_arcmin / (60. * 180) * np.pi)
             mask.data[disc] = 0
