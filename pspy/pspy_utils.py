@@ -24,21 +24,21 @@ def ps_lensed_theory_to_dict(filename,output_type,lmax=None,startAtZero=False):
     ps = {}
     l, ps["TT"], ps["EE"], ps["BB"], ps["TE"] = np.loadtxt(filename,unpack=True)
     ps["ET"] = ps["TE"].copy()
-    ps["TB"] ,ps["BT"], ps["EB"], ps["BE"] = np.zeros((4,len(l)))
+    ps["TB"], ps["BT"], ps["EB"], ps["BE"] = np.zeros((4,len(l)))
 
     if lmax is not None:
-        l=l[:lmax]
-    scale=l*(l+1)/(2*np.pi)
+        l = l[:lmax]
+    scale = l*(l+1)/(2*np.pi)
     for f in fields:
         if lmax is not None:
-            ps[f]=ps[f][:lmax]
-        if output_type=="Cl":
-            ps[f]/=scale
+            ps[f] = ps[f][:lmax]
+        if output_type == "Cl":
+            ps[f] /= scale
         if startAtZero:
-            ps[f]=np.append( np.array([0,0]),ps[f])
+            ps[f] = np.append(np.array([0,0]),ps[f])
     if startAtZero:
-        l=np.append( np.array([0,1]),l)
-    return l,ps
+        l = np.append( np.array([0,1]),l)
+    return l, ps
 
 def get_nlth_dict(rms_uKarcmin_T,
                   type,
@@ -116,7 +116,7 @@ def create_binning_file(bin_size,n_bins,lmax=None, file_name=None):
     if file_name is None:
         return bin_low, bin_hi, bin_cent
     else:
-        f = open('%s'%file_name,mode="w")
+        f = open("%s"%file_name,mode="w")
         for i in range(n_bins):
             f.write("%0.2f %0.2f %0.2f\n"%(bin_low[i], bin_hi[i], bin_cent[i]))
         f.close()
