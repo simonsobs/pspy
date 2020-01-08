@@ -266,7 +266,7 @@ def coupling_dict_to_array(dict):
     array[5*dim1:9*dim1, 5*dim2:9*dim2] = dict["spin2xspin2"]
     return array
 
-def apply_Bbl(Bbl,ps,spectra=None):
+def apply_Bbl(Bbl, ps, spectra=None):
     """Bin theoretical power spectra
         
     Parameters
@@ -343,18 +343,18 @@ def save_coupling(prefix,mbb_inv,Bbl,spin_pairs=None,mcm_inv=None):
 
     if spin_pairs is not None:
         for s in spin_pairs:
-            np.save(prefix +"_mbb_inv_%s.npy"%s, mbb_inv[s])
-            np.save(prefix +"_Bbl_%s.npy"%s, Bbl[s])
+            np.save(prefix + "_mbb_inv_%s.npy"%s, mbb_inv[s])
+            np.save(prefix + "_Bbl_%s.npy"%s, Bbl[s])
             if mcm_inv is not None:
-                np.save(prefix +"_mcm_inv_%s.npy"%s, mcm_inv[s])
+                np.save(prefix + "_mcm_inv_%s.npy"%s, mcm_inv[s])
     else:
-        np.save(prefix +"_mbb_inv.npy", mbb_inv)
-        np.save(prefix +"_Bbl.npy", Bbl)
+        np.save(prefix + "_mbb_inv.npy", mbb_inv)
+        np.save(prefix + "_Bbl.npy", Bbl)
         if mcm_inv is not None:
-            np.save(prefix +"_mcm_inv.npy", mcm_inv)
+            np.save(prefix + "_mcm_inv.npy", mcm_inv)
 
 
-def read_coupling(prefix,spin_pairs=None,unbin=None):
+def read_coupling(prefix, spin_pairs=None, unbin=None):
     """Read the inverse of the mode coupling matrix and the binning matrix
         
     Parameters
@@ -374,14 +374,14 @@ def read_coupling(prefix,spin_pairs=None,unbin=None):
         mcm_inv = {}
         for s in spin_pairs:
             if unbin:
-                mcm_inv[s] = np.load(prefix+"_mcm_inv_%s.npy"%s)
-            mbb_inv[s] = np.load(prefix+"_mbb_inv_%s.npy"%s)
-            Bbl[s] = np.load(prefix+"_Bbl_%s.npy"%s)
+                mcm_inv[s] = np.load(prefix + "_mcm_inv_%s.npy"%s)
+            mbb_inv[s] = np.load(prefix + "_mbb_inv_%s.npy"%s)
+            Bbl[s] = np.load(prefix + "_Bbl_%s.npy"%s)
     else:
         if unbin:
-            mcm_inv = np.load(prefix+"_mcm_inv.npy")
-        mbb_inv = np.load(prefix +"_mbb_inv.npy")
-        Bbl = np.load(prefix +"_Bbl.npy")
+            mcm_inv = np.load(prefix + "_mcm_inv.npy")
+        mbb_inv = np.load(prefix + "_mbb_inv.npy")
+        Bbl = np.load(prefix + "_Bbl.npy")
 
     if unbin:
         return mcm_inv, mbb_inv, Bbl
