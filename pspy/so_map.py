@@ -292,46 +292,46 @@ def read_map(file, coordinate=None, fields_healpix=None):
       
     """
     
-    map = so_map()
+    new_map = so_map()
     hdulist = pyfits.open(file)
     try:
         header = hdulist[1].header
-        map.pixel = "HEALPIX"
+        new_map.pixel = "HEALPIX"
         if fields_healpix is None:
-            map.ncomp = header["TFIELDS"]
-            map.data = hp.fitsfunc.read_map(file, field=np.arange(map.ncomp), verbose=False)
+            new_map.ncomp = header["TFIELDS"]
+            new_map.data = hp.fitsfunc.read_map(file, field=np.arange(new_map.ncomp), verbose=False)
         else:
             try:
-                map.ncomp = len(fields_healpix)
+                new_map.ncomp = len(fields_healpix)
             except:
-                map.ncomp = 1
-            map.data = hp.fitsfunc.read_map(file, verbose=False, field=fields_healpix)
+                new_map.ncomp = 1
+            new_map.data = hp.fitsfunc.read_map(file, verbose=False, field=fields_healpix)
 
-        map.nside = hp.pixelfunc.get_nside(map.data)
-        map.geometry = "healpix geometry"
+        new_map.nside = hp.pixelfunc.get_nside(new_map.data)
+        new_map.geometry = "healpix geometry"
         try:
-            map.coordinate = header["SKYCOORD"]
+            new_map.coordinate = header["SKYCOORD"]
         except:
-            map.coordinate = None
+            new_map.coordinate = None
 
     except:
         header = hdulist[0].header
-        map.pixel = (header["CTYPE1"][-3:])
+        new_map.pixel = (header["CTYPE1"][-3:])
         try:
-            map.ncomp = header["NAXIS3"]
+            new_map.ncomp = header["NAXIS3"]
         except:
-            map.ncomp = 1
-        map.data = enmap.read_map(file)
-        map.nside = None
-        map.geometry = map.data.geometry[1:]
-        map.coordinate = header["RADESYS"]
-        if map.coordinate == "ICRS":
-            map.coordinate = "equ"
+            new_map.ncomp = 1
+        new_map.data = enmap.read_map(file)
+        new_map.nside = None
+        new_map.geometry = new_map.data.geometry[1:]
+        new_map.coordinate = header["RADESYS"]
+        if new_map.coordinate == "ICRS":
+            new_map.coordinate = "equ"
 
     if coordinate is not None:
-        map.coordinate = coordinate
+        new_map.coordinate = coordinate
 
-    return map
+    return new_map
 
 def from_components(T, Q, U):
     """Create a (T,Q,U) ``so_map`` object from three fits files.
