@@ -12,9 +12,11 @@
 #
 import os
 import sys
+
+from mock import Mock as MagicMock
+
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../pspy'))
-from mock import Mock as MagicMock
 
 
 class Mock(MagicMock):
@@ -31,7 +33,7 @@ sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 # -- Project information -----------------------------------------------------
 
 project = 'pspy'
-copyright = '2019, T. Louis, S. Choi, DW Han, X. Garrido'
+copyright = '2019, Simons Observatory Collaboration Analysis Library Task Force'
 author = 'T. Louis, S. Choi, DW Han, X. Garrido'
 
 master_doc = 'index'
@@ -41,7 +43,10 @@ master_doc = 'index'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -67,4 +72,4 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # Add paths to extra static html files from notebook conversion
-html_extra_path = ['notebooks']
+html_extra_path = ['notebooks', 'latex']

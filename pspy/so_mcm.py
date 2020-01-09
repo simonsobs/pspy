@@ -1,5 +1,6 @@
 """
-Routines for mode coupling calculation.
+Routines for mode coupling calculation. For more details on computation of the matrix see
+https://pspy.readthedocs.io/en/latest/mcm.pdf.
 """
 
 from copy import deepcopy
@@ -7,7 +8,7 @@ from copy import deepcopy
 import healpy as hp
 import numpy as np
 
-from pspy import sph_tools,pspy_utils
+from pspy import pspy_utils, sph_tools
 from pspy.mcm_fortran import mcm_fortran
 
 
@@ -24,11 +25,11 @@ def mcm_and_bbl_spin0(win1,
                       save_file=None,
                       lmax_pad=None):
     """Get the mode coupling matrix and the binning matrix for spin0 fields
-        
+
     Parameters
     ----------
-    
-    win1: ``so_map`` (or alm)
+
+    win1: so_map (or alm)
       the window function of survey 1, if input_alm=True, expect wlm1
     binning_file: text file
       a binning file with three columns bin low, bin high, bin mean
@@ -52,7 +53,7 @@ def mcm_and_bbl_spin0(win1,
       the maximum multipole to consider for the mcm computation
       lmax_pad should always be greater than lmax
     """
-    
+
     if type == "Dl":
         doDl = 1
     if type == "Cl":
@@ -117,10 +118,10 @@ def mcm_and_bbl_spin0and2(win1,
                           save_file=None,
                           lmax_pad=None):
     """Get the mode coupling matrix and the binning matrix for spin 0 and 2 fields
-        
+
     Parameters
     ----------
-    
+
     win1: python tuple of so_map or alms (if input_alm=True)
       a python tuple (win_spin0,win_spin2) with the window functions of survey 1, if input_alm=True, expect (wlm_spin0, wlm_spin2)
     binning_file: text file
@@ -147,7 +148,7 @@ def mcm_and_bbl_spin0and2(win1,
       the maximum multipole to consider for the mcm computation
       lmax_pad should always be greater than lmax
     """
-    
+
     def get_coupling_dict(array, fac=1.0):
         ncomp, dim1, dim2 = array.shape
         dict={}
@@ -162,7 +163,7 @@ def mcm_and_bbl_spin0and2(win1,
         dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
         dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
         return dict
-    
+
     if type == "Dl":
         doDl = 1
     if type == "Cl":
@@ -243,15 +244,15 @@ def mcm_and_bbl_spin0and2(win1,
 
 def coupling_dict_to_array(dict):
     """Take a mcm or Bbl dictionnary with entries:
-        
+
     -  (spin0xspin0)
-    
+
     -  (spin0xspin2)
-    
+
     -  (spin2xspin0)
-    
+
     -  (spin2xspin2)
-    
+
     and return a 9xdim1,9xdim2 array.
     dim1 and dim2 are the dimensions of the spin0 object
     """
@@ -268,7 +269,7 @@ def coupling_dict_to_array(dict):
 
 def apply_Bbl(Bbl, ps, spectra=None):
     """Bin theoretical power spectra
-        
+
     Parameters
     ----------
 
@@ -280,7 +281,7 @@ def apply_Bbl(Bbl, ps, spectra=None):
     spectra: list of string
       needed for spin0 and spin2 cross correlation, the arrangement of the spectra
     """
-    
+
     if spectra is not None:
         Bbl_array = coupling_dict_to_array(Bbl)
         ps_vec = ps[spectra[0]]
@@ -297,7 +298,7 @@ def apply_Bbl(Bbl, ps, spectra=None):
 
 def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
     """Save the inverse of the mode coupling matrix and the binning matrix in npy format
-        
+
     Parameters
     ----------
 
@@ -305,38 +306,38 @@ def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
       the prefix for the name of the file
     mbb_inv: 2d array (or dict of 2d array)
       the inverse of the mode coupling matrix, if spin pairs is not none, should be a dictionnary with entries
-    
+
       -  spin0xspin0
-    
+
       -  spin0xspin2
-    
+
       -  spin2xspin0
-    
+
       -  spin2xspin2
-    
+
     Bbl: 2d array (or dict of 2d array)
       the binning matrix,if spin pairs is not none, should be a dictionnary with entries
-      
+
       -  spin0xspin0
-    
+
       -  spin0xspin2
-    
+
       -  spin2xspin0
-    
+
       -  spin2xspin2
-    
+
       otherwise, it will be a single matrix.
     spin_pairs: list of strings
       needed for spin0 and 2 fields.
     mcm_inv: 2d array (or dict of 2d array)
       the inverse of the unbinned mode coupling matrix, if spin pairs is not none, should be a dictionnary with entries
-      
+
       -  spin0xspin0
-      
+
       -  spin0xspin2
-      
+
       -  spin2xspin0
-      
+
       -  spin2xspin2
     """
 
@@ -355,7 +356,7 @@ def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
 
 def read_coupling(prefix, spin_pairs=None, unbin=None):
     """Read the inverse of the mode coupling matrix and the binning matrix
-        
+
     Parameters
     ----------
 
