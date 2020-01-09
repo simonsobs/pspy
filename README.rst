@@ -18,14 +18,6 @@ python example notebooks for an introductory set of examples on how to use the p
 * Free software: BSD license
 * Documentation: https://pspy.readthedocs.io.
 
-Dependencies
-------------
-
-* Python >= 3.5
-* ``pyFFTW`` https://pyfftw.readthedocs.io
-* ``healpy`` https://healpy.readthedocs.io
-* ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
-
 Installing
 ----------
 
@@ -59,3 +51,11 @@ Ipython notebooks
 * `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
 
 Others tutorials can be found under the ``tutorials`` directory.
+
+Dependencies
+------------
+
+* Python >= 3.5
+* ``pyFFTW`` https://pyfftw.readthedocs.io
+* ``healpy`` https://healpy.readthedocs.io
+* ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
