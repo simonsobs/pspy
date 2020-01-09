@@ -101,7 +101,7 @@ def apod_C1(binary, radius):
     
     return win
 
-def apod_rectangle(binary,radius):
+def apod_rectangle(binary, radius):
     """Create an apodisation for rectangle window (in CAR) (smoother at the corner)
         
     Parameters
@@ -145,7 +145,7 @@ def apod_rectangle(binary,radius):
 
         return win
 
-def get_spinned_windows(w,lmax,niter):
+def get_spinned_windows(w, lmax, niter):
     """Compute the spinned window functions (for pure B modes method)
         
     Parameters
@@ -183,7 +183,7 @@ def get_spinned_windows(w,lmax,niter):
     if w.pixel == "HEALPIX":
         curvedsky.alm2map_healpix(np.array([wlm1_e, wlm1_b]), w1, spin=1)
         curvedsky.alm2map_healpix(np.array([wlm2_e, wlm2_b]), w2, spin=2)
-    if w.pixel=="CAR":
+    if w.pixel == "CAR":
         curvedsky.alm2map(np.array([wlm1_e,wlm1_b]), w1, spin=1)
         curvedsky.alm2map(np.array([wlm2_e,wlm2_b]), w2, spin=2)
     
