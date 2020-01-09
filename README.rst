@@ -13,6 +13,7 @@ Python power spectrum library
 
 https://pspy.readthedocs.io/en/latest/
 
+.. inclusion-marker-do-not-remove
 
 Installing the code
 -------------------
@@ -28,7 +29,7 @@ Then you can install the ``pspy`` library and its dependencies *via*
     $ pip install -e /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
-to reinstall at every changes. 
+to reinstall at every changes.
 
 
 Ipython notebooks:
@@ -38,4 +39,3 @@ Ipython notebooks:
 * `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
 * `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
 * `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
-
