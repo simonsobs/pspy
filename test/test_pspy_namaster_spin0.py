@@ -76,10 +76,10 @@ window.data *= mask.data
 window.plot(file_name="%s/window" % (test_dir), hp_gnomv=(lon, lat, 3500, 1))
 
 # Compute spin 0 spectra a la pspy
-mbb_inv, Bbl=so_mcm.mcm_and_bbl_spin0(window, binning_file, lmax=lmax, type=type, niter=niter)
+mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0(window, binning_file, lmax=lmax, type=type, niter=niter)
 alm = sph_tools.get_alms(split, window, niter, lmax)
-l, ps= so_spectra.get_spectra(alm)
-lb, Cb_pspy= so_spectra.bin_spectra(l, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv)
+l, ps = so_spectra.get_spectra(alm)
+lb, Cb_pspy = so_spectra.bin_spectra(l, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv)
 
 # Compute spin 0 spectra a la namaster
 nlb = 40

@@ -86,8 +86,8 @@ window = (window,window)
 
 mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(window, binning_file, lmax=lmax, type=type, niter=niter)
 alms = sph_tools.get_alms(split, window, niter, lmax)
-l, ps= so_spectra.get_spectra(alms, spectra=spectra)
-lb_py, Cb_pspy= so_spectra.bin_spectra(l, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv, spectra=spectra)
+l, ps = so_spectra.get_spectra(alms, spectra=spectra)
+lb_py, Cb_pspy = so_spectra.bin_spectra(l, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv, spectra=spectra)
 
 # Compute spin 0 spin 2 spectra a la namaster
 
