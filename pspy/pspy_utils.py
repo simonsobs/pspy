@@ -177,3 +177,22 @@ def naive_binning(l, fl, binning_file, lmax):
         loc = np.where((l >= bin_low[ibin]) & (l <= bin_hi[ibin]))
         fl_bin[ibin] = (fl[loc]).mean()
     return bin_cent, fl_bin
+
+def beam_from_fwhm(fwhm_arcminute, lmax):
+    """Compute the harmonic transform of the beam
+    given the beam full width half maximum in arcminute
+        
+    Parameters
+    ----------
+    fwhm_arcminute: float
+      full width half maximum in arcminute
+    lmax: integer
+      the maximum multipole to consider
+        
+    """
+    beam_fwhm_rad = np.deg2rad(fwhm_arcminute) / 60
+    fac = beam_FWHM_rad / np.sqrt(8 * np.log(2))
+
+    ell = np.arange(2, 10000)
+    bl = np.exp(-ell * (ell + 1) * fac**2 / 2.)
+    return ell, bl
