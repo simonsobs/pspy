@@ -1,7 +1,13 @@
 ====
 pspy
 ====
+.. inclusion-marker-do-not-remove
 
+``pspy`` is a cosmology code for calculating CMB power spectra and covariance matrices. See the
+python example notebooks for an introductory set of examples on how to use the package.
+
+.. .. image:: https://img.shields.io/pypi/v/pspy.svg?style=flat
+..   :target: https://pypi.python.org/pypi/pspy/
 .. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
    :target: https://travis-ci.com/simonsobs/pspy
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
@@ -9,13 +15,19 @@ pspy
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=notebooks/%2Findex.ipynb
 
-Python power spectrum library
+* Free software: BSD license
+* Documentation: https://pspy.readthedocs.io.
 
-https://pspy.readthedocs.io/en/latest/
+Installing
+----------
 
+.. To install, you will need to have or to install ``numpy``. Then, run
 
-Installing the code
--------------------
+.. .. code:: shell
+
+..    $ pip install pspy [--user]
+
+If you plan to develop ``pspy``, it is better to checkout the latest version by doing
 
 .. code:: shell
 
@@ -28,14 +40,22 @@ Then you can install the ``pspy`` library and its dependencies *via*
     $ pip install -e /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
-to reinstall at every changes. 
+to reinstall at every changes.
 
-
-Ipython notebooks:
--------------------
+Ipython notebooks
+-----------------
 
 * `Reading, writing and plotting SO maps  <https://pspy.readthedocs.org/en/latest/tutorial_io.html>`_
 * `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
 * `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
 * `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
 
+Others tutorials can be found under the ``tutorials`` directory.
+
+Dependencies
+------------
+
+* Python >= 3.5
+* ``pyFFTW`` https://pyfftw.readthedocs.io
+* ``healpy`` https://healpy.readthedocs.io
+* ``pixell`` >= 0.7.0 https://pixell.readthedocs.io

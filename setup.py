@@ -2,6 +2,8 @@ import setuptools
 from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
 
+import versioneer
+
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 
@@ -19,10 +21,9 @@ cov = Extension(name="pspy.cov_fortran.cov_fortran",
                 sources=["pspy/cov_fortran/cov_fortran.f90", "pspy/wigner3j/wigner3j_sub.f"],
                 **compile_opts)
 
-import versioneer
 setup(
     name="pspy",
-    version= versioneer.get_version(),
+    version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Simons Observatory Collaboration Power Spectrum Task Force",
     url="https://github.com/simonsobs/pspy",
@@ -44,12 +45,12 @@ setup(
     ext_modules=[mcm, cov],
     install_requires=[
         "numpy",
-        # "scipy==1.3.3", # to be used with pyFFTW on pypi
+        "scipy<1.4.0", # to be used with pyFFTW on pypi
         "healpy",
         "cython", # this one should be installed by pyFFTW
-        "pyFFTW @ git+https://github.com/pyFFTW/pyFFTW.git",
+        "pyFFTW",
         "pillow", # this one should be installed by pixell
-        "pixell @ git+https://github.com/simonsobs/pixell.git"],
+        "pixell>=0.7.0"],
     packages=["pspy"],
     data_files=[("data", ["data/Planck_Parchment_RGB.txt"])],
 )
