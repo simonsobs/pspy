@@ -1,8 +1,10 @@
 """
 Utils for pspy.
 """
-import numpy as np
 import os
+
+import numpy as np
+
 
 def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=False):
     """Read a lensed power spectrum from CAMB and return a dictionnary
@@ -28,7 +30,7 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
 
     if lmax is not None:
         l = l[:lmax]
-    scale = l * (l+1) / (2 * np.pi)
+    scale = l * (l + 1) / (2 * np.pi)
     for f in fields:
         if lmax is not None:
             ps[f] = ps[f][:lmax]
@@ -40,12 +42,8 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
         l = np.append(np.array([0, 1]), l)
     return l, ps
 
-def get_nlth_dict(rms_uKarcmin_T,
-                  type,
-                  lmax,
-                  spectra=None,
-                  rms_uKarcmin_pol=None,
-                  beamfile=None):
+
+def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
     """ Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
 
     Parameters
@@ -72,7 +70,7 @@ def get_nlth_dict(rms_uKarcmin_T,
     lth = np.arange(2, lmax + 2)
     nl_th = {}
     if spectra is None:
-        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[2: lmax + 2]**2
+        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[2:lmax + 2]**2
         if type == "Dl":
             nl_th["TT"] *= lth * (lth + 1) / (2 * np.pi)
         return nl_th
@@ -88,6 +86,7 @@ def get_nlth_dict(rms_uKarcmin_T,
             for spec in spectra:
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
+
 
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     """ Create a (constant) binning file, and optionnaly write it to disk
@@ -107,7 +106,7 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     bin_low = bins * bin_size + 2
     bin_hi = (bins + 1) * bin_size + 1
     bin_cent = (bin_low + bin_hi) / 2
-    
+
     if lmax is not None:
         id = np.where(bin_hi < lmax)
         bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
@@ -115,10 +114,11 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     if file_name is None:
         return bin_low, bin_hi, bin_cent
     else:
-        f = open("%s"%file_name, mode="w")
+        f = open("%s" % file_name, mode="w")
         for i in range(n_bins):
-            f.write("%0.2f %0.2f %0.2f\n"%(bin_low[i], bin_hi[i], bin_cent[i]))
+            f.write("%0.2f %0.2f %0.2f\n" % (bin_low[i], bin_hi[i], bin_cent[i]))
         f.close()
+
 
 def read_binning_file(file_name, lmax):
     """Read a binningFile and truncate it to lmax, if bin_low lower than 2, set it to 2.
@@ -141,6 +141,7 @@ def read_binning_file(file_name, lmax):
     bin_size = bin_hi - bin_low + 1
     return bin_low, bin_hi, bin_cent, bin_size
 
+
 def create_directory(name):
     """Create a directory
 
@@ -149,13 +150,11 @@ def create_directory(name):
     name: string
       the name of the directory
     """
-    try:
-        os.makedirs(name)
-    except:
-        pass
+    os.makedirs(name, exist_ok=True)
+
 
 def naive_binning(l, fl, binning_file, lmax):
-    """bin a function of l given a binning file and lmax
+    """Bin a function of l given a binning file and lmax
 
     Parameters
     ----------
@@ -178,17 +177,18 @@ def naive_binning(l, fl, binning_file, lmax):
         fl_bin[ibin] = (fl[loc]).mean()
     return bin_cent, fl_bin
 
+
 def beam_from_fwhm(fwhm_arcminute, lmax):
     """Compute the harmonic transform of the beam
     given the beam full width half maximum in arcminute
-        
+
     Parameters
     ----------
     fwhm_arcminute: float
       full width half maximum in arcminute
     lmax: integer
       the maximum multipole to consider
-        
+
     """
     beam_fwhm_rad = np.deg2rad(fwhm_arcminute) / 60
     fac = beam_fwhm_rad / np.sqrt(8 * np.log(2))
