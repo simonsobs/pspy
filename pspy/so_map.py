@@ -6,11 +6,11 @@ This is a wrapper around healpix and enlib (pixell).
 import os
 from copy import deepcopy
 
-from pixell import enmap,reproject,enplot,curvedsky,powspec
-import healpy as hp
-import pylab as plt
-import numpy as np
 import astropy.io.fits as pyfits
+import healpy as hp
+import matplotlib.pyplot as plt
+import numpy as np
+from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
 from scipy.ndimage import distance_transform_edt
 
 from pspy.pspy_utils import ps_lensed_theory_to_dict
@@ -30,29 +30,29 @@ class so_map:
     def copy(self):
         """ Create a copy of the ``so_map`` object.
         """
-        
+
         return deepcopy(self)
-    
+
     def info(self):
         """ Print information about the ``so_map`` object.
         """
-        
+
         print("pixellisation:", self.pixel)
         print("number of components:", self.ncomp)
         print("number of pixels:", self.data.shape[:] if self.ncomp == 1 else self.data.shape[1:])
         print("nside:", self.nside)
         print("geometry:", self.geometry)
         print("coordinates:", self.coordinate)
-    
+
     def write_map(self, file_name):
         """Write the ``so_map`` to disk.
-            
+
         Parameters
         ----------
         filename : string
           the name of the fits file
         """
-        
+
         if self.pixel == "HEALPIX":
             hp.fitsfunc.write_map(file_name, self.data, overwrite=True)
         if self.pixel == "CAR":
@@ -60,16 +60,16 @@ class so_map:
 
     def upgrade(self, factor):
         """Upgrade the ``so_map``.
-            
+
         Parameters
         ----------
         factor : integer
           factor of increased pixel resolution (should be a factor of 2)
-        
+
         """
-        
-        assert( factor % 2 == 0), "factor should be a factor of 2"
-        
+
+        assert (factor % 2 == 0), "factor should be a factor of 2"
+
         upgrade = self.copy()
         if self.pixel == "HEALPIX":
             nside_out = int(self.nside * factor)
@@ -82,16 +82,16 @@ class so_map:
 
     def downgrade(self, factor):
         """Downgrade the ``so_map``.
-            
+
         Parameters
         ----------
         factor : integer
           factor of decreased pixel resolution (should be a factor of 2)
-        
+
         """
-        
-        assert( factor % 2 == 0), "factor should be a factor of 2"
-        
+
+        assert (factor % 2 == 0), "factor should be a factor of 2"
+
         downgrade = self.copy()
         if self.pixel == "HEALPIX":
             nside_out = int(self.nside / factor)
@@ -101,17 +101,17 @@ class so_map:
             downgrade.data = enmap.downgrade(self.data, factor)
             downgrade.geometry = downgrade.data.geometry[1:]
         return downgrade
-    
+
     def synfast(self, clfile):
         """fill a ``so_map`` with a cmb gaussian simulation.
-        
+
         Parameters
         ----------
         clfile : CAMB data file
           lensed power spectra file from CAMB
-        
+
         """
-        
+
         if self.pixel == "HEALPIX":
             l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
@@ -137,7 +137,7 @@ class so_map:
              cbar=True,
              hp_gnomv=None):
         """Plot a ``so_map``.
-            
+
         Parameters
         ----------
         color: cmap
@@ -145,7 +145,8 @@ class so_map:
         color_range: scalar for single component or len(3) list for T,Q,U.
           the range of the colorscale
         file_name: string
-          file_name is the name of the png file that will be created, if None the plot will be displayed.
+          file_name is the name of the png file that will be created, if None the plot
+          will be displayed.
         title: string
           the title of the plot.
         cbar: boolean
@@ -154,25 +155,21 @@ class so_map:
           for CAR plot, choose the spacing of the ticks.
         hp_gnomv: boolean
           gnomview projection for HEALPIX plotting, expected (lon_c,lat_c,xsize,reso).
-          
+
         """
-        
+        try:
+            colorize.mpl_setdefault(color)
+        except KeyError:
+            if self.pixel == "CAR":
+                raise KeyError("Color name must be a pixell color map name {}!".format(
+                    list(colorize.schemes.keys())))
+
         if self.pixel == "HEALPIX":
-            if color == "planck":
-                from matplotlib.colors import ListedColormap
-                from pspy.so_config import DEFAULT_DATA_DIR
-                planck_rgb_file = os.path.join(DEFAULT_DATA_DIR,"Planck_Parchment_RGB.txt")
-                colombi1_cmap = ListedColormap(np.loadtxt(planck_rgb_file)/255.)
-                colombi1_cmap.set_bad("white")
-                colombi1_cmap.set_under("white")
-                cmap = colombi1_cmap
-            else:
-                cmap = plt.get_cmap(color)
-                cmap.set_bad("white")
-                cmap.set_under("white")
-            
+            cmap = plt.get_cmap(color)
+            cmap.set_bad("white")
+            cmap.set_under("white")
             if self.ncomp == 1:
-                
+
                 min_range = -color_range if color_range is not None else None
                 max_range = +color_range if color_range is not None else None
 
@@ -185,8 +182,9 @@ class so_map:
                                 notext=True,
                                 title=title,
                                 cbar=cbar,
-                                rot=(lon,lat,0),
-                                xsize=xsize,reso=reso)
+                                rot=(lon, lat, 0),
+                                xsize=xsize,
+                                reso=reso)
                 else:
                     hp.mollview(self.data,
                                 min=min_range,
@@ -220,7 +218,7 @@ class so_map:
                                     notext=True,
                                     title=field + "" + title,
                                     cbar=cbar,
-                                    rot=(lon,lat,0),
+                                    rot=(lon, lat, 0),
                                     xsize=xsize,
                                     reso=reso)
                     else:
@@ -237,20 +235,20 @@ class so_map:
                         plt.close
                     else:
                         plt.show()
-                            
+
         if self.pixel == "CAR":
             if self.ncomp == 1:
                 if color_range is not None:
-                    max_range = "%s"%(color_range)
+                    max_range = "%s" % (color_range)
                 else:
-                    max_range = "%s"%(np.max(self.data))
-                
+                    max_range = "%s" % (np.max(self.data))
+
                 plots = enplot.get_plots(self.data,
                                          color=color,
                                          range=max_range,
                                          colorbar=1,
                                          ticks=ticks_spacing_car)
-                
+
                 for plot in plots:
                     if file_name is not None:
                         enplot.write(file_name + ".png", plot)
@@ -258,19 +256,20 @@ class so_map:
                         plot.img.show()
 
             if self.ncomp == 3:
-                fields=["T", "Q", "U"]
-    
+                fields = ["T", "Q", "U"]
+
                 if color_range is not None:
-                    max_range = "%s:%s:%s"%(color_range[0], color_range[1], color_range[2])
+                    max_range = "%s:%s:%s" % (color_range[0], color_range[1], color_range[2])
                 else:
-                    max_range = "%s:%s:%s"%(np.max(self.data[0]), np.max(self.data[1]), np.max(self.data[2]))
+                    max_range = "%s:%s:%s" % (np.max(self.data[0]), np.max(
+                        self.data[1]), np.max(self.data[2]))
 
                 plots = enplot.get_plots(self.data,
                                          color=color,
                                          range=max_range,
                                          colorbar=1,
                                          ticks=ticks_spacing_car)
-    
+
                 for (plot, field) in zip(plots, fields):
                     if file_name is not None:
                         enplot.write(file_name + "_%s" % field + ".png", plot)
@@ -278,9 +277,10 @@ class so_map:
                         #enplot.show(plot,method="ipython")
                         plot.img.show()
 
+
 def read_map(file, coordinate=None, fields_healpix=None):
     """Create a ``so_map`` object from a fits file.
-        
+
     Parameters
     ----------
     file: fits file
@@ -289,9 +289,9 @@ def read_map(file, coordinate=None, fields_healpix=None):
       coordinate system of the map
     fields_healpix: integer
       if fields_healpix is not None, load the specified field
-      
+
     """
-    
+
     new_map = so_map()
     hdulist = pyfits.open(file)
     try:
@@ -333,9 +333,10 @@ def read_map(file, coordinate=None, fields_healpix=None):
 
     return new_map
 
+
 def from_components(T, Q, U):
     """Create a (T,Q,U) ``so_map`` object from three fits files.
-        
+
     Parameters
     ----------
     T : fits file
@@ -345,13 +346,13 @@ def from_components(T, Q, U):
     U : fits file
       name of the U fits file
     """
-    
+
     ncomp = 3
     T = enmap.read_map(T)
     Q = enmap.read_map(Q)
     U = enmap.read_map(U)
     shape, wcs = T.geometry
-    shape = ((ncomp,) + shape)
+    shape = ((ncomp, ) + shape)
     new_map = so_map()
     new_map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     new_map.data[0] = T
@@ -362,12 +363,13 @@ def from_components(T, Q, U):
     new_map.ncomp = ncomp
     new_map.geometry = T.geometry[1:]
     new_map.coordinate = "equ"
-    
+
     return new_map
+
 
 def get_submap_car(map_car, box, mode):
     """Cut a CAR submap (using pixell).
-        
+
     Parameters
     ----------
     map : CAR map in ``so_map`` format
@@ -385,42 +387,45 @@ def get_submap_car(map_car, box, mode):
       "ceil":  both upper and lower bounds will be rounded up
       "inclusive": lower bounds are rounded down, and upper bounds up
       "exclusive": lower bounds are rounded up, and upper bounds down"""
-        
+
     submap = map_car.copy()
     submap.data = map_car.data.submap(box, mode=mode)
     submap.geometry = map_car.data.submap(box, mode=mode).geometry[1:]
-     
+
     return submap
+
 
 def get_box(ra0, ra1, dec0, dec1):
     """Create box in equatorial coordinates.
-        
+
     Parameters
     ----------
     ra0, dec0, ra1, dec1 : floats
       coordinates of the box in degrees
     """
-    
+
     box = np.array([[dec0, ra1], [dec1, ra0]]) * np.pi / 180
-    
+
     return box
+
 
 def bounding_box_from_map(map_car):
     """Get a coordinate box from a map.
-        
+
     Parameters
     ----------
     map_car : ``so_map`` in CAR coordinates
       the map used to define the box
     """
-    
+
     shape, wcs = map_car.data.geometry
-    
+
     return enmap.box(shape, wcs)
+
 
 def from_enmap(emap):
     """Get a ``so_map`` from an enmap (pixell format).
-        
+
     Parameters
     ----------
     emap : a ndmap object
@@ -444,9 +449,10 @@ def from_enmap(emap):
 
     return new_map
 
+
 def healpix2car(healpix_map, template, lmax=None):
     """Project a HEALPIX ``so_map`` into a CAR ``so_map``.
-        
+
     The projection will be done in harmonic space, you can specify a lmax
     to choose a range of multipoles considered in the projection.
     If the coordinate of the map and the template differ, a rotation will be performed.
@@ -460,16 +466,17 @@ def healpix2car(healpix_map, template, lmax=None):
     lmax: integer
       the maximum multipole in the HEALPIX map to project
     """
-    
+
     project = template.copy()
-            
+
     if healpix_map.coordinate is None or template.coordinate is None:
         rot = None
     elif healpix_map.coordinate == template.coordinate:
         rot = None
     else:
-        print("will rotate from %s to %s coordinate system"%(healpix_map.coordinate, template.coordinate))
-        rot = "%s,%s"%(healpix_map.coordinate, template.coordinate)
+        print("will rotate from %s to %s coordinate system" %
+              (healpix_map.coordinate, template.coordinate))
+        rot = "%s,%s" % (healpix_map.coordinate, template.coordinate)
     if lmax > 3 * healpix_map.nside - 1:
         print("WARNING: your lmax is too large, setting it to 3*nside-1 now")
         lmax = 3 * healpix_map.nside - 1
@@ -486,9 +493,10 @@ def healpix2car(healpix_map, template, lmax=None):
 
     return project
 
+
 def car2car(map_car, template):
     """Project a CAR map into another CAR map with different pixellisation
-    
+
     Parameters
     ----------
     map : ``so_map`` in CAR pixellisation
@@ -496,14 +504,15 @@ def car2car(map_car, template):
     template: ``so_map`` in CAR pixellisation
         the template that will be projected onto
     """
-    
+
     project = template.copy()
     project.data = enmap.project(map_car.data, template.data.shape, template.data.wcs)
     return project
 
-def healpix_template(ncomp, nside, coordinate = None):
+
+def healpix_template(ncomp, nside, coordinate=None):
     """Create a ``so_map`` template with healpix pixellisation.
-        
+
     Parameters
     ----------
     ncomp: integer
@@ -513,13 +522,13 @@ def healpix_template(ncomp, nside, coordinate = None):
     coordinate: string
       coordinate system of the map
     """
-    
+
     temp = so_map()
-    
-    if ncomp==3:
-        temp.data = np.zeros((3, 12*nside**2))
+
+    if ncomp == 3:
+        temp.data = np.zeros((3, 12 * nside**2))
     else:
-        temp.data = np.zeros((12*nside**2))
+        temp.data = np.zeros((12 * nside**2))
 
     temp.pixel = "HEALPIX"
     temp.ncomp = ncomp
@@ -528,9 +537,10 @@ def healpix_template(ncomp, nside, coordinate = None):
     temp.coordinate = coordinate
     return temp
 
+
 def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     """Create a ``so_map`` template with CAR pixellisation in equ coordinates.
-        
+
     Parameters
     ----------
     ncomp: integer
@@ -540,16 +550,16 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     res: float
       resolution in arcminute
     """
-    
+
     if ncomp == 3:
-        pre = (3,)
+        pre = (3, )
     else:
         pre = ()
-    
+
     box = get_box(ra0, ra1, dec0, dec1)
     res = res * np.pi / (180 * 60)
     temp = so_map()
-    shape,wcs = enmap.geometry(box, res=res, pre=pre)
+    shape, wcs = enmap.geometry(box, res=res, pre=pre)
     temp.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     temp.pixel = "CAR"
     temp.nside = None
@@ -558,9 +568,10 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     temp.coordinate = "equ"
     return temp
 
+
 def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     """Generate a white noise realisation corresponding to the template pixellisation
-        
+
     Parameters
     ----------
     template: ``so_map`` template
@@ -570,9 +581,9 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     rms_uKarcmin_pol: float
       the white noise polarisation rms in uK.arcmin
       if None set it to sqrt(2)*rms_uKarcmin_T
-      
+
     """
-    
+
     noise = template.copy()
     rad_to_arcmin = 60 * 180 / np.pi
     if noise.pixel == "HEALPIX":
@@ -603,9 +614,10 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
 
     return noise
 
+
 def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     """Simulate a point source mask in a binary template
-        
+
     Parameters
     ----------
     binary:  ``so_map`` binary template
@@ -615,16 +627,16 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     hole_radius_arcmin: float
       the radius of the holes
     """
-    
+
     mask = binary.copy()
     if binary.pixel == "HEALPIX":
         idx = np.where(binary.data == 1)
         for i in range(n_holes):
             random_index1 = np.random.choice(idx[0])
-            vec=hp.pixelfunc.pix2vec(binary.nside, random_index1)
+            vec = hp.pixelfunc.pix2vec(binary.nside, random_index1)
             disc = hp.query_disc(binary.nside, vec, hole_radius_arcmin / (60. * 180) * np.pi)
             mask.data[disc] = 0
-    
+
     if binary.pixel == "CAR":
         pixSize_arcmin = np.sqrt(binary.data.pixsize() * (60 * 180 / np.pi)**2)
         random_index1 = np.random.randint(0, binary.data.shape[0], size=n_holes)
@@ -634,5 +646,3 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
         mask.data[dist * pixSize_arcmin < hole_radius_arcmin] = 0
 
     return mask
-
-
