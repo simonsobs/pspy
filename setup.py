@@ -52,5 +52,4 @@ setup(
         "pillow", # this one should be installed by pixell
         "pixell>=0.7.0"],
     packages=["pspy"],
-    data_files=[("data", ["data/Planck_Parchment_RGB.txt"])],
 )
