@@ -26,3 +26,5 @@ Next, clone pspy and install as follow
     cd pspy
     python setup.py build_ext -i --fcompiler=intelem --compiler=intelem
     pip install -e . --user
+
+That is it, you should be done !
