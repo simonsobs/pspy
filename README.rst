@@ -42,7 +42,7 @@ Then you can install the ``pspy`` library and its dependencies *via*
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
 to reinstall at every changes.
 
-Instructions for installing pspy at NERSC are available at `INSTALL.rst <INSTALL.rst>`.
+Instructions for installing pspy at NERSC are available at `INSTALL.rst <https://github.com/simonsobs/pspy/INSTALL.rst>`.
 
 Ipython notebooks
 -----------------
