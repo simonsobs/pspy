@@ -28,4 +28,4 @@ Next, clone pspy and install as follow
     pip install -e . --user
 
 That is it, you should be done !
-Not that the pixell library doesn't run on the login node, so to test go to an interactive one !
+note that the pixell library does not run on the login node, so to test go to an interactive one !
