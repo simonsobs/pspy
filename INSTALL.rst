@@ -26,3 +26,6 @@ Next, clone pspy and install as follow
     cd pspy
     python setup.py build_ext -i --fcompiler=intelem --compiler=intelem
     pip install -e . --user
+
+That is it, you should be done !
+note that the pixell library does not run on the login node, so to test go to an interactive one !
