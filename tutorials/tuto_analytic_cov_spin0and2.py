@@ -13,7 +13,7 @@ import os,time
 
 #We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
 # It will have a resolution of 1 arcminute
-ra0, ra1, dec0, dec1 = -10, 10, -10, 10
+ra0, ra1, dec0, dec1 = -10, 10, -8, 8
 res = 2.5
 # ncomp=3 mean that we are going to use spin0 and 2 field
 ncomp = 3
@@ -46,7 +46,7 @@ apo_radius_degree_mask = 0.3
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 DoMonteCarlo = True
-n_sims = 20
+n_sims = 150
 
 test_dir = "result_cov_spin0and2"
 try:
@@ -102,7 +102,8 @@ for name1, id1 in zip(name_list, id_list):
         spec = id1[0] + id2[0]
         Clth_dict[id1 + id2] = ps_theory[spec] + nl_th[spec] * so_cov.delta2(name1, name2)
 
-coupling_dict = so_cov.cov_coupling_spin0and2(window, lmax, niter=niter)
+
+coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter)
 analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
 
 if DoMonteCarlo == True:
@@ -146,7 +147,7 @@ if DoMonteCarlo == True:
                                                 mbb_inv=mbb_inv,
                                                 spectra=spectra)
                 vec = []
-                for spec in ["TT","TE","EE"]:
+                for spec in ["TT", "TE", "ET", "EE"]:
                     vec = np.append(vec, Db[spec])
                 Db_list[spec_name] += [vec]
 
@@ -170,18 +171,8 @@ if DoMonteCarlo == True:
     plt.subplot(1, 2, 1)
     plt.title("Monte-Carlo correlation matrix", fontsize=22)
     plt.imshow(corr, vmin=-0.5, vmax=0.5, origin="lower")
-    ticks = np.arange(4, 3*n_bins, 15)
-    labels = (lb[ticks%n_bins]).astype(int)
-    plt.xticks(ticks, labels)
-    plt.yticks(ticks, labels)
-    plt.ylabel(r"$\ell_{TT}  \hspace{3}   \ell_{TE} \hspace{3}   \ell_{EE}$",fontsize=22)
-    plt.xlabel(r"$\ell_{TT}  \hspace{3}   \ell_{TE} \hspace{3}   \ell_{EE}$",fontsize=22)
     plt.colorbar()
     plt.subplot(1, 2, 2)
-    plt.ylabel(r"$\ell_{TT}  \hspace{3}   \ell_{TE} \hspace{3}   \ell_{EE}$",fontsize=22)
-    plt.xlabel(r"$\ell_{TT}  \hspace{3}   \ell_{TE} \hspace{3}   \ell_{EE}$",fontsize=22)
-    plt.xticks(ticks, labels)
-    plt.yticks(ticks, labels)
     plt.title("Analytic correlation matrix", fontsize=22)
     plt.imshow(analytic_corr, vmin=-0.5, vmax=0.5, origin="lower")
     plt.colorbar()
@@ -189,13 +180,15 @@ if DoMonteCarlo == True:
     plt.clf()
     plt.close()
 
-
     plt.figure(figsize=(15, 15))
     count = 1
-    for bl in ["TTTT","EEEE","TETE","TTEE","TEEE","TETT"]:
-        plt.subplot(2, 3, count)
-        cov_select = so_cov.selectblock(cov, ["TT", "TE", "EE"], n_bins, block=bl)
-        analytic_cov_select = so_cov.selectblock(analytic_cov,  ["TT", "TE", "EE"], n_bins,block=bl)
+    for bl in ["TTTT", "TETE", "ETET", "EEEE",
+               "TTTE", "TTET", "TTEE", "TEET",
+               "TEEE", "ETEE"]:
+        
+        plt.subplot(2, 5, count)
+        cov_select = so_cov.selectblock(cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl)
+        analytic_cov_select = so_cov.selectblock(analytic_cov,  ["TT", "TE", "ET", "EE"], n_bins,block=bl)
         var = cov_select.diagonal()
         analytic_var = analytic_cov_select.diagonal()
         # plt.semilogy()
