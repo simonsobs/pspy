@@ -1,13 +1,12 @@
 """
 Routines for mode coupling calculation. For more details on computation of the matrix see
-https://pspy.readthedocs.io/en/latest/mcm.pdf.
+https://pspy.readthedocs.io/en/latest/scientific_doc.pdf.
 """
 
 from copy import deepcopy
 
 import healpy as hp
 import numpy as np
-
 from pspy import pspy_utils, sph_tools
 from pspy.mcm_fortran import mcm_fortran
 
@@ -104,6 +103,7 @@ def mcm_and_bbl_spin0(win1,
             save_coupling(save_file, mbb_inv, Bbl)
         return mbb_inv, Bbl
 
+
 def mcm_and_bbl_spin0and2(win1,
                           binning_file,
                           lmax,
@@ -148,16 +148,15 @@ def mcm_and_bbl_spin0and2(win1,
       the maximum multipole to consider for the mcm computation
       lmax_pad should always be greater than lmax
     """
-
     def get_coupling_dict(array, fac=1.0):
         ncomp, dim1, dim2 = array.shape
-        dict={}
+        dict = {}
         dict["spin0xspin0"] = array[0, :, :]
         dict["spin0xspin2"] = array[1, :, :]
         dict["spin2xspin0"] = array[2, :, :]
         dict["spin2xspin2"] = np.zeros((4 * dim1, 4 * dim2))
         for i in range(4):
-            dict["spin2xspin2"][i * dim1:(i+1) * dim1, i * dim2:(i+1) * dim2] = array[3, :, :]
+            dict["spin2xspin2"][i * dim1:(i + 1) * dim1, i * dim2:(i + 1) * dim2] = array[3, :, :]
         dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = array[4, :, :] * fac
         dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = array[4, :, :] * fac
         dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
@@ -174,9 +173,12 @@ def mcm_and_bbl_spin0and2(win1,
         maxl = lmax_pad
 
     if input_alm == False:
-        win1 = (sph_tools.map2alm(win1[0], niter=niter, lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
+        win1 = (sph_tools.map2alm(win1[0], niter=niter,
+                                  lmax=maxl), sph_tools.map2alm(win1[1], niter=niter, lmax=maxl))
         if win2 is not None:
-            win2 = (sph_tools.map2alm(win2[0], niter=niter, lmax=maxl), sph_tools.map2alm(win2[1], niter=niter, lmax=maxl))
+            win2 = (sph_tools.map2alm(win2[0], niter=niter,
+                                      lmax=maxl), sph_tools.map2alm(win2[1], niter=niter,
+                                                                    lmax=maxl))
     if win2 is None:
         win2 = deepcopy(win1)
 
@@ -187,7 +189,7 @@ def mcm_and_bbl_spin0and2(win1,
 
     wcl = {}
     wbl = {}
-    spins = ["0","2"]
+    spins = ["0", "2"]
 
     for i, spin1 in enumerate(spins):
         for j, spin2 in enumerate(spins):
@@ -198,14 +200,12 @@ def mcm_and_bbl_spin0and2(win1,
 
     mcm = np.zeros((5, maxl, maxl))
 
-    if pure==False:
-        mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"],
-                                       wbl["00"], wbl["02"], wbl["20"], wbl["22"],
-                                       mcm.T)
+    if pure == False:
+        mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], wbl["00"],
+                                       wbl["02"], wbl["20"], wbl["22"], mcm.T)
     else:
-        mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"], wcl["02"], wcl["20"], wcl["22"],
-                                            wbl["00"], wbl["02"], wbl["20"], wbl["22"],
-                                            mcm.T)
+        mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"], wcl["02"], wcl["20"], wcl["22"], wbl["00"],
+                                            wbl["02"], wbl["20"], wbl["22"], mcm.T)
 
     mcm = mcm[:, :lmax, :lmax]
 
@@ -216,8 +216,10 @@ def mcm_and_bbl_spin0and2(win1,
     Bbl_array = np.zeros((5, n_bins, lmax))
 
     for i in range(5):
-        mcm_fortran.bin_mcm((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (mbb_array[i,:,:]).T, doDl)
-        mcm_fortran.binning_matrix((mcm[i,:,:]).T, bin_lo, bin_hi, bin_size, (Bbl_array[i,:,:]).T, doDl)
+        mcm_fortran.bin_mcm((mcm[i, :, :]).T, bin_lo, bin_hi, bin_size, (mbb_array[i, :, :]).T,
+                            doDl)
+        mcm_fortran.binning_matrix((mcm[i, :, :]).T, bin_lo, bin_hi, bin_size,
+                                   (Bbl_array[i, :, :]).T, doDl)
 
     mbb = get_coupling_dict(mbb_array, fac=-1.0)
     Bbl = get_coupling_dict(Bbl_array, fac=1.0)
@@ -242,6 +244,7 @@ def mcm_and_bbl_spin0and2(win1,
             save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs)
         return mbb_inv, Bbl
 
+
 def coupling_dict_to_array(dict):
     """Take a mcm or Bbl dictionnary with entries:
 
@@ -258,14 +261,15 @@ def coupling_dict_to_array(dict):
     """
 
     dim1, dim2 = dict["spin0xspin0"].shape
-    array = np.zeros((9*dim1,9*dim2))
+    array = np.zeros((9 * dim1, 9 * dim2))
     array[0:dim1, 0:dim2] = dict["spin0xspin0"]
-    array[dim1:2*dim1, dim2:2*dim2] = dict["spin0xspin2"]
-    array[2*dim1:3*dim1, 2*dim2:3*dim2] = dict["spin0xspin2"]
-    array[3*dim1:4*dim1, 3*dim2:4*dim2] = dict["spin2xspin0"]
-    array[4*dim1:5*dim1, 4*dim2:5*dim2] = dict["spin2xspin0"]
-    array[5*dim1:9*dim1, 5*dim2:9*dim2] = dict["spin2xspin2"]
+    array[dim1:2 * dim1, dim2:2 * dim2] = dict["spin0xspin2"]
+    array[2 * dim1:3 * dim1, 2 * dim2:3 * dim2] = dict["spin0xspin2"]
+    array[3 * dim1:4 * dim1, 3 * dim2:4 * dim2] = dict["spin2xspin0"]
+    array[4 * dim1:5 * dim1, 4 * dim2:5 * dim2] = dict["spin2xspin0"]
+    array[5 * dim1:9 * dim1, 5 * dim2:9 * dim2] = dict["spin2xspin2"]
     return array
+
 
 def apply_Bbl(Bbl, ps, spectra=None):
     """Bin theoretical power spectra
@@ -295,6 +299,7 @@ def apply_Bbl(Bbl, ps, spectra=None):
     else:
         ps_th = np.dot(Bbl, ps)
     return ps_th
+
 
 def save_coupling(prefix, mbb_inv, Bbl, spin_pairs=None, mcm_inv=None):
     """Save the inverse of the mode coupling matrix and the binning matrix in npy format
