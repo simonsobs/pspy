@@ -17,7 +17,7 @@ python example notebooks for an introductory set of examples on how to use the p
 
 * Free software: BSD license
 * pspy documentation: https://pspy.readthedocs.io.
-* Scientific documentation: https://pspy.readthedocs.io/en/latest/scientific_doc.pdf
+* scientific documentation: https://pspy.readthedocs.io/en/latest/scientific_doc.pdf
 
 
 Installing
