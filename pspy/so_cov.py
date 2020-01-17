@@ -64,9 +64,8 @@ def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
     return coupling_dict
 
 
-def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
+def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
     """Compute the coupling kernels corresponding to the T and E covariance matrix
-        see Section IV B of https://www.overleaf.com/read/fvrcvgbzqwrz
 
     Parameters
     ----------
@@ -82,10 +81,13 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
       the name of the file in which the coupling kernel will be saved (npy format)
     """
 
-    win_list = ["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
-                "TaTcPbPd", "TaPdPbTc", "TaTcTbPd", "TaPdTbTc",
-                "TaPcTbPd", "TaPdTbPc", "PaTcPbPd", "PaPdPbTc"]
 
+    win_list = ["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
+                "TaTcPbPd", "TaPdPbTc", "PaPcTbTd", "PaTdTbPc",
+                "TaPcTbPd", "TaPdTbPc", "TaTcTbPd", "TaPdTbTc",
+                "TaPcTbTd", "TaTdTbPc", "TaPcPbTd", "TaTdPbPc",
+                "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc"]
+                
     coupling_dict = {}
     if type(win) is not dict:
         sq_win = win.copy()
@@ -94,10 +96,10 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
         wcl = hp.alm2cl(alm)
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
-        coupling = np.zeros((3, lmax, lmax))
-        cov_fortran.calc_cov_spin0and2_single_win(wcl, coupling.T)
+        coupling = np.zeros((1, lmax, lmax))
+        cov_fortran.calc_cov_spin0and2_single_win_simple(wcl, coupling.T)
 
-        indexlist=[0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 2, 2]
+        indexlist=np.zeros(20, dtype=np.int8)
 
         for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
@@ -119,13 +121,15 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2 * l + 1) / (4 * np.pi)
 
-        coupling = np.zeros((12, lmax, lmax))
-        cov_fortran.calc_cov_spin0and2(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
-                                       wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
-                                       wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["PaTcPbPd"], wcl["PaPdPbTc"],
-                                       coupling.T)
+        coupling = np.zeros((20, lmax, lmax))
+        cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
+                                              wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
+                                              wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
+                                              wcl["TaPcTbTd"], wcl["TaTdTbPc"], wcl["TaPcPbTd"], wcl["TaTdPbPc"],
+                                              wcl["TaPcPbPd"], wcl["TaPdPbPc"], wcl["PaPcTbPd"], wcl["PaPdTbPc"],
+                                              coupling.T)
 
-        indexlist = np.arange(12)
+        indexlist = np.arange(20)
         for name, index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
 
@@ -134,7 +138,7 @@ def cov_coupling_spin0and2(win, lmax, niter=0, save_file=None):
 
     return coupling_dict
 
-def read_coupling(file):
+def read_coupling(file, spectra=None):
     """Read a precomputed coupling kernels
     the code use the size of the array to infer what type of survey it corresponds to
 
@@ -147,26 +151,28 @@ def read_coupling(file):
 
     coupling = np.load("%s.npy"%file)
     coupling_dict = {}
-    if coupling.shape[0] == 12:
-        win_list = ["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
-                    "TaTcPbPd", "TaPdPbTc", "TaTcTbPd", "TaPdTbTc",
-                    "TaPcTbPd", "TaPdTbPc", "PaTcPbPd", "PaPdPbTc"]
-        indexlist = np.arange(12)
-    elif coupling.shape[0] == 3:
-        win_list=["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
-                  "TaTcPbPd", "TaPdPbTc", "TaTcTbPd", "TaPdTbTc",
-                  "TaPcTbPd", "TaPdTbPc", "PaTcPbPd", "PaPdPbTc"]
-        indexlist=[0, 0, 1, 1, 2, 0, 0, 0, 0, 0, 2, 2]
-    elif coupling.shape[0] == 2:
+    if spectra is None:
         win_list = ["TaTcTbTd", "TaTdTbTc"]
-        indexlist = [0,1]
-    elif coupling.shape[0] == 1:
-        win_list= ["TaTcTbTd", "TaTdTbTc"]
-        indexlist = [0,0]
+        if coupling.shape[0] == 2:
+            indexlist = [0,1]
+        elif coupling.shape[0] == 1:
+            indexlist = [0,0]
+    else:
+        win_list = ["TaTcTbTd", "TaTdTbTc", "PaPcPbPd", "PaPdPbPc",
+                    "TaTcPbPd", "TaPdPbTc", "PaPcTbTd", "PaTdTbPc",
+                    "TaPcTbPd", "TaPdTbPc", "TaTcTbPd", "TaPdTbTc",
+                    "TaPcTbTd", "TaTdTbPc", "TaPcPbTd", "TaTdPbPc",
+                    "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc"]
+        if coupling.shape[0] == 20:
+            indexlist = np.arange(20)
+        elif coupling.shape[0] == 1:
+            indexlist=np.zeros(20, dtype=np.int8)
+        
     for name, index in zip(win_list, indexlist):
         coupling_dict[name] = coupling[index]
 
     return coupling_dict
+
 
 def symmetrize(Clth, mode="arithm"):
     """Take a power spectrum Cl and return a symmetric array C_l1l2=f(Cl)
@@ -227,8 +233,11 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
 
     cov = symmetrize(Clth_dict["TaTc"]) * symmetrize(Clth_dict["TbTd"]) * coupling_dict["TaTcTbTd"]
     cov += symmetrize(Clth_dict["TaTd"]) * symmetrize(Clth_dict["TbTc"]) * coupling_dict["TaTdTbTc"]
+    
     analytic_cov = bin_mat(cov, binning_file, lmax)
+    
     analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+
     return analytic_cov
 
 def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
@@ -253,21 +262,54 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     TaTc, TbTd, TaTd, TbTc = symmetrize(Clth_dict["TaTc"]), symmetrize(Clth_dict["TbTd"]), symmetrize(Clth_dict["TaTd"]), symmetrize(Clth_dict["TbTc"])
     EaEc, EbEd, EaEd, EbEc = symmetrize(Clth_dict["EaEc"]), symmetrize(Clth_dict["EbEd"]), symmetrize(Clth_dict["EaEd"]), symmetrize(Clth_dict["EbEc"])
-    TaEd, TaEc, TbEc = symmetrize(Clth_dict["TaEd"]), symmetrize(Clth_dict["TaEc"]), symmetrize(Clth_dict["TbEc"])
-    TbEd, EaTc, EbTc = symmetrize(Clth_dict["TbEd"]), symmetrize(Clth_dict["EaTc"]), symmetrize(Clth_dict["EbTc"])
-
+    TaEc, TaEd, TbEc, TbEd = symmetrize(Clth_dict["TaEc"]), symmetrize(Clth_dict["TaEd"]), symmetrize(Clth_dict["TbEc"]), symmetrize(Clth_dict["TbEd"])
+    EaTc, EaTd, EbTc, EbTd = symmetrize(Clth_dict["EaTc"]), symmetrize(Clth_dict["EaTd"]), symmetrize(Clth_dict["EbTc"]), symmetrize(Clth_dict["EbTd"])
+    
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
-    analytic_cov = np.zeros((3*n_bins, 3*n_bins))
+    analytic_cov = np.zeros((4*n_bins, 4*n_bins))
 
-    analytic_cov[:n_bins, :n_bins] = bin_mat(TaTc * TbTd * coupling_dict["TaTcTbTd"] + TaTd * TbTc * coupling_dict["TaTdTbTc"], binning_file, lmax) #TTTT
-    analytic_cov[n_bins:2*n_bins, n_bins:2*n_bins] = bin_mat(TaTc * EbEd * coupling_dict["TaTcPbPd"] + TaEd * EbTc * coupling_dict["TaPdPbTc"], binning_file, lmax) #TETE
-    analytic_cov[2*n_bins:3*n_bins, 2*n_bins:3*n_bins] = bin_mat(EaEc * EbEd * coupling_dict["PaPcPbPd"] + EaEd * EbEc * coupling_dict["PaPdPbPc"], binning_file, lmax) #EEEE
-    analytic_cov[n_bins:2*n_bins, :n_bins] = bin_mat(TaTc * TbEd * coupling_dict["TaTcTbPd"] + TaEd * TbTc * coupling_dict["TaPdTbTc"], binning_file, lmax)  #TTTE
-    analytic_cov[2*n_bins:3*n_bins, :n_bins] = bin_mat(TaEc * TbEd * coupling_dict["TaPcTbPd"] + TaEd * TbEc * coupling_dict["TaPdTbPc"], binning_file, lmax) #TTEE
-    analytic_cov[2*n_bins:3*n_bins, n_bins:2*n_bins] = bin_mat(EaTc * EbEd * coupling_dict["PaTcPbPd"] + EaEd * EbTc * coupling_dict["TaPdTbPc"], binning_file, lmax) #TEEE
+    #TaTbTcTd
+    M_00 = TaTc * TbTd * coupling_dict["TaTcTbTd"] + TaTd * TbTc * coupling_dict["TaTdTbTc"]
+    analytic_cov[0*n_bins:1*n_bins, 0*n_bins:1*n_bins] = bin_mat(M_00, binning_file, lmax)
+    
+    #TaEbTcEd
+    M_11 = TaTc * EbEd * coupling_dict["TaTcPbPd"] + TaEd * EbTc * coupling_dict["TaPdPbTc"]
+    analytic_cov[1*n_bins:2*n_bins, 1*n_bins:2*n_bins] = bin_mat(M_11, binning_file, lmax)
+    
+    #EaTbEcTd
+    M_22 = EaEc * TbTd * coupling_dict["PaPcTbTd"] + EaTd * TbEc * coupling_dict["PaTdTbPc"]
+    analytic_cov[2*n_bins:3*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_22, binning_file, lmax)
 
-    analytic_cov = np.tril(analytic_cov) + np.triu(analytic_cov.T, 1)
+    #EaEbEcEd
+    M_33 = EaEc * EbEd * coupling_dict["PaPcPbPd"] + EaEd * EbEc * coupling_dict["PaPdPbPc"]
+    analytic_cov[3*n_bins:4*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_33, binning_file, lmax)
+    
+    #TaTbTcEd
+    M_01 = TaTc * TbEd * coupling_dict["TaTcTbPd"] + TaEd * TbTc * coupling_dict["TaPdTbTc"]
+    analytic_cov[0*n_bins:1*n_bins, 1*n_bins:2*n_bins] = bin_mat(M_01, binning_file, lmax)
+
+    #TaTbEcTd
+    M_02 = TaEc * TbTd * coupling_dict["TaPcTbTd"] + TaTd * TbEc * coupling_dict["TaTdTbPc"]
+    analytic_cov[0*n_bins:1*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_02, binning_file, lmax)
+
+    #TaTbEcEd
+    M_03 = TaEc * TbEd * coupling_dict["TaPcTbPd"] + TaEd * TbEc * coupling_dict["TaPdTbPc"]
+    analytic_cov[0*n_bins:1*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_03, binning_file, lmax)
+
+    #TaEbEcTd
+    M_12 = TaEc * EbTd * coupling_dict["TaPcPbTd"] + TaTd * EbEc * coupling_dict["TaTdPbPc"]
+    analytic_cov[1*n_bins:2*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_12, binning_file, lmax)
+
+    #TaEbEcEd
+    M_13 = TaEc * EbEd * coupling_dict["TaPcPbPd"] + TaEd * EbEc * coupling_dict["TaPdPbPc"]
+    analytic_cov[1*n_bins:2*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_13, binning_file, lmax)
+
+    #EaTbEcEd
+    M_23 = EaEc * TbEd * coupling_dict["PaPcTbPd"] + EaEd * TbEc * coupling_dict["PaPdTbPc"]
+    analytic_cov[2*n_bins:3*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_23, binning_file, lmax)
+
+    analytic_cov = np.triu(analytic_cov) + np.tril(analytic_cov.T, -1)
 
     mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
     mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
@@ -275,6 +317,7 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
     analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
 
     return analytic_cov
+
 
 def extract_TTTEEE_mbb(mbb_inv):
     """The mode coupling marix is computed for T,E,B but for now we only construct analytical covariance matrix for T and E
@@ -289,12 +332,21 @@ def extract_TTTEEE_mbb(mbb_inv):
 
     mbb_inv_array = so_mcm.coupling_dict_to_array(mbb_inv)
     mbb_array = np.linalg.inv(mbb_inv_array)
-    n_bins = int(mbb_array.shape[0] / 9)
-    mbb_array_select = np.zeros((3*n_bins, 3*n_bins))
-    mbb_array_select[:n_bins, :n_bins] = mbb_array[:n_bins, :n_bins]
-    mbb_array_select[n_bins:2*n_bins, n_bins:2*n_bins] = mbb_array[n_bins:2*n_bins, n_bins:2*n_bins]
-    mbb_array_select[2*n_bins:3*n_bins, 2*n_bins:3*n_bins] = mbb_array[5*n_bins:6*n_bins, 5*n_bins:6*n_bins]
+    nbins = int(mbb_array.shape[0] / 9)
+    
+    
+    mbb_array_select = np.zeros((4*nbins, 4*nbins))
+    # TT
+    mbb_array_select[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_array[0*nbins:1*nbins, 0*nbins:1*nbins]
+    # TE
+    mbb_array_select[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_array[1*nbins:2*nbins, 1*nbins:2*nbins]
+    # ET
+    mbb_array_select[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_array[3*nbins:4*nbins, 3*nbins:4*nbins]
+    # EE
+    mbb_array_select[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_array[5*nbins:6*nbins, 5*nbins:6*nbins]
+
     mbb_inv_array = np.linalg.inv(mbb_array_select)
+    
     return mbb_inv_array
 
 def cov2corr(cov):
@@ -382,6 +434,7 @@ def g(a, b, c, d, ns):
     result /= (ns[a] * ns[b] * (ns[c] - delta2(a, c)) * (ns[d] - delta2(b, d)))
     return result
 
+
 def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     """doc not ready yet
     """
@@ -389,24 +442,45 @@ def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     exp_beta, f_beta = beta.split("_")
     exp_gamma, f_gamma = gamma.split("_")
     exp_eta, f_eta = eta.split("_")
-
-    RX = id[0] + id[2]
-    SY = id[1] + id[3]
+    
+    RX = id[0] + id[1]
+    SY = id[2] + id[3]
     chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
     chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
-    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] *f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
+    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] * f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
     chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
-
-    print ("RX",RX)
-    print ("SY",SY)
-    print ("ns",ns)
-    print (r"f_{%s %s}^{%s %s}"%(exp_beta,exp_eta,exp_alpha,exp_gamma),f(exp_beta,exp_eta,exp_alpha,exp_gamma,ns))
-    print (r"f_{%s %s}^{%s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),f(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
-    print (r"g_{%s %s %s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),g(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
-
+    
     chi= symmetrize(chi, mode="arithm")
-
+    
     return chi
+
+
+
+#def chi_old(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
+#    """doc not ready yet
+#    """
+#    exp_alpha, f_alpha = alpha.split("_")
+#    exp_beta, f_beta = beta.split("_")
+#    exp_gamma, f_gamma = gamma.split("_")
+#    exp_eta, f_eta = eta.split("_")
+
+#    RX = id[0] + id[2]
+#    SY = id[1] + id[3]
+#    chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
+#    chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
+#    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] *f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
+#    chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
+
+#    print ("RX",RX)
+#    print ("SY",SY)
+#    print ("ns",ns)
+#    print (r"f_{%s %s}^{%s %s}"%(exp_beta,exp_eta,exp_alpha,exp_gamma),f(exp_beta,exp_eta,exp_alpha,exp_gamma,ns))
+#    print (r"f_{%s %s}^{%s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),f(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
+#    print (r"g_{%s %s %s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),g(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
+
+#    chi= symmetrize(chi, mode="arithm")
+
+#    return chi
 
 
 # def calc_cov_lensed(noise_uK_arcmin,
