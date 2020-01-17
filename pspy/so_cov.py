@@ -11,7 +11,7 @@ from pspy.cov_fortran import cov_fortran
 
 def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
-        see Section IV A of https://www.overleaf.com/read/fvrcvgbzqwrz
+        
 
    Parameters
     ----------
@@ -419,7 +419,7 @@ def delta4(a, b, c, d):
         return 0
 
 def f(a, b, c, d, ns):
-    """f combination factor in the covariance computation (https://www.overleaf.com/read/fvrcvgbzqwrz)
+    """f combination factor in the covariance computation
     """
 
     result = 1. * ns[a] * (ns[c] * ns[d] * delta2(a, b) - ns[c] * delta3(a, b, d) - ns[d] * delta3(a, b, c) + delta4(a, b, c, d))
@@ -427,7 +427,7 @@ def f(a, b, c, d, ns):
     return result
 
 def g(a, b, c, d, ns):
-    """g combination factor in the covariance computation (https://www.overleaf.com/read/fvrcvgbzqwrz)
+    """g combination factor in the covariance computation
     """
 
     result = 1. * ns[a] * (ns[c] * delta2(a,b) * delta2(c, d) - delta4(a, b, c, d))
