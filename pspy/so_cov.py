@@ -1,6 +1,6 @@
 """
 Tools for analytical covariance matrix estimation. For more details on computation of the matrix see
-https://pspy.readthedocs.io/en/latest/mcm.pdf.
+https://pspy.readthedocs.io/en/latest/scientific_doc.pdf.
 """
 import healpy as hp
 import numpy as np
