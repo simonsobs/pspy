@@ -16,7 +16,9 @@ python example notebooks for an introductory set of examples on how to use the p
    :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=notebooks/%2Findex.ipynb
 
 * Free software: BSD license
-* Documentation: https://pspy.readthedocs.io.
+* pspy documentation: https://pspy.readthedocs.io.
+* Scientific documentation: https://pspy.readthedocs.io/en/latest/scientific_doc.pdf
+
 
 Installing
 ----------
