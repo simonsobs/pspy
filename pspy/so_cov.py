@@ -86,7 +86,10 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
                 "TaTcPbPd", "TaPdPbTc", "PaPcTbTd", "PaTdTbPc",
                 "TaPcTbPd", "TaPdTbPc", "TaTcTbPd", "TaPdTbTc",
                 "TaPcTbTd", "TaTdTbPc", "TaPcPbTd", "TaTdPbPc",
-                "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc"]
+                "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc",
+                "TaTcPbTd", "TaTdPbTc", "PaTcTbTd", "PaTdTbTc",
+                "PaTcPbTd", "PaTdPbTc", "PaTcTbPd", "PaPdTbTc",
+                "PaTcPbPd", "PaPdPbTc", "PaPcPbTd", "PaTdPbPc"]
                 
     coupling_dict = {}
     if type(win) is not dict:
@@ -99,7 +102,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
         coupling = np.zeros((1, lmax, lmax))
         cov_fortran.calc_cov_spin0and2_single_win_simple(wcl, coupling.T)
 
-        indexlist=np.zeros(20, dtype=np.int8)
+        indexlist=np.zeros(32, dtype=np.int8)
 
         for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
@@ -121,15 +124,18 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
             l = np.arange(len(wcl[n0+n1+n2+n3]))
             wcl[n0+n1+n2+n3] *= (2 * l + 1) / (4 * np.pi)
 
-        coupling = np.zeros((20, lmax, lmax))
+        coupling = np.zeros((32, lmax, lmax))
         cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
                                               wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
                                               wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
                                               wcl["TaPcTbTd"], wcl["TaTdTbPc"], wcl["TaPcPbTd"], wcl["TaTdPbPc"],
                                               wcl["TaPcPbPd"], wcl["TaPdPbPc"], wcl["PaPcTbPd"], wcl["PaPdTbPc"],
+                                              wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
+                                              wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
+                                              wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
                                               coupling.T)
 
-        indexlist = np.arange(20)
+        indexlist = np.arange(32)
         for name, index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index]
 
@@ -162,11 +168,15 @@ def read_coupling(file, spectra=None):
                     "TaTcPbPd", "TaPdPbTc", "PaPcTbTd", "PaTdTbPc",
                     "TaPcTbPd", "TaPdTbPc", "TaTcTbPd", "TaPdTbTc",
                     "TaPcTbTd", "TaTdTbPc", "TaPcPbTd", "TaTdPbPc",
-                    "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc"]
-        if coupling.shape[0] == 20:
-            indexlist = np.arange(20)
+                    "TaPcPbPd", "TaPdPbPc", "PaPcTbPd", "PaPdTbPc",
+                    "TaTcPbTd", "TaTdPbTc", "PaTcTbTd", "PaTdTbTc",
+                    "PaTcPbTd", "PaTdPbTc", "PaTcTbPd", "PaPdTbTc",
+                    "PaTcPbPd", "PaPdPbTc", "PaPcPbTd", "PaTdPbPc"]
+                    
+        if coupling.shape[0] == 32:
+            indexlist = np.arange(32)
         elif coupling.shape[0] == 1:
-            indexlist=np.zeros(20, dtype=np.int8)
+            indexlist=np.zeros(32, dtype=np.int8)
         
     for name, index in zip(win_list, indexlist):
         coupling_dict[name] = coupling[index]

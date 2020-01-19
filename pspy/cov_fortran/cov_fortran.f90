@@ -85,7 +85,11 @@ subroutine calc_cov_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
                                    & TaPcTbPd, TaPdTbPc, TaTcTbPd, TaPdTbTc, &
                                    & TaPcTbTd, TaTdTbPc, TaPcPbTd, TaTdPbPc, &
                                    & TaPcPbPd, TaPdPbPc, PaPcTbPd, PaPdTbPc, &
+                                   & TaTcPbTd, TaTdPbTc, PaTcTbTd, PaTdTbTc, &
+                                   & PaTcPbTd, PaTdPbTc, PaTcTbPd, PaPdTbTc, &
+                                   & PaTcPbPd, PaPdPbTc, PaPcPbTd, PaTdPbPc, &
                                    & cov_array)
+
 
     implicit none
     real(8), intent(in)    :: TaTcTbTd(:), TaTdTbTc(:), PaPcPbPd(:), PaPdPbPc(:)
@@ -93,7 +97,9 @@ subroutine calc_cov_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
     real(8), intent(in)    :: TaPcTbPd(:), TaPdTbPc(:), TaTcTbPd(:), TaPdTbTc(:)
     real(8), intent(in)    :: TaPcTbTd(:), TaTdTbPc(:), TaPcPbTd(:), TaTdPbPc(:)
     real(8), intent(in)    :: TaPcPbPd(:), TaPdPbPc(:), PaPcTbPd(:), PaPdTbPc(:)
-
+    real(8), intent(in)    :: TaTcPbTd(:), TaTdPbTc(:), PaTcTbTd(:), PaTdTbTc(:)
+    real(8), intent(in)    :: PaTcPbTd(:), PaTdPbTc(:), PaTcTbPd(:), PaPdTbTc(:)
+    real(8), intent(in)    :: PaTcPbPd(:), PaPdPbTc(:), PaPcPbTd(:), PaTdPbPc(:)
     real(8), intent(inout) :: cov_array(:,:,:)
     real(8), parameter     :: pi = 3.14159265358979323846264d0
     integer :: l1, l2, l3, info, nlmax, lmin, lmax, i
@@ -132,6 +138,21 @@ subroutine calc_cov_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
                 cov_array(l1-1, l2-1, 18) = cov_array(l1-1, l2-1, 18) + (TaPdPbPc(l3+1)*thrcof0(i)**2d0)
                 cov_array(l1-1, l2-1, 19) = cov_array(l1-1, l2-1, 19) + (PaPcTbPd(l3+1)*thrcof0(i)**2d0)
                 cov_array(l1-1, l2-1, 20) = cov_array(l1-1, l2-1, 20) + (PaPdTbPc(l3+1)*thrcof0(i)**2d0)
+
+                cov_array(l1-1, l2-1, 21) = cov_array(l1-1, l2-1, 21) + (TaTcPbTd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 22) = cov_array(l1-1, l2-1, 22) + (TaTdPbTc(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 23) = cov_array(l1-1, l2-1, 23) + (PaTcTbTd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 24) = cov_array(l1-1, l2-1, 24) + (PaTdTbTc(l3+1)*thrcof0(i)**2d0)
+
+                cov_array(l1-1, l2-1, 25) = cov_array(l1-1, l2-1, 25) + (PaTcPbTd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 26) = cov_array(l1-1, l2-1, 26) + (PaTdPbTc(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 27) = cov_array(l1-1, l2-1, 27) + (PaTcTbPd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 28) = cov_array(l1-1, l2-1, 28) + (PaPdTbTc(l3+1)*thrcof0(i)**2d0)
+
+                cov_array(l1-1, l2-1, 29) = cov_array(l1-1, l2-1, 29) + (PaTcPbPd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 30) = cov_array(l1-1, l2-1, 30) + (PaPdPbTc(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 31) = cov_array(l1-1, l2-1, 31) + (PaPcPbTd(l3+1)*thrcof0(i)**2d0)
+                cov_array(l1-1, l2-1, 32) = cov_array(l1-1, l2-1, 32) + (PaTdPbPc(l3+1)*thrcof0(i)**2d0)
 
             end do
         end do
