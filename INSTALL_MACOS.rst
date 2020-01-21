@@ -21,7 +21,7 @@ you can check that your ``gcc`` is now the macport one.
 
     which gcc
 
-it should print /opt/local/bin/gcc, if it doesn't, close your terminal, open a new one and try again.
+it should print ``/opt/local/bin/gcc``, if it doesn't, close your terminal, open a new one and try again.
 
 Now the difficult part is done, and the rest is installing python software, a complete installation goes as follow (you can skip the part you have already done)
 
