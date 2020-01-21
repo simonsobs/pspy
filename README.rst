@@ -46,7 +46,7 @@ to reinstall at every changes.
 
 Instructions for installing ``pspy`` at ``NERSC`` are available at  `INSTALL_NERSC <https://github.com/simonsobs/pspy/blob/master/INSTALL_NERSC.rst>`_.
 
-Instructions for installing ``pspy`` on ``MACOS`` are available at  `INSTALL_MACOS <https://github.com/simonsobs/pspy/blob/master/INSTALL_MACOS.rst>`_.
+Instructions for installing ``pspy`` on ``MAC OS`` are available at  `INSTALL_MACOS <https://github.com/simonsobs/pspy/blob/master/INSTALL_MACOS.rst>`_.
 
 
 Ipython notebooks
