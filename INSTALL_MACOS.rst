@@ -42,7 +42,7 @@ Now the difficult part is done, and the rest is installing python softwares, a c
     sudo pip install healpy
 
 Note that we use ``scipy < 1.4`` for pyfftw compatibility and ``astropy < 4`` because of changes in fits convention happening in version 4.
-You should now have all the dependencies to install ``pixell``.
+You should now have all the dependencies to install ``pixell``, go to a location where you want to install ``pixell`` and run
 
 .. code:: shell
 
@@ -53,7 +53,7 @@ You should now have all the dependencies to install ``pixell``.
     sudo python setup.py test
 
 the last command will run a bunch of tests that should all be succesfuls.
-Then ``pspy`` is installed via
+Then go to a folder where you want to install ``pspy`` and run
 
 .. code:: shell
 
@@ -62,5 +62,6 @@ Then ``pspy`` is installed via
     sudo python setup.py install
 
 to check that the installation is working, go to the tutorials folder of ``pspy`` and  run the scripts !
-
-
+.. code:: shell
+    cd tutorials
+    python tuto_spectra_spin0.py
