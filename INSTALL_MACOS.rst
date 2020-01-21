@@ -1,6 +1,6 @@
 
-Install on MAC OS
-----------------
+Installation on MAC OS
+----------------------
 
 On MAC OS, one difficulty for installing ``pspy`` is the dependency on the ``pixell`` library.
 ``pixell`` includes ``sharp``, a C library allowing to do spherical harmonic transforms and we will need to compile it.
