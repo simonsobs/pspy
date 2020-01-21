@@ -5,8 +5,7 @@ Install on MAC OS
 On MAC OS, one difficulty for installing ``pspy`` is the dependency on the ``pixell`` library.
 ``pixell`` includes ``sharp``, a c library allowing to do spherical transform.
 
-First you should go to the apple store and get or update Xcode.
-Install ``macport`` corresponding to your OS version : https://www.macports.org/.
+First you should go to the apple store and get or update Xcode, then install ``macport`` corresponding to your OS version : https://www.macports.org/.
 
 We will need to install a c/fortran compiler and some configure tools
 
