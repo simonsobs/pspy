@@ -52,7 +52,7 @@ You should now have all the dependencies to install ``pixell``.
     sudo CC=gcc python setup.py install
     sudo python setup.py test
 
-the last comment will run a bunch of tests that should all be succesfuls.
+the last command will run a bunch of tests that should all be succesfuls.
 Then ``pspy`` is installed via
 
 .. code:: shell
