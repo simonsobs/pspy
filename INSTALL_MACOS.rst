@@ -57,8 +57,8 @@ Then ``pspy`` is installed via
 
 .. code:: shell
 
-    git clone https://github.com/simonsobs/pixell.git
-    cd pixell
+    git clone https://github.com/simonsobs/pspy.git
+    cd pspy
     sudo python setup.py install
 
 to check that the installation is working, go to the tutorials folder of ``pspy`` and  run the scripts !
