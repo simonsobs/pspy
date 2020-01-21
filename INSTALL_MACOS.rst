@@ -63,5 +63,6 @@ Then go to a folder where you want to install ``pspy`` and run
 
 to check that the installation is working, go to the tutorials folder of ``pspy`` and  run the scripts !
 .. code:: shell
+
     cd tutorials
     python tuto_spectra_spin0.py
