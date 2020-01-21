@@ -42,7 +42,7 @@ Now the difficult part is done, and the rest is installing python software, a co
     sudo pip install astropy==3.1.0
     sudo pip install healpy
 
-Note that we use ``scipy`` < 1.4 for pyfftw compatibility and ``astropy`` < 4 because of change in some fits convention happening in version 4.
+Note that we use ``scipy`` < 1.4 for pyfftw compatibility and ``astropy`` < 4 because of change in fits convention happening in version 4.
 You should now have all the dependencies to install ``pixell``.
 
 .. code:: shell
