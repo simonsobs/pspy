@@ -23,7 +23,7 @@ you can check that your ``gcc`` is now the macport one.
 
 it should print ``/opt/local/bin/gcc``, if it doesn't, close your terminal, open a new one and try again.
 
-Now the difficult part is done, and the rest is installing python softwares, a complete installation goes as follow (you can skip the part you have already done)
+Now the difficult part is done, and the rest is installing python softwares, a complete installation for ``python3.7`` goes as follow (you can skip the part you have already done)
 
 .. code:: shell
 
