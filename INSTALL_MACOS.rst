@@ -46,6 +46,7 @@ Note that we use ``scipy`` < 1.4 for pyfftw compatibility and ``astropy`` < 4 be
 You should now have all the dependencies to install ``pixell``.
 
 .. code:: shell
+
     git clone https://github.com/simonsobs/pixell.git
     cd pixell
     sudo CC=gcc python setup.py build_ext -i
@@ -56,6 +57,7 @@ the last comment will run a bunch of test that should all be succesfuls.
 Then ``pspy`` is installed via
 
 .. code:: shell
+
     git clone https://github.com/simonsobs/pixell.git
     cd pixell
     sudo python setup.py install
