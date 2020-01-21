@@ -62,6 +62,7 @@ Then go to a folder where you want to install ``pspy`` and run
     sudo python setup.py install
 
 to check that the installation is working, go to the tutorials folder of ``pspy`` and  run the scripts !
+
 .. code:: shell
 
     cd tutorials
