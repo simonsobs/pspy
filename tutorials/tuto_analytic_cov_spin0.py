@@ -14,7 +14,7 @@ import time
 
 # We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
 # It will have a resolution of 1 arcminute
-ra0, ra1, dec0, dec1 = -10, 10, -10, 10
+ra0, ra1, dec0, dec1 = -10, 10, -8, 8
 res = 2.5
 ncomp = 1
 # clfile are the camb lensed power spectra
@@ -43,7 +43,8 @@ apo_radius_degree_mask = 0.3
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 DoMonteCarlo = True
-n_sims = 100
+n_sims = 150
+
 
 test_dir = "result_cov_spin0"
 try:
