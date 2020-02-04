@@ -45,9 +45,7 @@ setup(
     ext_modules=[mcm, cov],
     install_requires=[
         "numpy",
-        "scipy<1.4.0", # to be used with pyFFTW on pypi
         "healpy",
-        "cython", # this one should be installed by pyFFTW
         "pyFFTW",
         "pillow", # this one should be installed by pixell
         "pixell>=0.7.0"],
