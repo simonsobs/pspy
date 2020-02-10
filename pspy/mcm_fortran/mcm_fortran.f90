@@ -71,7 +71,7 @@ subroutine calc_mcm_spin0and2_pure(wcl_00,wcl_02, wcl_20, wcl_22, wbl_00,wbl_02,
     real(8) :: l1f(2), fac_00,fac_02,fac_20,fac_22,fac_b,fac_c,combin
     real(8) :: thrcof0(2*size(mcm_array,1)),thrcofa(2*size(mcm_array,1)),thrcofb(2*size(mcm_array,1)), thrcofc(2*size(mcm_array,1))
     nlmax = size(mcm_array,1)-1
-    !$omp parallel do private(l3,l2,l1,fac_00,fac_02,fac_20,fac_22,info,l1f,thrcof0,thrcofa,thrcofb,thrcofc,lmin1,lmax1,i1,lmin2,lmax2,i2,lmin3,lmax3,i3) schedule(dynamic)
+    !$omp parallel do private(l3,l2,l1,fac_00,fac_02,fac_20,fac_22,info,l1f,thrcof0,thrcofa,thrcofb,thrcofc,lmin1,lmax1,i1,lmin2,lmax2,i2,lmin3,lmax3,i3,fac_b,fac_c,combin) schedule(dynamic)
     do l1 = 2, nlmax
         fac_00=(2*l1+1)/(4*pi)*wbl_00(l1+1)
         fac_02=(2*l1+1)/(4*pi)*wbl_02(l1+1)
@@ -106,11 +106,13 @@ subroutine calc_mcm_spin0and2_pure(wcl_00,wcl_02, wcl_20, wcl_22, wbl_00,wbl_02,
                 end if
 
                 combin=thrcofa(i1) + fac_b*thrcofb(i2) + fac_c*thrcofc(i3)
+
                 mcm_array(l1-1,l2-1,1) =mcm_array(l1-1,l2-1,1)+ fac_00*(wcl_00(l3+1)*thrcof0(i1)**2d0)
                 mcm_array(l1-1,l2-1,2) =mcm_array(l1-1,l2-1,2)+ fac_02*(wcl_02(l3+1)*thrcof0(i1)*combin)
                 mcm_array(l1-1,l2-1,3) =mcm_array(l1-1,l2-1,3)+ fac_20*(wcl_20(l3+1)*thrcof0(i1)*combin)
                 mcm_array(l1-1,l2-1,4) =mcm_array(l1-1,l2-1,4)+ fac_22*(wcl_22(l3+1)*combin**2*(1+(-1)**(l1+l2+l3))/2)
                 mcm_array(l1-1,l2-1,5) =mcm_array(l1-1,l2-1,5)+ fac_22*(wcl_22(l3+1)*combin**2*(1-(-1)**(l1+l2+l3))/2)
+        
             end do
         end do
     end do
