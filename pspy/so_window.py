@@ -166,7 +166,7 @@ def get_spinned_windows(w, lmax, niter):
         template = enmap.samewcs(template,w.data)
     
     wlm = sph_tools.map2alm(w, lmax=lmax, niter=niter)
-    ell = np.arange(lmax)
+    ell = np.arange(lmax+1)
     filter_1 = -np.sqrt((ell + 1) * ell)
     filter_2 = np.sqrt((ell + 2) * (ell + 1) * ell * (ell - 1))
 

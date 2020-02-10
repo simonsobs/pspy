@@ -126,7 +126,6 @@ def get_pure_alms(so_map, window, niter, lmax):
 
     """
     
-
     w1_plus, w1_minus, w2_plus, w2_minus = so_window.get_spinned_windows(window[1], lmax, niter=niter)
     p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
     p1 = np.array([(w1_plus.data * so_map.data[1] + w1_minus.data * so_map.data[2]), (w1_plus.data * so_map.data[2] - w1_minus.data * so_map.data[1])])
@@ -145,7 +144,6 @@ def get_pure_alms(so_map, window, niter, lmax):
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax=lmax)
     
     if so_map.pixel == "HEALPIX":
-        
         alm = hp.sphtfunc.map2alm(so_map.data[0] * window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
         s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax=lmax)
         s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax=lmax)
@@ -155,15 +153,14 @@ def get_pure_alms(so_map, window, niter, lmax):
             for _ in range(niter):
                 s2eblm += curvedsky.map2alm_healpix(p2-curvedsky.alm2map_healpix(s2eblm, p2_copy, spin=2), lmax=lmax, spin=2)
                 s1eblm += curvedsky.map2alm_healpix(p1-curvedsky.alm2map_healpix(s1eblm, p1_copy, spin=1), lmax=lmax, spin=1)
-
-
+    
         s0eblm= s1eblm.copy()
         s0eblm[0] = hp.sphtfunc.map2alm(p0[0], lmax=lmax, iter=niter)
         s0eblm[1] = hp.sphtfunc.map2alm(p0[1], lmax=lmax, iter=niter)
 
-    ell = np.arange(lmax)
-    filter_1 = np.zeros(lmax)
-    filter_2 = np.zeros(lmax)
+    ell = np.arange(lmax+1)
+    filter_1 = np.zeros(lmax+1)
+    filter_2 = np.zeros(lmax+1)
 
     filter_1[2:] = 2 * np.sqrt(1.0 / ((ell[2:] + 2.) * (ell[2:] - 1.)))
     filter_2[2:] = np.sqrt(1.0  / ((ell[2:] + 2.) * (ell[2:] + 1.) * ell[2:] * (ell[2:] - 1.)))
