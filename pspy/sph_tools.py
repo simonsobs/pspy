@@ -127,10 +127,10 @@ def get_pure_alms(so_map, window, niter, lmax):
     """
     
 
-    s1_a, s1_b, s2_a, s2_b = so_window.get_spinned_windows(window[1], lmax, niter=niter)
+    w1_plus, w1_minus, w2_plus, w2_minus = so_window.get_spinned_windows(window[1], lmax, niter=niter)
     p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
-    p1 = np.array([(s1_a.data * so_map.data[1] + s1_b.data * so_map.data[2]), (s1_a.data * so_map.data[2] - s1_b.data * so_map.data[1])])
-    p0 = np.array([(s2_a.data * so_map.data[1] + s2_b.data * so_map.data[2]), (s2_a.data * so_map.data[2] - s2_b.data * so_map.data[1])])
+    p1 = np.array([(w1_plus.data * so_map.data[1] + w1_minus.data * so_map.data[2]), (w1_plus.data * so_map.data[2] - w1_minus.data * so_map.data[1])])
+    p0 = np.array([(w2_plus.data * so_map.data[1] + w2_minus.data * so_map.data[2]), (w2_plus.data * so_map.data[2] - w2_minus.data * so_map.data[1])])
     
     if so_map.pixel == "CAR":
         p0 = enmap.samewcs(p0,so_map.data)
@@ -145,28 +145,35 @@ def get_pure_alms(so_map, window, niter, lmax):
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax=lmax)
     
     if so_map.pixel == "HEALPIX":
+        
         alm = hp.sphtfunc.map2alm(so_map.data[0] * window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
         s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax=lmax)
         s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax=lmax)
+        if niter != 0:
+            p2_copy = p2.copy()
+            p1_copy = p1.copy()
+            for _ in range(niter):
+                s2eblm += curvedsky.map2alm_healpix(p2-curvedsky.alm2map_healpix(s2eblm, p2_copy, spin=2), lmax=lmax, spin=2)
+                s1eblm += curvedsky.map2alm_healpix(p1-curvedsky.alm2map_healpix(s1eblm, p1_copy, spin=1), lmax=lmax, spin=1)
+
+
         s0eblm= s1eblm.copy()
-        s0eblm[0] = curvedsky.map2alm_healpix(p0[0], spin=0, lmax=lmax)
-        s0eblm[1] = curvedsky.map2alm_healpix(p0[1], spin=0, lmax=lmax)
+        s0eblm[0] = hp.sphtfunc.map2alm(p0[0], lmax=lmax, iter=niter)
+        s0eblm[1] = hp.sphtfunc.map2alm(p0[1], lmax=lmax, iter=niter)
 
     ell = np.arange(lmax)
     filter_1 = np.zeros(lmax)
     filter_2 = np.zeros(lmax)
-    filter_3 = np.zeros(lmax)
 
     filter_1[2:] = 2 * np.sqrt(1.0 / ((ell[2:] + 2.) * (ell[2:] - 1.)))
     filter_2[2:] = np.sqrt(1.0  / ((ell[2:] + 2.) * (ell[2:] + 1.) * ell[2:] * (ell[2:] - 1.)))
-    #filter_3[2:] = ell[2:] * 0 + 1
+
     for k in range(2):
         s1eblm[k] = hp.almxfl(s1eblm[k],filter_1)
         s0eblm[k] = hp.almxfl(s0eblm[k],filter_2)
-    #s2eblm[k] = hp.almxfl(s2eblm[k],filter_3)
-    
-    elm_p = s2eblm[0] + s1eblm[0] - s0eblm[0]
-    blm_b = s2eblm[1] + s1eblm[1] - s0eblm[1]
+
+    elm_p = s2eblm[0] + s1eblm[0] + s0eblm[0]
+    blm_b = s2eblm[1] + s1eblm[1] + s0eblm[1]
     
     return np.array([alm,elm_p,blm_b])
 
