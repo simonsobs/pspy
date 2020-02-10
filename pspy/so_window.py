@@ -187,10 +187,10 @@ def get_spinned_windows(w, lmax, niter):
         curvedsky.alm2map(np.array([wlm1_e,wlm1_b]), w1, spin=1)
         curvedsky.alm2map(np.array([wlm2_e,wlm2_b]), w2, spin=2)
     
-    s1_a.data[w.data != 0] = w1[0][w.data != 0]
-    s1_b.data[w.data != 0] = w1[1][w.data != 0]
-    s2_a.data[w.data != 0] = w2[0][w.data != 0]
-    s2_b.data[w.data != 0] = w2[1][w.data != 0]
+    s1_a.data = w1[0]
+    s1_b.data = w1[1]
+    s2_a.data = w2[0]
+    s2_b.data = w2[1]
     
     return s1_a, s1_b, s2_a, s2_b
 

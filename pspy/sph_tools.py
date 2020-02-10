@@ -125,8 +125,8 @@ def get_pure_alms(so_map, window, niter, lmax):
       the maximum multipole of the transform
 
     """
-
     
+
     s1_a, s1_b, s2_a, s2_b = so_window.get_spinned_windows(window[1], lmax, niter=niter)
     p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
     p1 = np.array([(s1_a.data * so_map.data[1] + s1_b.data * so_map.data[2]), (s1_a.data * so_map.data[2] - s1_b.data * so_map.data[1])])
@@ -159,11 +159,11 @@ def get_pure_alms(so_map, window, niter, lmax):
 
     filter_1[2:] = 2 * np.sqrt(1.0 / ((ell[2:] + 2.) * (ell[2:] - 1.)))
     filter_2[2:] = np.sqrt(1.0  / ((ell[2:] + 2.) * (ell[2:] + 1.) * ell[2:] * (ell[2:] - 1.)))
-    filter_3[2:] = ell[2:] * 0 + 1
+    #filter_3[2:] = ell[2:] * 0 + 1
     for k in range(2):
         s1eblm[k] = hp.almxfl(s1eblm[k],filter_1)
         s0eblm[k] = hp.almxfl(s0eblm[k],filter_2)
-        s2eblm[k] = hp.almxfl(s2eblm[k],filter_3)
+    #s2eblm[k] = hp.almxfl(s2eblm[k],filter_3)
     
     elm_p = s2eblm[0] + s1eblm[0] - s0eblm[0]
     blm_b = s2eblm[1] + s1eblm[1] - s0eblm[1]
