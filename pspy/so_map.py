@@ -11,9 +11,8 @@ import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
 from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
-from scipy.ndimage import distance_transform_edt
-
 from pspy.pspy_utils import ps_lensed_theory_to_dict
+from scipy.ndimage import distance_transform_edt
 
 
 class so_map:
@@ -153,7 +152,7 @@ class so_map:
           set to True to display the colorbar.
         ticks_spacing_CAR: float
           for CAR plot, choose the spacing of the ticks.
-        hp_gnomv: boolean
+        hp_gnomv: tuple
           gnomview projection for HEALPIX plotting, expected (lon_c,lat_c,xsize,reso).
 
         """
