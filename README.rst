@@ -8,6 +8,8 @@ python example notebooks for an introductory set of examples on how to use the p
 
 .. .. image:: https://img.shields.io/pypi/v/pspy.svg?style=flat
 ..   :target: https://pypi.python.org/pypi/pspy/
+.. image:: https://img.shields.io/badge/license-BSD-yellow
+   :target: https://github.com/simonsobs/pspy/blob/master/LICENSE
 .. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
    :target: https://travis-ci.com/simonsobs/pspy
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
