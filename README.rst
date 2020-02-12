@@ -56,6 +56,7 @@ Ipython notebooks
 * `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
 * `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
 * `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
+* `Compute spectra for standard and pure B modes  <https://pspy.readthedocs.org/en/latest/tutorial_purebb.html>`_
 
 Others tutorials can be found under the ``tutorials`` directory.
 
