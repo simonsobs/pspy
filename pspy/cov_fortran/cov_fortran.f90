@@ -159,15 +159,15 @@ subroutine calc_cov_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
 end subroutine
 
 
-subroutine calc_cov_spin0and2_planck(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
-                                   & TaTcPbPd, TaPdPbTc, PaPcTbTd, PaTdTbPc, &
-                                   & TaPcTbPd, TaPdTbPc, TaTcTbPd, TaPdTbTc, &
-                                   & TaPcTbTd, TaTdTbPc, TaPcPbTd, TaTdPbPc, &
-                                   & TaPcPbPd, TaPdPbPc, PaPcTbPd, PaPdTbPc, &
-                                   & TaTcPbTd, TaTdPbTc, PaTcTbTd, PaTdTbTc, &
-                                   & PaTcPbTd, PaTdPbTc, PaTcTbPd, PaPdTbTc, &
-                                   & PaTcPbPd, PaPdPbTc, PaPcPbTd, PaTdPbPc, &
-                                   & cov_array)
+subroutine calc_cov_spin0and2_simple_planck(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
+                                          & TaTcPbPd, TaPdPbTc, PaPcTbTd, PaTdTbPc, &
+                                          & TaPcTbPd, TaPdTbPc, TaTcTbPd, TaPdTbTc, &
+                                          & TaPcTbTd, TaTdTbPc, TaPcPbTd, TaTdPbPc, &
+                                          & TaPcPbPd, TaPdPbPc, PaPcTbPd, PaPdTbPc, &
+                                          & TaTcPbTd, TaTdPbTc, PaTcTbTd, PaTdTbTc, &
+                                          & PaTcPbTd, PaTdPbTc, PaTcTbPd, PaPdTbTc, &
+                                          & PaTcPbPd, PaPdPbTc, PaPcPbTd, PaTdPbPc, &
+                                          & cov_array)
 
 
     implicit none
