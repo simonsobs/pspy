@@ -8,6 +8,8 @@ python example notebooks for an introductory set of examples on how to use the p
 
 .. .. image:: https://img.shields.io/pypi/v/pspy.svg?style=flat
 ..   :target: https://pypi.python.org/pypi/pspy/
+.. image:: https://img.shields.io/badge/license-BSD-yellow
+   :target: https://github.com/simonsobs/pspy/blob/master/LICENSE
 .. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
    :target: https://travis-ci.com/simonsobs/pspy
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
@@ -56,6 +58,7 @@ Ipython notebooks
 * `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
 * `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
 * `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
+* `Compute spectra for standard and pure B modes  <https://pspy.readthedocs.org/en/latest/tutorial_purebb.html>`_
 
 Others tutorials can be found under the ``tutorials`` directory.
 
