@@ -9,7 +9,7 @@ from pspy import pspy_utils, so_mcm, sph_tools
 from pspy.cov_fortran import cov_fortran
 
 
-def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
+def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
         
 
@@ -64,7 +64,7 @@ def cov_coupling_spin0(win, lmax, niter=0, save_file=None):
     return coupling_dict
 
 
-def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
+def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=False):
     """Compute the coupling kernels corresponding to the T and E covariance matrix
 
     Parameters
@@ -125,15 +125,28 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
             wcl[n0+n1+n2+n3] *= (2 * l + 1) / (4 * np.pi)
 
         coupling = np.zeros((32, lmax, lmax))
-        cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
-                                              wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
-                                              wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
-                                              wcl["TaPcTbTd"], wcl["TaTdTbPc"], wcl["TaPcPbTd"], wcl["TaTdPbPc"],
-                                              wcl["TaPcPbPd"], wcl["TaPdPbPc"], wcl["PaPcTbPd"], wcl["PaPdTbPc"],
-                                              wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
-                                              wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
-                                              wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
-                                              coupling.T)
+
+        if planck==True:
+            cov_fortran.calc_cov_spin0and2_planck(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
+                                                  wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
+                                                  wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
+                                                  wcl["TaPcTbTd"], wcl["TaTdTbPc"], wcl["TaPcPbTd"], wcl["TaTdPbPc"],
+                                                  wcl["TaPcPbPd"], wcl["TaPdPbPc"], wcl["PaPcTbPd"], wcl["PaPdTbPc"],
+                                                  wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
+                                                  wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
+                                                  wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
+                                                  coupling.T)
+
+        else:
+            cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
+                                                  wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
+                                                  wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
+                                                  wcl["TaPcTbTd"], wcl["TaTdTbPc"], wcl["TaPcPbTd"], wcl["TaTdPbPc"],
+                                                  wcl["TaPcPbPd"], wcl["TaPdPbPc"], wcl["PaPcTbPd"], wcl["PaPdTbPc"],
+                                                  wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
+                                                  wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
+                                                  wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
+                                                  coupling.T)
 
         indexlist = np.arange(32)
         for name, index in zip(win_list, indexlist):
@@ -143,6 +156,9 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=0, save_file=None):
         np.save("%s.npy"%save_file, coupling)
 
     return coupling_dict
+
+
+
 
 def read_coupling(file, spectra=None):
     """Read a precomputed coupling kernels
@@ -344,7 +360,6 @@ def extract_TTTEEE_mbb(mbb_inv):
     mbb_array = np.linalg.inv(mbb_inv_array)
     nbins = int(mbb_array.shape[0] / 9)
     
-    
     mbb_array_select = np.zeros((4*nbins, 4*nbins))
     # TT
     mbb_array_select[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_array[0*nbins:1*nbins, 0*nbins:1*nbins]
@@ -358,6 +373,8 @@ def extract_TTTEEE_mbb(mbb_inv):
     mbb_inv_array = np.linalg.inv(mbb_array_select)
     
     return mbb_inv_array
+
+
 
 def cov2corr(cov):
     """Go from covariance to correlation matrix, also setting the diagonal to zero
@@ -464,6 +481,42 @@ def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     
     return chi
 
+
+def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
+    """doc not ready yet
+        """
+    exp_alpha, f_alpha = alpha.split("_")
+    exp_beta, f_beta = beta.split("_")
+    exp_gamma, f_gamma = gamma.split("_")
+    exp_eta, f_eta = eta.split("_")
+    
+    RX = id[0] + id[1]
+    SY = id[2] + id[3]
+    
+    if RX == "TE":
+        Dl[alpha, gamma, RX] = symmetrize(Dl[alpha, gamma, RX], mode="arithm")
+        DNl[alpha, gamma, RX] = symmetrize(DNl[alpha, gamma, RX], mode="arithm")
+
+    else:
+        Dl[alpha, gamma, RX] = symmetrize(Dl[alpha, gamma, RX], mode="geo")
+        DNl[alpha, gamma, RX] = symmetrize(DNl[alpha, gamma, RX], mode="geo")
+
+    if SY == "TE":
+        Dl[beta, eta, SY] = symmetrize(Dl[beta, eta, SY] , mode="arithm")
+        DNl[beta, eta, SY] = symmetrize(DNl[beta, eta, SY] , mode="arithm")
+    else:
+        Dl[beta, eta, SY] = symmetrize(Dl[beta, eta, SY] , mode="geo")
+        DNl[beta, eta, SY] = symmetrize(DNl[beta, eta, SY] , mode="geo")
+
+    
+    chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
+    chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
+    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] * f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
+    chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
+    
+    chi= symmetrize(chi, mode="arithm")
+    
+    return chi
 
 
 #def chi_old(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
