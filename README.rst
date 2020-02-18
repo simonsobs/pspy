@@ -69,3 +69,11 @@ Dependencies
 * ``pyFFTW`` https://pyfftw.readthedocs.io
 * ``healpy`` https://healpy.readthedocs.io
 * ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
+
+
+Contributors
+------------
+* Thibaut Louis
+* Steve Choi
+* DW Han
+* Xavier Garrido
