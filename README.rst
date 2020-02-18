@@ -71,7 +71,7 @@ Dependencies
 * ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
 
 
-Contributors
+Authors
 ------------
 * Thibaut Louis
 * Steve Choi
