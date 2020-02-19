@@ -67,6 +67,9 @@ mask = so_map.simulate_source_mask(binary, n_holes=source_mask_nholes, hole_radi
 mask = so_window.create_apodization(mask, apo_type="C1", apo_radius_degree=apo_radius_degree_mask)
 #the window is given by the product of the survey window and the mask window
 window.data *= mask.data
+
+window.plot(file_name="%s/window"%(test_dir))
+
 #the window is going to couple mode together, we compute a mode coupling matrix in order to undo this effect
 mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0(window, binning_file, lmax=lmax, type="Dl", niter=niter)
 

@@ -70,6 +70,8 @@ mask = so_window.create_apodization(mask, apo_type="C1", apo_radius_degree=apo_r
 #the window is given by the product of the survey window and the mask window
 window.data *= mask.data
 
+window.plot(file_name="%s/window"%(test_dir))
+
 #for spin0 and 2 the window need to be a tuple made of two objects
 #the window used for spin0 and the one used for spin 2
 window_tuple = (window, window)
