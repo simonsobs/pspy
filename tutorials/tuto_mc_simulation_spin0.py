@@ -42,7 +42,7 @@ apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 mpi = True
 iStart = 0
-iStop = 30
+iStop = 150
 n_sims = iStop - iStart + 1
 
 test_dir = "mc_spin0"
