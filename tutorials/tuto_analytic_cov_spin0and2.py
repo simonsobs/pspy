@@ -157,6 +157,7 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
             print("sim number %04d took %s second to compute" % (iii, time.time()-t))
 
         elif read_MonteCarlo:
+            print("reading sim %04d spectra"%iii)
             for name1, c1  in zip(nameList, np.arange(n_splits)):
                 for name2, c2  in zip(nameList, np.arange(n_splits)):
                     if c1 > c2: continue

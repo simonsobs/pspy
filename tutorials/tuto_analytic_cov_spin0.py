@@ -133,6 +133,7 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
             print("sim number %04d took %s second to compute" % (iii,time.time()-t))
 
         elif read_MonteCarlo:
+            print("reading sim %04d spectra"%iii)
             for name1, c1  in zip(nameList, np.arange(n_splits)):
                 for name2, c2  in zip(nameList, np.arange(n_splits)):
                     if c1 > c2: continue
@@ -174,9 +175,9 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
 
     plt.figure(figsize=(12, 6))
     plt.subplot(1, 2, 1)
-    plt.imshow(so_cov.cov2corr(cov))
+    plt.imshow(so_cov.cov2corr(cov), vmin=-0.4, vmax=0.4)
     plt.subplot(1, 2, 2)
-    plt.imshow(so_cov.cov2corr(analytic_cov))
+    plt.imshow(so_cov.cov2corr(analytic_cov), vmin=-0.4, vmax=0.4)
     plt.savefig("%s/correlation.png"%(test_dir))
     plt.clf()
     plt.close()
