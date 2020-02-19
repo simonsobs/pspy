@@ -42,9 +42,9 @@ apo_radius_degree_mask = 0.3
 # for the CAR survey we will use an apodisation type designed for rectangle maps
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
-do_MonteCarlo = False
-read_MonteCarlo = True
-n_sims = 30
+do_MonteCarlo = True
+read_MonteCarlo = False
+n_sims = 150
 
 
 test_dir = "result_cov_spin0"
