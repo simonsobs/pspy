@@ -46,7 +46,7 @@ apo_type = "Rectangle"
 DoMonteCarlo = True
 mpi = True
 iStart = 0
-iStop = 10
+iStop = 30
 n_sims = iStop - iStart + 1
 
 
@@ -93,6 +93,11 @@ for c1, name1 in  enumerate(nameList):
         spec_name = "%sx%s" % (name1, name2)
         specList += [spec_name]
 
+if mpi == True:
+    so_mpi.init(True)
+    subtasks = so_mpi.taskrange(imin=iStart, imax=iStop)
+else:
+    subtasks = np.arange(iStart, iStop + 1)
 
 # loop over the simulation index and compute the corresponding spectra
 

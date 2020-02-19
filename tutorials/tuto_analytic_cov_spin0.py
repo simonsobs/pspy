@@ -42,15 +42,15 @@ apo_radius_degree_mask = 0.3
 # for the CAR survey we will use an apodisation type designed for rectangle maps
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
-DoMonteCarlo = True
-n_sims = 150
+do_MonteCarlo = False
+read_MonteCarlo = True
+n_sims = 30
 
 
 test_dir = "result_cov_spin0"
-try:
-    os.makedirs(test_dir)
-except:
-    pass
+pspy_utils.create_directory(test_dir)
+if read_MonteCarlo:
+    mc_dir = "mc_spin0"
 
 template = so_map.car_template(ncomp, ra0, ra1, dec0, dec1, res)
 # the binary template for the window functionpixels
@@ -88,7 +88,7 @@ analytic_cov = so_cov.cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mb
 np.save("%s/analytic_cov.npy"%test_dir, analytic_cov)
 
 
-if DoMonteCarlo == True:
+if (do_MonteCarlo == True) or (read_MonteCarlo == True):
     Db_list = {}
     cov = {}
     nameList = []
@@ -103,33 +103,43 @@ if DoMonteCarlo == True:
             Db_list[spec_name] = []
 
     for iii in range(n_sims):
-        t = time.time()
-        cmb = template.synfast(clfile)
-        splitlist = []
-        for i in range(n_splits):
-            split = cmb.copy()
-            noise = so_map.white_noise(split, rms_uKarcmin_T=rms_uKarcmin_T)
-            split.data += noise.data
-            splitlist += [split]
+        if do_MonteCarlo:
+            t = time.time()
+            cmb = template.synfast(clfile)
+            splitlist = []
+            for i in range(n_splits):
+                split = cmb.copy()
+                noise = so_map.white_noise(split, rms_uKarcmin_T=rms_uKarcmin_T)
+                split.data += noise.data
+                splitlist += [split]
 
-        almList = []
-        for s in splitlist:
-            almList += [sph_tools.get_alms(s, window, niter, lmax)]
+            almList = []
+            for s in splitlist:
+                almList += [sph_tools.get_alms(s, window, niter, lmax)]
 
-        for name1, alm1, c1  in zip(nameList, almList, np.arange(n_splits)):
-            for name2, alm2, c2  in zip(nameList, almList, np.arange(n_splits)):
-                if c1 > c2: continue
-                ls, ps = so_spectra.get_spectra(alm1, alm2)
-                spec_name = "%sx%s" % (name1,name2)
-                lb, Db = so_spectra.bin_spectra(ls,
-                                                ps,
-                                                binning_file,
-                                                lmax,
-                                                type=type,
-                                                mbb_inv=mbb_inv)
-                Db_list[spec_name] += [Db]
+            for name1, alm1, c1  in zip(nameList, almList, np.arange(n_splits)):
+                for name2, alm2, c2  in zip(nameList, almList, np.arange(n_splits)):
+                    if c1 > c2: continue
+                    ls, ps = so_spectra.get_spectra(alm1, alm2)
+                    spec_name = "%sx%s" % (name1,name2)
+                    lb, Db = so_spectra.bin_spectra(ls,
+                                                    ps,
+                                                    binning_file,
+                                                    lmax,
+                                                    type=type,
+                                                    mbb_inv=mbb_inv)
+                    Db_list[spec_name] += [Db]
+                        
+            print("sim number %04d took %s second to compute" % (iii,time.time()-t))
 
-        print("sim number %04d took %s second to compute" % (iii,time.time()-t))
+        elif read_MonteCarlo:
+            for name1, c1  in zip(nameList, np.arange(n_splits)):
+                for name2, c2  in zip(nameList, np.arange(n_splits)):
+                    if c1 > c2: continue
+                    spec_name = "%sx%s" % (name1,name2)
+                    lb, Db = so_spectra.read_ps("%s/sim_spectra_%s_%04d.dat"%(mc_dir, spec_name, iii))
+                    Db_list[spec_name] += [Db]
+
 
     for spec1 in specList:
         for spec2 in specList:
@@ -143,7 +153,6 @@ if DoMonteCarlo == True:
     np.save("%s/montecarlo_cov.npy"%test_dir, cov)
 
 
-
     var = cov.diagonal()
     analytic_var = analytic_cov.diagonal()
 
@@ -153,6 +162,13 @@ if DoMonteCarlo == True:
     plt.ylabel(r"$\sigma^{2}_{\ell}$", fontsize=22)
     plt.xlabel(r"$\ell$", fontsize=22)
     plt.savefig("%s/variance.png"%(test_dir))
+    plt.clf()
+    plt.close()
+
+    plt.plot(lb[1:], analytic_var[1:]/var[1:])
+    plt.ylabel(r"$\sigma^{2, \rm analytic}_{\ell}/ \sigma^{2, \rm MC}_{\ell}$", fontsize=22)
+    plt.xlabel(r"$\ell$", fontsize=22)
+    plt.savefig("%s/ratio_variance.png"%(test_dir))
     plt.clf()
     plt.close()
 
