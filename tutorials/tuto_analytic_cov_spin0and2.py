@@ -46,9 +46,11 @@ apo_radius_degree_mask = 0.3
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 DoMonteCarlo = True
-mpi = False
+mpi = True
 iStart = 0
-iStop = 100
+iStop = 5000
+n_sims = iStop - iStart + 1
+
 
 test_dir = "result_cov_spin0and2"
 pspy_utils.create_directory(test_dir)
@@ -129,7 +131,7 @@ if DoMonteCarlo == True:
         so_mpi.init(True)
         subtasks = so_mpi.taskrange(imin=iStart, imax=iStop)
     else:
-        subtasks = np.arange(iStart, iStop)
+        subtasks = np.arange(iStart, iStop + 1)
 
 
     for iii in subtasks:
