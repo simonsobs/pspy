@@ -214,9 +214,9 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
         analytic_var = analytic_cov_select.diagonal()
         
         plt.plot(lb[1:], analytic_var[1:]/var[1:])
-        if count == 1 or count == 4:
+        if count == 1 or count == 6:
             plt.ylabel(r"$\sigma^{2, \rm analytic}_{\ell}/ \sigma^{2, \rm MC}_{\ell}$", fontsize=22)
-        if count > 3:
+        if count > 5:
             plt.xlabel(r"$\ell$", fontsize=22)
         plt.legend()
         count += 1
@@ -241,9 +241,9 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
             plt.semilogy()
         plt.plot(lb[1:], var[1:], "o", label="MC %sx%s"%(bl[:2],bl[2:4]))
         plt.plot(lb[1:], analytic_var[1:],label="Analytic %sx%s"%(bl[:2],bl[2:4]))
-        if count == 1 or count == 4:
+        if count == 1 or count == 6:
             plt.ylabel(r"$\sigma^{2}_{\ell}$", fontsize=22)
-        if count > 3:
+        if count > 5:
             plt.xlabel(r"$\ell$", fontsize=22)
         plt.legend()
         count += 1
