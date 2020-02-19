@@ -85,6 +85,9 @@ for name1, id1 in zip(survey_name, survey_id):
 coupling_dict = so_cov.cov_coupling_spin0(window, lmax, niter=niter)
 analytic_cov = so_cov.cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
 
+np.save("%s/analytic_cov.npy"%test_dir, analytic_cov)
+
+
 if DoMonteCarlo == True:
     Db_list = {}
     cov = {}
@@ -137,6 +140,9 @@ if DoMonteCarlo == True:
             cov[spec1, spec2] = cov[spec1, spec2] / n_sims - np.outer(np.mean(Db_list[spec1], axis=0), np.mean(Db_list[spec2], axis=0))
 
     cov = cov["%sx%s"%(survey_name[0], survey_name[1]), "%sx%s" %(survey_name[2], survey_name[3])]
+    np.save("%s/montecarlo_cov.npy"%test_dir, cov)
+
+
 
     var = cov.diagonal()
     analytic_var = analytic_cov.diagonal()

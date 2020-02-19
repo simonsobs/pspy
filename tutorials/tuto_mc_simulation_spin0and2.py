@@ -94,12 +94,6 @@ for c1, name1 in  enumerate(nameList):
         specList += [spec_name]
 
 
-if mpi == True:
-    so_mpi.init(True)
-    subtasks = so_mpi.taskrange(imin=iStart, imax=iStop)
-else:
-    subtasks = np.arange(iStart, iStop + 1)
-
 # loop over the simulation index and compute the corresponding spectra
 
 for iii in subtasks:
