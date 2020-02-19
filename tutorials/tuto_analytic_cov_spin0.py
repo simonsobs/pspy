@@ -5,7 +5,7 @@ We also provide an option for monte-carlo verification of the covariance matrix
 """
 import matplotlib
 matplotlib.use("Agg")
-from pspy import so_map, so_window, so_mcm, sph_tools, so_spectra, pspy_utils, so_cov, so_mpi
+from pspy import so_map, so_window, so_mcm, sph_tools, so_spectra, pspy_utils, so_cov
 import healpy as hp
 import numpy as np
 import pylab as plt
@@ -43,18 +43,14 @@ apo_radius_degree_mask = 0.3
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 DoMonteCarlo = True
-mpi = True
-iStart = 0
-iStop = 5000
-n_sims = iStop - iStart + 1
+n_sims = 150
+
 
 test_dir = "result_cov_spin0"
-pspy_utils.create_directory(test_dir)
-
-if DoMonteCarlo == True:
-    spec_dir = test_dir+ "/spectra"
-    pspy_utils.create_directory(spec_dir)
-
+try:
+    os.makedirs(test_dir)
+except:
+    pass
 
 template = so_map.car_template(ncomp, ra0, ra1, dec0, dec1, res)
 # the binary template for the window functionpixels
@@ -103,13 +99,7 @@ if DoMonteCarlo == True:
             specList += [spec_name]
             Db_list[spec_name] = []
 
-    if mpi == True:
-        so_mpi.init(True)
-        subtasks = so_mpi.taskrange(imin=iStart, imax=iStop)
-    else:
-        subtasks = np.arange(iStart, iStop + 1)
-
-    for iii in subtasks:
+    for iii in range(n_sims):
         t = time.time()
         cmb = template.synfast(clfile)
         splitlist = []
@@ -134,19 +124,13 @@ if DoMonteCarlo == True:
                                                 lmax,
                                                 type=type,
                                                 mbb_inv=mbb_inv)
-                                                
-                so_spectra.write_ps("%s/sim_spectra_%s_%04d.dat"%(spec_dir, spec_name, iii),
-                                    lb,
-                                    Db,
-                                    type=type)
-
                 Db_list[spec_name] += [Db]
 
         print("sim number %04d took %s second to compute" % (iii,time.time()-t))
 
     for spec1 in specList:
         for spec2 in specList:
-            cov[spec1, spec2] = 0
+            cov[spec1, spec2]=0
             for iii in range(n_sims):
                 cov[spec1, spec2] += np.outer(Db_list[spec1][iii], Db_list[spec2][iii])
             print (spec1, spec2)
@@ -163,12 +147,6 @@ if DoMonteCarlo == True:
     plt.ylabel(r"$\sigma^{2}_{\ell}$", fontsize=22)
     plt.xlabel(r"$\ell$", fontsize=22)
     plt.savefig("%s/variance.png"%(test_dir))
-    plt.clf()
-    plt.close()
-
-    plt.plot(lb[1:], var[1:]/analytic_var[1:], label="ratio")
-    plt.xlabel(r"$\ell$", fontsize=22)
-    plt.savefig("%s/ratio_variance.png"%(test_dir))
     plt.clf()
     plt.close()
 
