@@ -1,5 +1,5 @@
 """
-This script tests the generation of simulation of spin0 spectra
+This script tests the generation of simulation of spin0 spectra, including an option to use mpi
 """
 import matplotlib
 matplotlib.use("Agg")

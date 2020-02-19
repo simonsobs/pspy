@@ -1,7 +1,5 @@
 """
-These are tests of analytic estimation of a gaussian covariance matrix for spin0 and 2 field
-It is done in CAR pixellisation.
-We also provide an option for monte-carlo verification of the covariance matrix
+This script tests the generation of simulation of spin0and2 spectra, including an option to use mpi
 """
 import matplotlib
 matplotlib.use("Agg")
