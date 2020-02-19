@@ -44,6 +44,8 @@ source_mask_radius = 10
 apo_radius_degree_mask = 0.3
 # for the CAR survey we will use an apodisation type designed for rectangle maps
 apo_type = "Rectangle"
+# should the cov mat take into account the specificity of polar
+planck = False
 # parameter for the monte-carlo simulation
 do_MonteCarlo = True
 read_MonteCarlo = False
@@ -105,7 +107,7 @@ for name1, id1 in zip(name_list, id_list):
         Clth_dict[id1 + id2] = ps_theory[spec] + nl_th[spec] * so_cov.delta2(name1, name2)
 
 
-coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter)
+coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter, planck = planck)
 analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
 
 np.save("%s/analytic_cov.npy"%test_dir, analytic_cov)
