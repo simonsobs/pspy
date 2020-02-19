@@ -46,13 +46,17 @@ apo_radius_degree_mask = 0.3
 apo_type = "Rectangle"
 # parameter for the monte-carlo simulation
 DoMonteCarlo = True
-n_sims = 150
+mpi = False
+iStart = 0
+iStop = 100
 
 test_dir = "result_cov_spin0and2"
-try:
-    os.makedirs(test_dir)
-except:
-    pass
+pspy_utils.create_directory(test_dir)
+
+if DoMonteCarlo == True:
+    spec_dir = test_dir+ "/spectra"
+    pspy_utils.create_directory(spec_dir)
+
 
 template = so_map.car_template(ncomp, ra0, ra1, dec0, dec1, res)
 # the binary template for the window functionpixels
@@ -120,7 +124,15 @@ if DoMonteCarlo == True:
             specList += [spec_name]
             Db_list[spec_name] = []
 
-    for iii in range(n_sims):
+
+    if mpi == True:
+        so_mpi.init(True)
+        subtasks = so_mpi.taskrange(imin=iStart, imax=iStop)
+    else:
+        subtasks = np.arange(iStart, iStop)
+
+
+    for iii in subtasks:
         t = time.time()
         cmb = template.synfast(clfile)
         splitlist = []
@@ -146,6 +158,13 @@ if DoMonteCarlo == True:
                                                 type=type,
                                                 mbb_inv=mbb_inv,
                                                 spectra=spectra)
+                                                
+                so_spectra.write_ps("%s/sim_spectra_%s_%04d.dat"%(spec_dir, spec_name, iii),
+                                    lb,
+                                    Db,
+                                    type=type,
+                                    spectra=spectra)
+
                 vec = []
                 for spec in ["TT", "TE", "ET", "EE"]:
                     vec = np.append(vec, Db[spec])
