@@ -234,7 +234,7 @@ def bin_mat(mat, binning_file, lmax):
     coupling_b = np.zeros((n_bins, n_bins))
     for i in range(n_bins):
         for j in range(n_bins):
-            coupling_b[i,j] = np.mean(mat[bin_lo[i]-2:bin_hi[i]-2, bin_lo[j]-2:bin_hi[j]-2])
+            coupling_b[i,j] = np.mean(mat[bin_lo[i]-2:bin_hi[i]-1, bin_lo[j]-2:bin_hi[j]-1])
     return coupling_b
 
 def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
