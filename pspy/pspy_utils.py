@@ -193,6 +193,6 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     beam_fwhm_rad = np.deg2rad(fwhm_arcminute) / 60
     fac = beam_fwhm_rad / np.sqrt(8 * np.log(2))
 
-    ell = np.arange(2, 10000)
+    ell = np.arange(2, lmax)
     bl = np.exp(-ell * (ell + 1) * fac**2 / 2.)
     return ell, bl
