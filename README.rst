@@ -77,3 +77,5 @@ Authors
 * Steve Choi
 * DW Han
 * Xavier Garrido
+
+The code is part of `PSpipe <https://github.com/simonsobs/PSpipe>`_ the Simons Observatory power spectrum pipeline.
