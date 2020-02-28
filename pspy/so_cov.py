@@ -522,7 +522,7 @@ def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
 
 
 def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
-    """plot the covariance matrix at full resolution using pixell plotting results
+    """plot the covariance matrix at full resolution using pixell plotting routines
 
     Parameters
     ----------
