@@ -521,7 +521,7 @@ def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     return chi
 
 
-def plot_cov_matrix(mat, range, color="pwhite"):
+def plot_cov_matrix(mat, range, color="pwhite", file_name=None):
     """plot the covariance matrix at full resolution using pixell plotting results
 
     Parameters
@@ -533,8 +533,10 @@ def plot_cov_matrix(mat, range, color="pwhite"):
       the range of the plot
     color: pixell colormap
       the colormap for the plot (have to be pixell compatible)
+    file_name: string
+      file_name is the name of the png file that will be created, if None the plot
+      will be displayed.
     """
-
 
     try:
         colorize.mpl_setdefault(color)
@@ -550,8 +552,11 @@ def plot_cov_matrix(mat, range, color="pwhite"):
                              colorbar=1,
                              grid=0)
     for plot in plots:
-        plot.img.show()
-                       
+        if file_name is not None:
+            enplot.write(file_name + ".png", plot)
+        else:
+            plot.img.show()
+
                        
                        
 
