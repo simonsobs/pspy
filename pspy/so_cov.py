@@ -376,7 +376,7 @@ def extract_TTTEEE_mbb(mbb_inv):
 
 
 
-def cov2corr(cov):
+def cov2corr(cov, remove_diag=True):
     """Go from covariance to correlation matrix, also setting the diagonal to zero
 
     Parameters
@@ -386,7 +386,9 @@ def cov2corr(cov):
     """
 
     d = np.sqrt(cov.diagonal())
-    corr = ((cov.T/d).T)/d - np.identity(cov.shape[0])
+    corr = ((cov.T/d).T)/d
+    if remove_diag == True:
+        corr -= np.identity(cov.shape[0])
     return corr
 
 def selectblock(cov, spectra, n_bins, block="TTTT"):
@@ -518,6 +520,40 @@ def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     
     return chi
 
+
+def plot_cov_matrix(mat, range, color="pwhite"):
+    """plot the covariance matrix at full resolution using pixell plotting results
+
+    Parameters
+    ----------
+
+    mat: 2d array
+      the covariance matrix
+    range: float
+      the range of the plot
+    color: pixell colormap
+      the colormap for the plot (have to be pixell compatible)
+    """
+
+
+    try:
+        colorize.mpl_setdefault(color)
+    except KeyError:
+        raise KeyError("Color name must be a pixell color map name {}!".format(
+                list(colorize.schemes.keys())))
+
+    wcs = enmap.create_wcs(mat.shape, proj="car")
+    mat = enmap.enmap(mat,wcs)
+    plots = enplot.get_plots(mat,
+                             color=color,
+                             range=range,
+                             colorbar=1,
+                             grid=0)
+    for plot in plots:
+        plot.img.show()
+                       
+                       
+                       
 
 #def chi_old(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
 #    """doc not ready yet
