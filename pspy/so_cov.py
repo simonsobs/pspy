@@ -4,7 +4,7 @@ https://pspy.readthedocs.io/en/latest/scientific_doc.pdf.
 """
 import healpy as hp
 import numpy as np
-
+from pixell import colorize, enmap, enplot
 from pspy import pspy_utils, so_mcm, sph_tools
 from pspy.cov_fortran import cov_fortran
 
@@ -521,7 +521,7 @@ def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     return chi
 
 
-def plot_cov_matrix(mat, range, color="pwhite", file_name=None):
+def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
     """plot the covariance matrix at full resolution using pixell plotting results
 
     Parameters
@@ -529,7 +529,7 @@ def plot_cov_matrix(mat, range, color="pwhite", file_name=None):
 
     mat: 2d array
       the covariance matrix
-    range: float
+    color_range: float
       the range of the plot
     color: pixell colormap
       the colormap for the plot (have to be pixell compatible)
@@ -544,11 +544,16 @@ def plot_cov_matrix(mat, range, color="pwhite", file_name=None):
         raise KeyError("Color name must be a pixell color map name {}!".format(
                 list(colorize.schemes.keys())))
 
+    if color_range is None:
+        max_range = np.maximum(np.max(mat),np.abs(np.min(mat)))
+        color_range = "%s" % (max_range)
+
+
     wcs = enmap.create_wcs(mat.shape, proj="car")
     mat = enmap.enmap(mat,wcs)
     plots = enplot.get_plots(mat,
                              color=color,
-                             range=range,
+                             range=color_range,
                              colorbar=1,
                              grid=0)
     for plot in plots:
