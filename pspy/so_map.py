@@ -489,7 +489,11 @@ def healpix2car(healpix_map, template, lmax=None):
                                                 lmax=lmax,
                                                 rot=rot,
                                                 first=0)
-
+                                            
+    project.ncomp == healpix_map.ncomp
+    if project.ncomp == 1:
+        project.data = project.data[0]
+        
     return project
 
 
