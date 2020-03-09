@@ -476,10 +476,10 @@ def healpix2car(healpix_map, template, lmax=None):
         print("will rotate from %s to %s coordinate system" %
               (healpix_map.coordinate, template.coordinate))
         rot = "%s,%s" % (healpix_map.coordinate, template.coordinate)
+    if lmax is None:
+        lmax = 3 * healpix_map.nside - 1
     if lmax > 3 * healpix_map.nside - 1:
         print("WARNING: your lmax is too large, setting it to 3*nside-1 now")
-        lmax = 3 * healpix_map.nside - 1
-    if lmax is None:
         lmax = 3 * healpix_map.nside - 1
     project.data = reproject.enmap_from_healpix(healpix_map.data,
                                                 template.data.shape,
@@ -489,11 +489,11 @@ def healpix2car(healpix_map, template, lmax=None):
                                                 lmax=lmax,
                                                 rot=rot,
                                                 first=0)
-                                            
+
     project.ncomp == healpix_map.ncomp
     if project.ncomp == 1:
         project.data = project.data[0]
-        
+
     return project
 
 
