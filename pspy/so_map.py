@@ -102,7 +102,7 @@ class so_map:
         return downgrade
 
     def synfast(self, clfile):
-        """fill a ``so_map`` with a cmb gaussian simulation.
+        """Fill a ``so_map`` with a cmb gaussian simulation.
 
         Parameters
         ----------
