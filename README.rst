@@ -6,8 +6,8 @@ pspy
 ``pspy`` is a cosmology code for calculating CMB power spectra and covariance matrices. See the
 python example notebooks for an introductory set of examples on how to use the package.
 
-.. .. image:: https://img.shields.io/pypi/v/pspy.svg?style=flat
-..   :target: https://pypi.python.org/pypi/pspy/
+.. image:: https://img.shields.io/pypi/v/pspy.svg?style=flat
+   :target: https://pypi.python.org/pypi/pspy/
 .. image:: https://img.shields.io/badge/license-BSD-yellow
    :target: https://github.com/simonsobs/pspy/blob/master/LICENSE
 .. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
