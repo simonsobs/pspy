@@ -25,11 +25,11 @@ python example notebooks for an introductory set of examples on how to use the p
 Installing
 ----------
 
-.. To install, you will need to have or to install ``numpy``. Then, run
+To install, you will need to have or to install ``numpy``. Then, run
 
-.. .. code:: shell
+.. code:: shell
 
-..    $ pip install pspy [--user]
+    $ pip install pspy [--user]
 
 If you plan to develop ``pspy``, it is better to checkout the latest version by doing
 
