@@ -12,21 +12,20 @@ from pspy import sph_tools
 
 def get_distance(binary):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
-        
+    
     Parameters
     ----------
     binary: ``so_map``
-      a ``so_map`` with binary data (1 is observed, 0 is masked)
+    a ``so_map`` with binary data (1 is observed, 0 is masked)
     """
-    
+
     dist = binary.copy()
     if binary.pixel == "HEALPIX":
-        dist.data = enmap.distance_transform_healpix(binary.data, method="heap")
-        dist.data *= 180 / np.pi
+        dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap")
+        dist.data[:] *= 180 / np.pi
     if binary.pixel == "CAR":
-        pixSize_arcmin = np.sqrt(binary.data.pixsize() * (60 * 180 / np.pi)**2)
-        dist.data[:] = distance_transform_edt(binary.data)
-        dist.data[:] *= pixSize_arcmin / 60
+        dist.data[:] = enmap.distance_transform(binary.data)
+        dist.data[:] *= 180 / np.pi
 
     return dist
 
