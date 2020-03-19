@@ -5,7 +5,6 @@ routines for window function generation
 import healpy as hp
 import numpy as np
 from pixell import enmap, curvedsky
-from scipy.ndimage import distance_transform_edt
 
 from pspy import sph_tools
 

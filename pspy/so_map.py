@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
 from pspy.pspy_utils import ps_lensed_theory_to_dict
-from scipy.ndimage import distance_transform_edt
 
 
 class so_map:
