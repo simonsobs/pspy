@@ -39,9 +39,9 @@ def mcm_and_bbl_spin0(win1,
     win2: so_map (or alm)
       the window function of survey 2, if input_alm=True, expect wlm2
     bl1: 1d array
-      the beam of survey 1
+      the beam of survey 1, expected to start at l=0
     bl2: 1d array
-      the beam of survey 2
+      the beam of survey 2, expected to start at l=0
     niter: int
       specify the number of iteration in map2alm
     unbin: boolean
@@ -76,18 +76,22 @@ def mcm_and_bbl_spin0(win1,
     wcl *= (2 * l + 1)
 
     if bl1 is None:
-        bl1 = np.ones(len(l))
+        bl1 = np.ones(len(l)+2)
     if bl2 is None:
         bl2 = bl1.copy()
-
+    
     mcm = np.zeros((maxl, maxl))
-    mcm_fortran.calc_mcm_spin0(wcl, bl1 * bl2, mcm.T)
+    mcm_fortran.calc_mcm_spin0(wcl, mcm.T)
+    fac = (2 * np.arange(2, maxl + 2) + 1) / (4 * np.pi) * bl1[2:maxl + 2] * bl2[2:maxl + 2]
+    mcm *= fac
+        
     mcm = mcm[:lmax, :lmax]
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
     mbb = np.zeros((n_bins, n_bins))
     mcm_fortran.bin_mcm(mcm.T, bin_lo, bin_hi, bin_size, mbb.T, doDl)
-
+    
+    
     Bbl = np.zeros((n_bins, lmax))
     mcm_fortran.binning_matrix(mcm.T, bin_lo, bin_hi, bin_size, Bbl.T, doDl)
     mbb_inv = np.linalg.inv(mbb)
@@ -133,9 +137,9 @@ def mcm_and_bbl_spin0and2(win1,
     win2: python tuple of so_map or alms (if input_alm=True)
       a python tuple (win_spin0,win_spin2) with the window functions of survey 1, if input_alm=True, expect (wlm_spin0, wlm_spin2)
     bl1: python tuple of 1d array
-      a python tuple (beam_spin0,beam_spin2) with the beam of survey 1
+      a python tuple (beam_spin0,beam_spin2) with the beam of survey 1, expected to start at l=0
     bl2: python tuple of 1d array
-      a python tuple (beam_spin0,beam_spin2) with the beam of survey 2
+      a python tuple (beam_spin0,beam_spin2) with the beam of survey 2, expected to start at l=0
     niter: int
       specify the number of iteration in map2alm
     pureB: boolean
@@ -183,7 +187,7 @@ def mcm_and_bbl_spin0and2(win1,
         win2 = deepcopy(win1)
 
     if bl1 is None:
-        bl1 = (np.ones(maxl), np.ones(maxl))
+        bl1 = (np.ones(2+maxl), np.ones(2+maxl))
     if bl2 is None:
         bl2 = deepcopy(bl1)
 
@@ -194,18 +198,19 @@ def mcm_and_bbl_spin0and2(win1,
     for i, spin1 in enumerate(spins):
         for j, spin2 in enumerate(spins):
             wcl[spin1 + spin2] = hp.alm2cl(win1[i], win2[j])
-            #wcl[s1+s2]=wcl[s1+s2][:lmax]*(2*np.arange(lmax)+1)
             wcl[spin1 + spin2] *= (2 * np.arange(len(wcl[spin1 + spin2])) + 1)
             wbl[spin1 + spin2] = bl1[i] * bl2[j]
 
     mcm = np.zeros((5, maxl, maxl))
 
     if pure == False:
-        mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], wbl["00"],
-                                       wbl["02"], wbl["20"], wbl["22"], mcm.T)
+        mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
     else:
-        mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"], wcl["02"], wcl["20"], wcl["22"], wbl["00"],
-                                            wbl["02"], wbl["20"], wbl["22"], mcm.T)
+        mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
+
+    for id_mcm, spairs in enumerate(["00", "02", "20", "22", "22"]):
+        fac = (2 * np.arange(2, maxl + 2) + 1) / (4 * np.pi) *  wbl[spairs][2:maxl + 2]
+        mcm[id_mcm] *= fac
 
     mcm = mcm[:, :lmax, :lmax]
 
