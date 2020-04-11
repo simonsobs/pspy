@@ -276,7 +276,7 @@ class so_map:
                         plot.img.show()
 
 
-def read_map(file, coordinate=None, fields_healpix=None):
+def read_map(file, coordinate=None, fields_healpix=None, car_box = None):
     """Create a ``so_map`` object from a fits file.
 
     Parameters
@@ -287,6 +287,8 @@ def read_map(file, coordinate=None, fields_healpix=None):
       coordinate system of the map
     fields_healpix: integer
       if fields_healpix is not None, load the specified field
+    car_box:  2x2 array
+        [[dec0,ra0],[dec1,ra1]] in degree
 
     """
 
@@ -319,7 +321,13 @@ def read_map(file, coordinate=None, fields_healpix=None):
             new_map.ncomp = header["NAXIS3"]
         except:
             new_map.ncomp = 1
-        new_map.data = enmap.read_map(file)
+            
+        if car_box is not None:
+            car_box = np.array(car_box)*np.pi/180
+            new_map.data = enmap.read_map(file, box=car_box)
+        else:
+            new_map.data = enmap.read_map(file)
+
         new_map.nside = None
         new_map.geometry = new_map.data.geometry[1:]
         new_map.coordinate = header["RADESYS"]
