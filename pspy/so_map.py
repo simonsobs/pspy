@@ -10,6 +10,7 @@ import astropy.io.fits as pyfits
 import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
+
 from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
 from pspy.pspy_utils import ps_lensed_theory_to_dict
 
@@ -110,21 +111,22 @@ class so_map:
 
         """
 
+        synfast = self.copy()
         if self.pixel == "HEALPIX":
             l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
-                self.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
+                synfast.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
             else:
-                self.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
-                                                self.nside,
-                                                new=True,
-                                                verbose=False)
+                synfast.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
+                                                   self.nside,
+                                                   new=True,
+                                                   verbose=False)
 
         if self.pixel == "CAR":
             ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
-            self.data = curvedsky.rand_map(self.data.shape, self.data.wcs, ps)
+            synfast.data = curvedsky.rand_map(self.data.shape, self.data.wcs, ps)
 
-        return self
+        return synfast
 
     def plot(self,
              color="planck",
@@ -276,7 +278,7 @@ class so_map:
                         plot.img.show()
 
 
-def read_map(file, coordinate=None, fields_healpix=None, car_box = None):
+def read_map(file, coordinate=None, fields_healpix=None, car_box=None):
     """Create a ``so_map`` object from a fits file.
 
     Parameters
@@ -321,9 +323,9 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box = None):
             new_map.ncomp = header["NAXIS3"]
         except:
             new_map.ncomp = 1
-            
+
         if car_box is not None:
-            car_box = np.array(car_box)*np.pi/180
+            car_box = np.array(car_box) * np.pi / 180
             new_map.data = enmap.read_map(file, box=car_box)
         else:
             new_map.data = enmap.read_map(file)
@@ -624,7 +626,7 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
 
     return noise
 
-    
+
 def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
     """Simulate a point source mask in a binary template
 
