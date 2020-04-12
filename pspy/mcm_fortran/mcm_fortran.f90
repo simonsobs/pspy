@@ -1,5 +1,7 @@
 ! FFLAGS="-fopenmp -fPIC -Ofast -ffree-line-length-none" f2py-2.7 -c -m mcm_fortran mcm_fortran.f90 wigner3j_sub.f -lgomp
 
+
+
 subroutine calc_mcm_spin0(wcl, mcm)
     implicit none
     real(8), intent(in)    :: wcl(:)
@@ -11,7 +13,7 @@ subroutine calc_mcm_spin0(wcl, mcm)
     nlmax = size(mcm,1)-1
     !$omp parallel do private(l3, l2, l1, info, l1f, thrcof0, lmin, lmax, i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
             lmin = INT(l1f(1))
             lmax = MIN(nlmax+1,INT(l1f(2)))
@@ -22,6 +24,7 @@ subroutine calc_mcm_spin0(wcl, mcm)
         end do
     end do
 end subroutine
+
 
 subroutine calc_mcm_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
     implicit none
@@ -34,7 +37,7 @@ subroutine calc_mcm_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
     nlmax = size(mcm_array,1)-1
     !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,thrcof1,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
             call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f(1), l1f(2), thrcof1, size(thrcof1), info)
             lmin = INT(l1f(1))

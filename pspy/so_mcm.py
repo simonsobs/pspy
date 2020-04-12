@@ -82,10 +82,14 @@ def mcm_and_bbl_spin0(win1,
     
     mcm = np.zeros((maxl, maxl))
     mcm_fortran.calc_mcm_spin0(wcl, mcm.T)
+
+    mcm = mcm + mcm.T - np.diag(np.diag(mcm))
+    
     fac = (2 * np.arange(2, maxl + 2) + 1) / (4 * np.pi) * bl1[2:maxl + 2] * bl2[2:maxl + 2]
     mcm *= fac
-        
+
     mcm = mcm[:lmax, :lmax]
+    
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
     mbb = np.zeros((n_bins, n_bins))
@@ -121,6 +125,7 @@ def mcm_and_bbl_spin0and2(win1,
                           unbin=None,
                           save_file=None,
                           lmax_pad=None):
+                          
     """Get the mode coupling matrix and the binning matrix for spin 0 and 2 fields
 
     Parameters
@@ -205,15 +210,19 @@ def mcm_and_bbl_spin0and2(win1,
 
     if pure == False:
         mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
+        for id_mcm in range(5):
+            mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
+            
     else:
         mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
+        
 
     for id_mcm, spairs in enumerate(["00", "02", "20", "22", "22"]):
         fac = (2 * np.arange(2, maxl + 2) + 1) / (4 * np.pi) *  wbl[spairs][2:maxl + 2]
         mcm[id_mcm] *= fac
 
     mcm = mcm[:, :lmax, :lmax]
-
+    
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
 
