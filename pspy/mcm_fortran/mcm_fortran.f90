@@ -26,6 +26,34 @@ subroutine calc_mcm_spin0(wcl, mcm)
 end subroutine
 
 
+subroutine calc_mcm_spin0_threshold(wcl, threshold, mcm)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)   :: threshold
+    real(8), intent(inout) :: mcm(:,:)
+    real(8), parameter     :: pi = 3.14159265358979323846264d0
+    integer :: l1, l2, l3, info, nlmax, lmin, lmax, i
+    real(8) :: l1f(2)
+    real(8) :: thrcof0(2*size(mcm,1))
+    nlmax = size(mcm,1)-1
+    !$omp parallel do private(l3, l2, l1, info, l1f, thrcof0, lmin, lmax, i) schedule(dynamic)
+    do l1 = 2, nlmax
+        do l2 = l1, min(l1+threshold,nlmax)
+
+
+            call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
+            lmin = INT(l1f(1))
+            lmax = MIN(nlmax+1,INT(l1f(2)))
+            do l3=lmin, lmax
+                i   = l3 - lmin + 1
+                mcm(l1-1,l2-1) = mcm(l1-1,l2-1) + (wcl(l3+1)*thrcof0(i)**2d0)
+            end do
+        end do
+    end do
+end subroutine
+
+
+
 subroutine calc_mcm_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
     implicit none
     real(8), intent(in)    :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
@@ -54,6 +82,40 @@ subroutine calc_mcm_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
     end do
 
 end subroutine
+
+
+subroutine calc_mcm_spin0and2_threshold(wcl_00, wcl_02, wcl_20, wcl_22, threshold, mcm_array)
+    implicit none
+    real(8), intent(in)    :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
+    integer, intent(in)   :: threshold
+    real(8), intent(inout) :: mcm_array(:,:,:)
+    real(8), parameter     :: pi = 3.14159265358979323846264d0
+    integer :: l1, l2, l3, info, nlmax, lmin, lmax, i
+    real(8) :: l1f(2)
+    real(8) :: thrcof0(2*size(mcm_array,1)),thrcof1(2*size(mcm_array,1))
+    nlmax = size(mcm_array,1)-1
+    !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,thrcof1, lmin,lmax,i) schedule(dynamic)
+    do l1 = 2, nlmax
+        do l2 = l1, min(l1+threshold,nlmax)
+
+            call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
+            call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f(1), l1f(2), thrcof1, size(thrcof1), info)
+            lmin = INT(l1f(1))
+            lmax = MIN(nlmax+1,INT(l1f(2)))
+            do l3=lmin, lmax
+                i   = l3 - lmin + 1
+                mcm_array(l1-1,l2-1,1) = mcm_array(l1-1,l2-1,1) + (wcl_00(l3+1)*thrcof0(i)**2d0)
+                mcm_array(l1-1,l2-1,2) = mcm_array(l1-1,l2-1,2) + (wcl_02(l3+1)*thrcof0(i)*thrcof1(i))
+                mcm_array(l1-1,l2-1,3) = mcm_array(l1-1,l2-1,3) + (wcl_20(l3+1)*thrcof0(i)*thrcof1(i))
+                mcm_array(l1-1,l2-1,4) = mcm_array(l1-1,l2-1,4) + (wcl_22(l3+1)*thrcof1(i)**2*(1+(-1)**(l1+l2+l3))/2)
+                mcm_array(l1-1,l2-1,5) = mcm_array(l1-1,l2-1,5) + (wcl_22(l3+1)*thrcof1(i)**2*(1-(-1)**(l1+l2+l3))/2)
+            end do
+        end do
+    end do
+
+end subroutine
+
+
 
 subroutine calc_mcm_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
     implicit none

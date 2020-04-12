@@ -22,7 +22,8 @@ def mcm_and_bbl_spin0(win1,
                       input_alm=False,
                       unbin=None,
                       save_file=None,
-                      lmax_pad=None):
+                      lmax_pad=None,
+                      threshold=None):
     """Get the mode coupling matrix and the binning matrix for spin0 fields
 
     Parameters
@@ -51,6 +52,10 @@ def mcm_and_bbl_spin0(win1,
     lmax_pad: integer
       the maximum multipole to consider for the mcm computation
       lmax_pad should always be greater than lmax
+    threshold: integer
+      for approximating the mcm computation, threshold is the max |l1-l2| consider
+      in the calculation
+      
     """
 
     if type == "Dl":
@@ -81,7 +86,12 @@ def mcm_and_bbl_spin0(win1,
         bl2 = bl1.copy()
     
     mcm = np.zeros((maxl, maxl))
-    mcm_fortran.calc_mcm_spin0(wcl, mcm.T)
+    
+    if threshold is None:
+        mcm_fortran.calc_mcm_spin0(wcl, mcm.T)
+    else:
+        mcm_fortran.calc_mcm_spin0_threshold(wcl, threshold, mcm.T)
+        
 
     mcm = mcm + mcm.T - np.diag(np.diag(mcm))
     
@@ -124,7 +134,9 @@ def mcm_and_bbl_spin0and2(win1,
                           pure=False,
                           unbin=None,
                           save_file=None,
-                          lmax_pad=None):
+                          lmax_pad=None,
+                          threshold=None):
+
                           
     """Get the mode coupling matrix and the binning matrix for spin 0 and 2 fields
 
@@ -156,6 +168,10 @@ def mcm_and_bbl_spin0and2(win1,
     lmax_pad: integer
       the maximum multipole to consider for the mcm computation
       lmax_pad should always be greater than lmax
+    threshold: integer
+      for approximating the mcm computation, threshold is the max |l1-l2| consider
+      in the calculation
+
     """
     def get_coupling_dict(array, fac=1.0):
         ncomp, dim1, dim2 = array.shape
@@ -209,7 +225,12 @@ def mcm_and_bbl_spin0and2(win1,
     mcm = np.zeros((5, maxl, maxl))
 
     if pure == False:
-        mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
+    
+        if threshold is None:
+            mcm_fortran.calc_mcm_spin0and2(wcl["00"], wcl["02"], wcl["20"], wcl["22"], mcm.T)
+        else:
+            mcm_fortran.calc_mcm_spin0and2_threshold(wcl["00"], wcl["02"], wcl["20"], wcl["22"], threshold, mcm.T)
+
         for id_mcm in range(5):
             mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
             
