@@ -336,6 +336,8 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None):
         if new_map.coordinate == "ICRS":
             new_map.coordinate = "equ"
 
+    hdulist.close()
+
     if coordinate is not None:
         new_map.coordinate = coordinate
 
