@@ -12,7 +12,6 @@ from pspy.cov_fortran import cov_fortran
 def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
         
-
    Parameters
     ----------
 
@@ -37,8 +36,8 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
         wcl *= (2 * l + 1) / (4 * np.pi)
         coupling = np.zeros((1, lmax, lmax))
         cov_fortran.calc_cov_spin0_single_win(wcl, coupling.T)
-        coupling_dict["TaTcTbTd"] = coupling[0]
-        coupling_dict["TaTdTbTc"] = coupling[0]
+        coupling_dict["TaTcTbTd"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
+        coupling_dict["TaTdTbTc"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
     else:
         wcl = {}
         for s in ["TaTcTbTd","TaTdTbTc"]:
@@ -55,8 +54,8 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
 
         coupling = np.zeros((2, lmax, lmax))
         cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], coupling.T)
-        coupling_dict["TaTcTbTd"] = coupling[0]
-        coupling_dict["TaTdTbTc"] = coupling[1]
+        coupling_dict["TaTcTbTd"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0]))
+        coupling_dict["TaTdTbTc"] = coupling[1] + coupling[1].T - np.diag(np.diag(coupling[1]))
 
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)
@@ -105,7 +104,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         indexlist=np.zeros(32, dtype=np.int8)
 
         for name,index in zip(win_list, indexlist):
-            coupling_dict[name] = coupling[index]
+            coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
     else:
         wcl={}
         for s in win_list:
@@ -150,7 +149,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
 
         indexlist = np.arange(32)
         for name, index in zip(win_list, indexlist):
-            coupling_dict[name] = coupling[index]
+            coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
 
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)

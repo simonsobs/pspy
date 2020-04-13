@@ -11,11 +11,9 @@ subroutine calc_cov_spin0_single_win(wcl,cov_array)
     nlmax = size(cov_array,1)-1
     !$omp parallel do private(l3,l2,l1,fac,info,l1f,thrcof0,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
             lmin=INT(l1f(1))
-            !lmax= INT(l1f(2))
-            !write(*,*) nlmax,lmax
             lmax=MIN(nlmax+1,INT(l1f(2)))
             do l3=lmin,lmax
                 i   = l3-lmin+1
@@ -36,11 +34,9 @@ subroutine calc_cov_spin0(ac_bd,ad_bc,cov_array)
     nlmax = size(cov_array,1)-1
     !$omp parallel do private(l3,l2,l1,fac,info,l1f,thrcof0,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
             lmin=INT(l1f(1))
-            !lmax= INT(l1f(2))
-            !write(*,*) nlmax,lmax
             lmax=MIN(nlmax+1,INT(l1f(2)))
             do l3=lmin,lmax
                 i   = l3-lmin+1
@@ -64,7 +60,7 @@ subroutine calc_cov_spin0and2_single_win_simple(wcl,cov_array)
     nlmax = size(cov_array,1)-1
     !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
             lmin=INT(l1f(1))
             lmax=MIN(nlmax+1,INT(l1f(2)))
@@ -106,7 +102,7 @@ subroutine calc_cov_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
     nlmax = size(cov_array,1)-1
     !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
             lmin=INT(l1f(1))
             lmax=MIN(nlmax+1,INT(l1f(2)))
@@ -187,7 +183,7 @@ subroutine calc_cov_spin0and2_simple_planck(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPb
     nlmax = size(cov_array,1)-1
     !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,thrcof1,lmin,lmax,i) schedule(dynamic)
     do l1 = 2, nlmax
-        do l2 = 2, nlmax
+        do l2 = l1, nlmax
             call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
             call drc3jj(dble(l1),dble(l2),-2d0,2d0,l1f(1),l1f(2),thrcof1, size(thrcof1),info)
 
