@@ -9,7 +9,7 @@ from pspy import pspy_utils, so_mcm, sph_tools
 from pspy.cov_fortran import cov_fortran
 
 
-def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
+def cov_coupling_spin0(win, lmax, niter=3, save_file=None, threshold=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
         
    Parameters
@@ -24,6 +24,10 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
       the number of iteration performed while computing the alm
     save_file: string
       the name of the file in which the coupling kernel will be saved (npy format)
+    threshold: integer
+      for approximating the cov computation, threshold is the max |l1-l2| consider
+      in the calculation
+
     """
 
     coupling_dict = {}
@@ -35,7 +39,12 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None):
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
         coupling = np.zeros((1, lmax, lmax))
-        cov_fortran.calc_cov_spin0_single_win(wcl, coupling.T)
+        if threshold is None:
+            cov_fortran.calc_cov_spin0_single_win(wcl, coupling.T)
+        else:
+            cov_fortran.calc_cov_spin0_single_win_threshold(wcl, threshold, coupling.T)
+
+            
         coupling_dict["TaTcTbTd"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
         coupling_dict["TaTdTbTc"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
     else:

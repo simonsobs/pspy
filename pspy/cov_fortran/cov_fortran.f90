@@ -23,6 +23,32 @@ subroutine calc_cov_spin0_single_win(wcl,cov_array)
     end do
 end subroutine
 
+
+subroutine calc_cov_spin0_single_win_threshold(wcl, threshold, cov_array)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)   :: threshold
+    real(8), intent(inout) :: cov_array(:,:,:)
+    real(8), parameter     :: pi = 3.14159265358979323846264d0
+    integer :: l1, l2, l3, info, nlmax, lmin, lmax, i
+    real(8) :: l1f(2), fac
+    real(8) :: thrcof0(2*size(cov_array,1))
+    nlmax = size(cov_array,1)-1
+    !$omp parallel do private(l3,l2,l1,fac,info,l1f,thrcof0,lmin,lmax,i) schedule(dynamic)
+    do l1 = 2, nlmax
+        do l2 = l1, min(l1+threshold,nlmax)
+
+            call drc3jj(dble(l1),dble(l2),0d0,0d0,l1f(1),l1f(2),thrcof0, size(thrcof0),info)
+            lmin=INT(l1f(1))
+            lmax=MIN(nlmax+1,INT(l1f(2)))
+            do l3=lmin,lmax
+                i   = l3-lmin+1
+                cov_array(l1-1,l2-1,1) =cov_array(l1-1,l2-1,1)+ (wcl(l3+1)*thrcof0(i)**2d0)
+            end do
+        end do
+    end do
+end subroutine
+
 subroutine calc_cov_spin0(ac_bd,ad_bc,cov_array)
     implicit none
     real(8), intent(in)    :: ac_bd(:),ad_bc(:)
