@@ -193,7 +193,7 @@ def power_from_fft(ft, ft2=None):
                 
         p2d.spectra = spectra_list
         
-    return p2d
+    return p2d.lmap, p2d
 
 
 def get_ffts(so_map, window, lmax=None):
