@@ -161,7 +161,7 @@ def fft_from_so_map(so_map):
     
     return ft
     
-def power_from_fft(ft, ft2=None):
+def power_from_fft(ft, ft2=None, type = "Cl"):
     """
     Creates an 2-D power spectra object out of fft2D objects
     """
@@ -173,25 +173,30 @@ def power_from_fft(ft, ft2=None):
     p2d.thetamap = ft.thetamap
     p2d.powermap = {}
     
+    fac = 1
+    if type == "Dl":
+        fac = p2d.lmap**2/(2*np.pi)
+    
     if ft.ncomp == 1:
         p2d.spectra = ["II"]
 
         if ft2 is None:
-            p2d.powermap["II"] = (ft.kmap*np.conj(ft.kmap)).real
+            p2d.powermap["II"] = (ft.kmap*np.conj(ft.kmap)).real * fac
         else:
-            p2d.powermap["II"]= (ft.kmap*np.conj(ft2.kmap)).real
+            p2d.powermap["II"]= (ft.kmap*np.conj(ft2.kmap)).real * fac
                   
     elif ft.ncomp == 3:
         spectra_list = []
         for i, m1 in enumerate(["I","Q","U"]):
             for j, m2 in enumerate(["I","Q","U"]):
                 if ft2 is None:
-                    p2d.powermap[m1+m2]= (ft.kmap[i]*np.conj(ft.kmap[j])).real
+                    p2d.powermap[m1+m2]= (ft.kmap[i]*np.conj(ft.kmap[j])).real * fac
                 else:
-                    p2d.powermap[m1+m2]= (ft.kmap[i]*np.conj(ft2.kmap[j])).real
+                    p2d.powermap[m1+m2]= (ft.kmap[i]*np.conj(ft2.kmap[j])).real * fac
                 spectra_list += [m1+m2]
                 
         p2d.spectra = spectra_list
+    
         
     return p2d.lmap, p2d
 
