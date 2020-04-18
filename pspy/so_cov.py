@@ -7,9 +7,10 @@ import numpy as np
 from pixell import colorize, enmap, enplot
 from pspy import pspy_utils, so_mcm, sph_tools
 from pspy.cov_fortran import cov_fortran
+from pspy.mcm_fortran import mcm_fortran
 
 
-def cov_coupling_spin0(win, lmax, niter=3, save_file=None, threshold=None):
+def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_thres=None, l_toep=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
         
    Parameters
@@ -24,13 +25,13 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, threshold=None):
       the number of iteration performed while computing the alm
     save_file: string
       the name of the file in which the coupling kernel will be saved (npy format)
-    threshold: integer
-      for approximating the cov computation, threshold is the max |l1-l2| consider
-      in the calculation
 
     """
 
     coupling_dict = {}
+    if l_toep is None: l_toep = lmax
+    if l_thres is None: l_thres = lmax
+
     if type(win) is not dict:
         sq_win = win.copy()
         sq_win.data *= sq_win.data
@@ -38,19 +39,28 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, threshold=None):
         wcl = hp.alm2cl(alm)
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
-        coupling = np.zeros((1, lmax, lmax))
-        if threshold is None:
-            cov_fortran.calc_cov_spin0_single_win(wcl, coupling.T)
-        else:
-            cov_fortran.calc_cov_spin0_single_win_threshold(wcl, threshold, coupling.T)
+        coupling = np.zeros((lmax, lmax))
+        
 
-            
-        coupling_dict["TaTcTbTd"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
-        coupling_dict["TaTdTbTc"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0])) #coupling[0]
+        mcm_fortran.calc_coupling_spin0(wcl,
+                                       l_thres,
+                                       l_toep,
+                                       coupling.T)
+
+        # Hack for the last multipoles
+        coupling[-2:,1:], coupling[-1:,2:] = coupling[-3,:-1], coupling[-3,:-2]
+        
+        if l_toep < lmax:
+            # For toepliz fill the matrix
+            coupling = so_mcm.format_toepliz(coupling, l_toep, lmax)
+
+        coupling_dict["TaTcTbTd"] = coupling + coupling.T - np.diag(np.diag(coupling))
+        coupling_dict["TaTdTbTc"] = coupling + coupling.T - np.diag(np.diag(coupling))
+        
     else:
         wcl = {}
-        for s in ["TaTcTbTd","TaTdTbTc"]:
-            n0, n1, n2, n3 = [s[i, i + 2] for i in range(4)]
+        for s in ["TaTcTbTd", "TaTdTbTc"]:
+            n0, n1, n2, n3 = [s[i * 2:(i + 1) * 2] for i in range(4)]
             sq_win_n0n1 = win[n0].copy()
             sq_win_n0n1.data *= win[n1].data
             sq_win_n2n3 = win[n2].copy()
@@ -62,17 +72,26 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, threshold=None):
             wcl[n0+n1+n2+n3] *= (2 * l + 1) / (4 * np.pi)
 
         coupling = np.zeros((2, lmax, lmax))
-        cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], coupling.T)
-        coupling_dict["TaTcTbTd"] = coupling[0] + coupling[0].T - np.diag(np.diag(coupling[0]))
-        coupling_dict["TaTdTbTc"] = coupling[1] + coupling[1].T - np.diag(np.diag(coupling[1]))
+        
+        # need to implement l_thres, l_toep
+        cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], l_thres, l_toep,  coupling.T)
+        
+        for id_cov, name in enumerate(["TaTcTbTd", "TaTdTbTc"]):
+            # Hack for the last two raws, set their value to the last third raw (these values will not be used)
+            coupling[id_cov][-2:,1:], coupling[id_cov][-1:,2:] =  coupling[id_cov][-3,:-1], coupling[id_cov][-3,:-2]
+            if l_toep < lmax:
+                coupling[id_cov] = so_mcm.format_toepliz(coupling[id_cov], l_toep, lmax)
 
+            coupling_dict[name] = coupling[id_cov] + coupling[id_cov].T - np.diag(np.diag(coupling[id_cov]))
+
+        
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)
 
     return coupling_dict
 
 
-def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=False):
+def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=False, l_thres=None, l_toep=None):
     """Compute the coupling kernels corresponding to the T and E covariance matrix
 
     Parameters
@@ -100,6 +119,10 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                 "PaTcPbPd", "PaPdPbTc", "PaPcPbTd", "PaTdPbPc"]
                 
     coupling_dict = {}
+    
+    if l_toep is None: l_toep = lmax
+    if l_thres is None: l_thres = lmax
+
     if type(win) is not dict:
         sq_win = win.copy()
         sq_win.data *= sq_win.data
@@ -108,14 +131,29 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
         coupling = np.zeros((1, lmax, lmax))
-        cov_fortran.calc_cov_spin0and2_single_win_simple(wcl, coupling.T)
+    
+
+        mcm_fortran.calc_coupling_spin0(wcl,
+                                       l_thres,
+                                       l_toep,
+                                       coupling[0].T)
+
+        # Hack for the last multipoles
+        coupling[0][-2:,1:] =  coupling[0][-3,:-1]
+        coupling[0][-1:,2:] =  coupling[0][-3,:-2]
+        
+        if l_toep < lmax:
+            # For toepliz fill the matrix
+            coupling[0] = so_mcm.format_toepliz(coupling[0], l_toep, maxl)
 
         indexlist=np.zeros(32, dtype=np.int8)
 
         for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
     else:
+        # need to implement l_thres, l_toep
         wcl={}
+        
         for s in win_list:
 
             n0, n1, n2, n3 = [s[i * 2:(i + 1) * 2] for i in range(4)]
@@ -143,7 +181,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                                                   wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
                                                   wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
                                                   wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
-                                                  coupling.T)
+                                                  l_thres, l_toep, coupling.T)
 
         else:
             cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
@@ -154,10 +192,14 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                                                   wcl["TaTcPbTd"], wcl["TaTdPbTc"], wcl["PaTcTbTd"], wcl["PaTdTbTc"],
                                                   wcl["PaTcPbTd"], wcl["PaTdPbTc"], wcl["PaTcTbPd"], wcl["PaPdTbTc"],
                                                   wcl["PaTcPbPd"], wcl["PaPdPbTc"], wcl["PaPcPbTd"], wcl["PaTdPbPc"],
-                                                  coupling.T)
+                                                  l_thres, l_toep, coupling.T)
 
         indexlist = np.arange(32)
         for name, index in zip(win_list, indexlist):
+            coupling[index][-2:,1:], coupling[index][-1:,2:] =  coupling[index][-3,:-1], coupling[index][-3,:-2]
+            if l_toep < lmax:
+                coupling[index] = so_mcm.format_toepliz(coupling[index], l_toep, lmax)
+
             coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
 
     if save_file is not None:
