@@ -214,7 +214,6 @@ def mcm_and_bbl_spin0and2(win1,
                                       lmax=maxl), sph_tools.map2alm(win2[1], niter=niter,
                                                                     lmax=maxl))
     if win2 is None: win2 = deepcopy(win1)
-
     if bl1 is None: bl1 = (np.ones(2+maxl), np.ones(2+maxl))
     if bl2 is None: bl2 = deepcopy(bl1)
 
@@ -287,7 +286,7 @@ def mcm_and_bbl_spin0and2(win1,
                                     bin_lo,
                                     bin_hi,
                                     bin_size,
-                                    (Bbl_array[i, :, :]).T,
+                                    (Bbl_array[id_mcm, :, :]).T,
                                     doDl)
 
     mbb = get_coupling_dict(mbb_array, fac=-1.0)
