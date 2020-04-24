@@ -17,18 +17,19 @@ def get_distance(binary, rmax=None):
     binary: ``so_map``
     a ``so_map`` with binary data (1 is observed, 0 is masked)
     """
-        
+
     dist = binary.copy()
     if binary.pixel == "HEALPIX":
-        dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap", rmax = rmax)
+        dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap", rmax=rmax)
         dist.data[:] *= 180 / np.pi
     if binary.pixel == "CAR":
-        dist.data[:] = enmap.distance_transform(binary.data, rmax = rmax)
+        dist.data[:] = enmap.distance_transform(binary.data, rmax=rmax)
         dist.data[:] *= 180 / np.pi
 
     return dist
 
-def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
+
+def create_apodization(binary, apo_type, apo_radius_degree, use_rmax=False):
     """Create a apodized window function from a binary mask.
 
     Parameters
@@ -40,9 +41,9 @@ def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
     apo_radius: float
       the apodisation radius in degrees
     """
-    
-    if use_rmax == True:
-        rmax = (apo_radius_degree * 1.1) * np.pi/180
+
+    if use_rmax:
+        rmax = (apo_radius_degree * 1.1) * np.pi / 180
     else:
         rmax = None
 
@@ -57,6 +58,7 @@ def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
             window = apod_rectangle(binary, apo_radius_degree)
 
     return window
+
 
 def apod_C2(binary, radius, rmax=None):
     """Create a C2 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
@@ -81,6 +83,7 @@ def apod_C2(binary, radius, rmax=None):
 
     return win
 
+
 def apod_C1(binary, radius, rmax=None):
     """Create a C1 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
 
@@ -99,10 +102,11 @@ def apod_C1(binary, radius, rmax=None):
         dist = get_distance(binary, rmax)
         win = binary.copy()
         idx = np.where(dist.data > radius)
-        win.data = 1./2 - 1./2 * np.cos(-np.pi * dist.data / radius)
+        win.data = 1.0 / 2 - 1.0 / 2 * np.cos(-np.pi * dist.data / radius)
         win.data[idx] = 1
 
     return win
+
 
 def apod_rectangle(binary, radius):
     """Create an apodisation for rectangle window (in CAR) (smoother at the corner)
@@ -116,7 +120,7 @@ def apod_rectangle(binary, radius):
 
     """
 
-    #TODO: clean this one
+    # TODO: clean this one
 
     if radius == 0:
         return binary
@@ -129,7 +133,7 @@ def apod_rectangle(binary, radius):
         win.data = win.data * 0 + 1
         win_x = win.copy()
         win_y = win.copy()
-        ones = np.ones((Ny,Nx))
+        ones = np.ones((Ny, Nx))
         deg_to_pix_x = np.pi / 180 / pix_scale_x
         deg_to_pix_y = np.pi / 180 / pix_scale_y
         lenApod_x = int(radius * deg_to_pix_x)
@@ -137,16 +141,17 @@ def apod_rectangle(binary, radius):
 
         for i in range(lenApod_x):
             r = float(i)
-            win_x.data[:, i] = 1. / 2 * (ones[:, i] - np.cos(-np.pi * r / lenApod_x))
+            win_x.data[:, i] = 1.0 / 2 * (ones[:, i] - np.cos(-np.pi * r / lenApod_x))
             win_x.data[:, Nx - i - 1] = win_x.data[:, i]
         for j in range(lenApod_y):
             r = float(j)
-            win_y.data[j, :] = 1. / 2 * (ones[j, :] - np.cos(-np.pi * r / lenApod_y))
+            win_y.data[j, :] = 1.0 / 2 * (ones[j, :] - np.cos(-np.pi * r / lenApod_y))
             win_y.data[Ny - j - 1, :] = win_y.data[j, :]
 
         win.data = win_x.data * win_y.data
 
         return win
+
 
 def get_spinned_windows(w, lmax, niter):
     """Compute the spinned window functions (for pure B modes method)
@@ -166,10 +171,10 @@ def get_spinned_windows(w, lmax, niter):
     w1_plus, w1_minus, w2_plus, w2_minus = w.copy(), w.copy(), w.copy(), w.copy()
 
     if w.pixel == "CAR":
-        template = enmap.samewcs(template,w.data)
+        template = enmap.samewcs(template, w.data)
 
     wlm = sph_tools.map2alm(w, lmax=lmax, niter=niter)
-    ell = np.arange(lmax+1)
+    ell = np.arange(lmax + 1)
     filter_1 = -np.sqrt((ell + 1) * ell)
     filter_2 = np.sqrt((ell + 2) * (ell + 1) * ell * (ell - 1))
 
@@ -187,8 +192,8 @@ def get_spinned_windows(w, lmax, niter):
         curvedsky.alm2map_healpix(np.array([wlm1_e, wlm1_b]), w1, spin=1)
         curvedsky.alm2map_healpix(np.array([wlm2_e, wlm2_b]), w2, spin=2)
     if w.pixel == "CAR":
-        curvedsky.alm2map(np.array([wlm1_e,wlm1_b]), w1, spin=1)
-        curvedsky.alm2map(np.array([wlm2_e,wlm2_b]), w2, spin=2)
+        curvedsky.alm2map(np.array([wlm1_e, wlm1_b]), w1, spin=1)
+        curvedsky.alm2map(np.array([wlm2_e, wlm2_b]), w2, spin=2)
 
     w1_plus.data = w1[0]
     w1_minus.data = w1[1]
