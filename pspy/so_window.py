@@ -9,7 +9,7 @@ from pixell import enmap, curvedsky
 from pspy import sph_tools
 
 
-def get_distance(binary):
+def get_distance(binary, rmax):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
     
     Parameters
@@ -17,18 +17,18 @@ def get_distance(binary):
     binary: ``so_map``
     a ``so_map`` with binary data (1 is observed, 0 is masked)
     """
-
+        
     dist = binary.copy()
     if binary.pixel == "HEALPIX":
-        dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap")
+        dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap", rmax = rmax)
         dist.data[:] *= 180 / np.pi
     if binary.pixel == "CAR":
-        dist.data[:] = enmap.distance_transform(binary.data)
+        dist.data[:] = enmap.distance_transform(binary.data, rmax = rmax)
         dist.data[:] *= 180 / np.pi
 
     return dist
 
-def create_apodization(binary, apo_type, apo_radius_degree):
+def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
     """Create a apodized window function from a binary mask.
     
     Parameters
@@ -40,11 +40,16 @@ def create_apodization(binary, apo_type, apo_radius_degree):
     apo_radius: float
       the apodisation radius in degrees
     """
+    
+    if use_rmax == True:
+        rmax = (apo_radius_degree * 1.1) * np.pi/180
+    else:
+        rmax = None
 
     if apo_type == "C1":
-        window = apod_C1(binary, apo_radius_degree)
+        window = apod_C1(binary, apo_radius_degree, rmax)
     if apo_type == "C2":
-        window = apod_C2(binary, apo_radius_degree)
+        window = apod_C2(binary, apo_radius_degree, rmax)
     if apo_type == "Rectangle":
         if binary.pixel == "HEALPIX":
             raise ValueError("No rectangle apodization for HEALPIX map")
@@ -53,7 +58,7 @@ def create_apodization(binary, apo_type, apo_radius_degree):
 
     return window
 
-def apod_C2(binary, radius):
+def apod_C2(binary, radius, rmax):
     """Create a C2 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
@@ -68,7 +73,7 @@ def apod_C2(binary, radius):
     if radius == 0:
         return binary
     else:
-        dist = get_distance(binary)
+        dist = get_distance(binary, rmax)
         win = binary.copy()
         idx = np.where(dist.data > radius)
         win.data = dist.data / radius - np.sin(2 * np.pi * dist.data / radius) / (2 * np.pi)
@@ -76,7 +81,7 @@ def apod_C2(binary, radius):
         
     return win
 
-def apod_C1(binary, radius):
+def apod_C1(binary, radius, rmax):
     """Create a C1 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
@@ -91,7 +96,7 @@ def apod_C1(binary, radius):
     if radius == 0:
         return binary
     else:
-        dist = get_distance(binary)
+        dist = get_distance(binary, rmax)
         win = binary.copy()
         idx = np.where(dist.data > radius)
         win.data = 1./2 - 1./2 * np.cos(-np.pi * dist.data / radius)
