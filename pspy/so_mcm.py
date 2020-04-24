@@ -253,8 +253,6 @@ def mcm_and_bbl_spin0and2(win1,
         for id_mcm in range(5):
             # Hack for the last two raws, set their value to the last third raw (these values will not be used)
             mcm[id_mcm][-2:,1:], mcm[id_mcm][-1:,2:] =  mcm[id_mcm][-3,:-1], mcm[id_mcm][-3,:-2]
-            if id_mcm == 0:
-                np.save("coupling/element_computed.npy", mcm[0])
                 
             if l_toep < maxl:
                 mcm[id_mcm] = format_toepliz(mcm[id_mcm], l_toep, maxl)
