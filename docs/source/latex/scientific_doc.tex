@@ -272,7 +272,7 @@ So the expression simplifies to
 \left(\begin{array}{clcr}
 \ell & \ell_1 & \ell_3\\
 2 & -2 & 0 \end{array}\right)
-(1+ (-1)^{\ell_1+ \ell_2 + \ell_3}).
+(1+ (-1)^{\ell+ \ell_1 + \ell_3}).
 \ea
 With this we can expand the coupling term and simplify them
 \ba
@@ -281,17 +281,17 @@ M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &=&      \frac{2\ell_1 +1}{4\pi}   \sum_{ \
 \left(\begin{array}{clcr}
 \ell & \ell_1 & \ell_3\\
 2 & -2 & 0 \end{array}\right)^{2}
-\delta_{m_3 m_4} \delta_{\ell_3 \ell_4} \delta(\ell_1, \ell_2, \ell_3) \frac{1}{2\ell_3+1} \frac{(1+ (-1)^{\ell_1+ \ell_2 + \ell_3})}{2} \nonumber \\
+\delta_{m_3 m_4} \delta_{\ell_3 \ell_4} \delta(\ell_1, \ell_2, \ell_3) \frac{1}{2\ell_3+1} \frac{(1+ (-1)^{\ell+ \ell_1 + \ell_3})}{2} \nonumber \\
 &=&
 \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
 \ell & \ell_1 & \ell_3\\
-2 & -2 & 0 \end{array}\right)^{2} \frac{(1+ (-1)^{\ell_1+ \ell_2 + \ell_3})}{2}
+2 & -2 & 0 \end{array}\right)^{2} \frac{(1+ (-1)^{\ell+ \ell_1 + \ell_3})}{2}
 \ea
 Using the exact same math we derive the expression for 
 \ba
 M^{\nu_{1}\nu_{2}--}_{\ell \ell_{1}}= \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
 \ell & \ell_1 & \ell_3\\
-2 & -2 & 0 \end{array}\right)^{2} \frac{(1- (-1)^{\ell_1+ \ell_2 + \ell_3})}{2}.
+2 & -2 & 0 \end{array}\right)^{2} \frac{(1- (-1)^{\ell+ \ell_1 + \ell_3})}{2}.
 \ea
 These two matrices can be used to relate the observed power spectra to the true underlying power spectra
 \ba
@@ -640,7 +640,7 @@ M^{\nu_{1}\nu_{2}02}_{\ell \ell_{1}} &=& \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}
 0 & 0 & 0 \end{array}\right) \nonumber \\
 M^{\nu_{1}\nu_{2}++}_{\ell \ell_{1}} &=& \frac{2\ell_1 +1}{4\pi}  \sum_{\ell_{3}} (2\ell_3 +1) {\cal W}^{\nu_{1}\nu_{2}}_{\ell_3} \left(\begin{array}{clcr}
 \ell & \ell_1 & \ell_3\\
-2 & -2 & 0 \end{array}\right)^{2} \frac{(1+ (-1)^{\ell_1+ \ell_2 + \ell_3})}{2}.
+2 & -2 & 0 \end{array}\right)^{2} \frac{(1+ (-1)^{\ell+ \ell_1 + \ell_3})}{2}.
 \ea
 as derived in the mode coupling matrix documentation. So we are left with computing 
 $\langle \bm{ \Delta \tilde{C}}^{\nu_{1}, \nu_{2}}_{\ell_{1}}  (\bm{ \Delta \tilde{C}}^{\nu_{3}, \nu_{4}}_{\ell_{2}})^{t}   \rangle$
