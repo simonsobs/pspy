@@ -9,7 +9,7 @@ from pixell import enmap, curvedsky
 from pspy import sph_tools
 
 
-def get_distance(binary, rmax):
+def get_distance(binary, rmax=None):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
     
     Parameters
@@ -58,7 +58,7 @@ def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
 
     return window
 
-def apod_C2(binary, radius, rmax):
+def apod_C2(binary, radius, rmax=None):
     """Create a C2 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
@@ -81,7 +81,7 @@ def apod_C2(binary, radius, rmax):
         
     return win
 
-def apod_C1(binary, radius, rmax):
+def apod_C1(binary, radius, rmax=None):
     """Create a C1 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
         
     Parameters
