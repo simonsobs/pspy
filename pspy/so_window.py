@@ -11,7 +11,7 @@ from pspy import sph_tools
 
 def get_distance(binary, rmax=None):
     """Get the distance to the closest masked pixels for CAR and healpix so_map binary.
-    
+
     Parameters
     ----------
     binary: ``so_map``
@@ -30,7 +30,7 @@ def get_distance(binary, rmax=None):
 
 def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
     """Create a apodized window function from a binary mask.
-    
+
     Parameters
     ----------
     binary: ``so_map``
@@ -60,7 +60,7 @@ def create_apodization(binary, apo_type, apo_radius_degree, use_rmax = False):
 
 def apod_C2(binary, radius, rmax=None):
     """Create a C2 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
-        
+
     Parameters
     ----------
     binary: ``so_map``
@@ -69,7 +69,7 @@ def apod_C2(binary, radius, rmax=None):
         the apodisation radius in degrees
 
     """
-    
+
     if radius == 0:
         return binary
     else:
@@ -78,21 +78,21 @@ def apod_C2(binary, radius, rmax=None):
         idx = np.where(dist.data > radius)
         win.data = dist.data / radius - np.sin(2 * np.pi * dist.data / radius) / (2 * np.pi)
         win.data[idx] = 1
-        
+
     return win
 
 def apod_C1(binary, radius, rmax=None):
     """Create a C1 apodisation as defined in https://arxiv.org/pdf/0903.2350.pdf
-        
+
     Parameters
     ----------
     binary: ``so_map``
       a so_map with binary data (1 is observed, 0 is masked)
     apo_radius: float
       the apodisation radius in degrees
-        
+
     """
-    
+
     if radius == 0:
         return binary
     else:
@@ -101,23 +101,23 @@ def apod_C1(binary, radius, rmax=None):
         idx = np.where(dist.data > radius)
         win.data = 1./2 - 1./2 * np.cos(-np.pi * dist.data / radius)
         win.data[idx] = 1
-    
+
     return win
 
 def apod_rectangle(binary, radius):
     """Create an apodisation for rectangle window (in CAR) (smoother at the corner)
-        
+
     Parameters
     ----------
     binary: ``so_map``
       a so_map with binary data (1 is observed, 0 is masked)
     apo_radius: float
       the apodisation radius in degrees
-        
+
     """
-    
+
     #TODO: clean this one
-    
+
     if radius == 0:
         return binary
     else:
@@ -134,7 +134,7 @@ def apod_rectangle(binary, radius):
         deg_to_pix_y = np.pi / 180 / pix_scale_y
         lenApod_x = int(radius * deg_to_pix_x)
         lenApod_y = int(radius * deg_to_pix_y)
-    
+
         for i in range(lenApod_x):
             r = float(i)
             win_x.data[:, i] = 1. / 2 * (ones[:, i] - np.cos(-np.pi * r / lenApod_x))
@@ -150,7 +150,7 @@ def apod_rectangle(binary, radius):
 
 def get_spinned_windows(w, lmax, niter):
     """Compute the spinned window functions (for pure B modes method)
-        
+
     Parameters
     ----------
     w: ``so_map``
@@ -159,15 +159,15 @@ def get_spinned_windows(w, lmax, niter):
       maximum value of the multipole for the harmonic transform
     niter: integer
       number of iteration for the harmonic transform
-      
+
     """
 
     template = np.array([w.data.copy(), w.data.copy()])
     w1_plus, w1_minus, w2_plus, w2_minus = w.copy(), w.copy(), w.copy(), w.copy()
-    
+
     if w.pixel == "CAR":
         template = enmap.samewcs(template,w.data)
-    
+
     wlm = sph_tools.map2alm(w, lmax=lmax, niter=niter)
     ell = np.arange(lmax+1)
     filter_1 = -np.sqrt((ell + 1) * ell)
@@ -182,19 +182,17 @@ def get_spinned_windows(w, lmax, niter):
 
     w1 = template.copy()
     w2 = template.copy()
-    
+
     if w.pixel == "HEALPIX":
         curvedsky.alm2map_healpix(np.array([wlm1_e, wlm1_b]), w1, spin=1)
         curvedsky.alm2map_healpix(np.array([wlm2_e, wlm2_b]), w2, spin=2)
     if w.pixel == "CAR":
         curvedsky.alm2map(np.array([wlm1_e,wlm1_b]), w1, spin=1)
         curvedsky.alm2map(np.array([wlm2_e,wlm2_b]), w2, spin=2)
-    
+
     w1_plus.data = w1[0]
     w1_minus.data = w1[1]
     w2_plus.data = w2[0]
     w2_minus.data = w2[1]
-    
+
     return w1_plus, w1_minus, w2_plus, w2_minus
-
-

@@ -3,14 +3,14 @@ Routines for generalized map2alm and alm2map (healpix and CAR).
 """
 import healpy as hp
 import numpy as np
-from pixell import curvedsky, enmap
 
+from pixell import curvedsky, enmap
 from pspy import so_window
 
 
 def map2alm(map, niter, lmax, theta_range=None):
     """Map2alm transform (for healpix or CAR).
-    
+
     Parameters
     ----------
     map: ``so_map``
@@ -27,7 +27,7 @@ def map2alm(map, niter, lmax, theta_range=None):
     if map.pixel == "HEALPIX":
         if theta_range is None:
             alm = hp.sphtfunc.map2alm(map.data, lmax=lmax, iter=niter)
-        
+
         else:
             nside = hp.pixelfunc.get_nside(map.data)
             alm = curvedsky.map2alm_healpix(map.data,
@@ -44,7 +44,7 @@ def map2alm(map, niter, lmax, theta_range=None):
         return alm
 
     elif map.pixel=="CAR":
-        alm = curvedsky.map2alm(map.data, lmax= lmax)
+        alm = curvedsky.map2alm(map.data, lmax=lmax)
         if niter != 0:
             map_copy = map.copy()
             for _ in range(niter):
@@ -57,7 +57,7 @@ def map2alm(map, niter, lmax, theta_range=None):
 
 def alm2map(alms, so_map):
     """alm2map transform (for healpix and CAR).
-        
+
     Parameters
     ----------
     alms: array
@@ -81,7 +81,7 @@ def get_alms(so_map, window, niter, lmax, theta_range=None):
     """Get a map, multiply by a window and return alms
     This is basically map2alm but with application of the
     window functions.
-        
+
     Parameters
     ----------
 
@@ -107,12 +107,12 @@ def get_alms(so_map, window, niter, lmax, theta_range=None):
 
 
 def get_pure_alms(so_map, window, niter, lmax):
-    
+
     """Compute pure alms from maps and window function
-        
+
     Parameters
     ----------
-        
+
     so_map: ``so_map``
       the data we wants alms from
     window: so_map or tuple of so_map
@@ -125,24 +125,24 @@ def get_pure_alms(so_map, window, niter, lmax):
       the maximum multipole of the transform
 
     """
-    
+
     w1_plus, w1_minus, w2_plus, w2_minus = so_window.get_spinned_windows(window[1], lmax, niter=niter)
     p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
     p1 = np.array([(w1_plus.data * so_map.data[1] + w1_minus.data * so_map.data[2]), (w1_plus.data * so_map.data[2] - w1_minus.data * so_map.data[1])])
     p0 = np.array([(w2_plus.data * so_map.data[1] + w2_minus.data * so_map.data[2]), (w2_plus.data * so_map.data[2] - w2_minus.data * so_map.data[1])])
-    
+
     if so_map.pixel == "CAR":
         p0 = enmap.samewcs(p0,so_map.data)
         p1 = enmap.samewcs(p1,so_map.data)
         p2 = enmap.samewcs(p2,so_map.data)
-        
+
         alm = curvedsky.map2alm(so_map.data[0] * window[0].data, lmax=lmax)
         s2eblm = curvedsky.map2alm(p2, spin=2, lmax=lmax)
         s1eblm = curvedsky.map2alm(p1, spin=1, lmax=lmax)
         s0eblm = s1eblm.copy()
         s0eblm[0] = curvedsky.map2alm(p0[0], spin=0, lmax=lmax)
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax=lmax)
-    
+
     if so_map.pixel == "HEALPIX":
         alm = hp.sphtfunc.map2alm(so_map.data[0] * window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
         s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax=lmax)
@@ -153,7 +153,7 @@ def get_pure_alms(so_map, window, niter, lmax):
             for _ in range(niter):
                 s2eblm += curvedsky.map2alm_healpix(p2-curvedsky.alm2map_healpix(s2eblm, p2_copy, spin=2), lmax=lmax, spin=2)
                 s1eblm += curvedsky.map2alm_healpix(p1-curvedsky.alm2map_healpix(s1eblm, p1_copy, spin=1), lmax=lmax, spin=1)
-    
+
         s0eblm= s1eblm.copy()
         s0eblm[0] = hp.sphtfunc.map2alm(p0[0], lmax=lmax, iter=niter)
         s0eblm[1] = hp.sphtfunc.map2alm(p0[1], lmax=lmax, iter=niter)
@@ -171,6 +171,5 @@ def get_pure_alms(so_map, window, niter, lmax):
 
     elm_p = s2eblm[0] + s1eblm[0] + s0eblm[0]
     blm_b = s2eblm[1] + s1eblm[1] + s0eblm[1]
-    
-    return np.array([alm,elm_p,blm_b])
 
+    return np.array([alm,elm_p,blm_b])
