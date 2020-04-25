@@ -252,8 +252,7 @@ def mcm_and_bbl_spin0and2(win1,
 
         for id_mcm in range(5):
             # Hack for the last two raws, set their value to the last third raw (these values will not be used)
-            mcm[id_mcm][-2:,1:], mcm[id_mcm][-1:,2:] =  mcm[id_mcm][-3,:-1], mcm[id_mcm][-3,:-2]
-                
+            mcm[id_mcm][-2:,1:], mcm[id_mcm][-1:,2:] =  mcm[id_mcm][-3,:-1], mcm[id_mcm][-3,:-2]                
             if l_toep < maxl:
                 mcm[id_mcm] = format_toepliz(mcm[id_mcm], l_toep, maxl)
 
@@ -349,34 +348,6 @@ def format_toepliz(coupling, l_toep, lmax):
     toepliz_array = toepliz_array * np.outer(diag, diag)
     id = np.where(coupling != 0)
     toepliz_array[id]= coupling[id]
-
-    return toepliz_array
-
-
-def format_toepliz_old(toepliz_array, l_toep, lmax):
-    """take a matrix and apply the toepliz appoximation
-    Parameters
-    ----------
-
-    toepliz_array: array
-      consist of an array where the upper part is the exact matrix and
-      the lower part is the diagonal. We will feed the off diagonal
-      of the lower part using the measurement of the correlation from the exact computatio
-    l_toep: integer
-      the l at which we start the approx
-    lmax: integer
-    the maximum multipole of the array
-
-    """
-
-    diag = np.sqrt(np.diag(toepliz_array))
-    corr= so_cov.cov2corr(toepliz_array, remove_diag=False)
-
-    for ell in range(l_toep - 2, lmax):
-        pix = ell - (l_toep - 2)
-        corr[ell:, ell] = corr[l_toep - 2:lmax - pix, l_toep - 2]
-        
-    toepliz_array = corr * np.outer(diag, diag)
 
     return toepliz_array
 
