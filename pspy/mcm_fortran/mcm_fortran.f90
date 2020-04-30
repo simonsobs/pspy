@@ -2,17 +2,19 @@ module mcm_compute
 
 contains
 
-subroutine calc_coupling_elem_spin0(wcl, l1, l2, nlmax, elem)
+subroutine calc_coupling_elem_spin0(wcl, l1, l2, elem)
     implicit none
-    integer, intent(in)   :: l1, l2, nlmax
+    integer, intent(in)   :: l1, l2
     real(8), intent(in)   :: wcl(:)
     real(8), intent(inout):: elem
-    real(8) :: thrcof0(2*(nlmax+1)), l1f, l2f
-    integer :: info, l3, wlmin, wlmax, i
+    real(8) :: thrcof0(2*size(wcl)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i, lmax
+    lmax = size(wcl)-1 ! wcl starts at 0
+
     call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
 
     wlmin = int(l1f)
-    wlmax = min(nlmax+1, int(l2f))
+    wlmax = min(lmax, int(l2f))
     elem = 0
     do l3 = wlmin, wlmax
         i = l3 - wlmin + 1
@@ -20,19 +22,21 @@ subroutine calc_coupling_elem_spin0(wcl, l1, l2, nlmax, elem)
     end do
 end subroutine
 
-subroutine calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, elems)
+subroutine calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, elems)
     implicit none
-    integer, intent(in)   :: l1, l2, nlmax
+    integer, intent(in)   :: l1, l2
     real(8), intent(in)   :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
     real(8), intent(inout):: elems(5)
-    real(8) :: thrcof0(2*(nlmax+1)), thrcof1(2*(nlmax+1)), l1f, l2f
-    integer :: info, l3, wlmin, wlmax, i
+    real(8) :: thrcof0(2*size(wcl_00)), thrcof1(2*size(wcl_00)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i, lmax
+
+    lmax = size(wcl_00)-1 ! wcl starts at 0
 
     call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
     call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcof1, size(thrcof1), info)
 
     wlmin = int(l1f)
-    wlmax = min(nlmax+1, int(l2f))
+    wlmax = min(lmax, int(l2f))
     elems = 0
     do l3 = wlmin, wlmax
         i = l3 - wlmin + 1
@@ -44,24 +48,24 @@ subroutine calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, 
     end do
 end subroutine
 
-subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, elems)
+subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, elems)
     implicit none
-    integer, intent(in)   :: l1, l2, nlmax
+    integer, intent(in)   :: l1, l2
     real(8), intent(in)   :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
     real(8), intent(inout):: elems(5)
-    real(8) :: thrcof0(2*(nlmax+1)), thrcofa(2*(nlmax+1)), thrcofb(2*(nlmax+1)), thrcofc(2*(nlmax+1)), l1f, l2f, fac_b, fac_c, combin
-    integer :: info, l3, wlmin1, wlmax1, i1, wlmin2, wlmax2, i2, wlmin3, wlmax3, i3
+    real(8) :: thrcof0(2*size(wcl_00)), thrcofa(2*size(wcl_00)), thrcofb(2*size(wcl_00)), thrcofc(2*size(wcl_00)), l1f, l2f, fac_b, fac_c, combin
+    integer :: info, l3, wlmin1, wlmax1, i1, wlmin2, i2, wlmin3, i3, lmax
+
+    lmax = size(wcl_00)-1 ! wcl starts at 0
 
     call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
     call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcofa, size(thrcofa), info)
     wlmin1 = int(l1f)
-    wlmax1 = min(nlmax + 1, int(l2f))
+    wlmax1 = min(lmax, int(l2f))
     call drc3jj(dble(l1), dble(l2), -2d0, 1d0, l1f, l2f, thrcofb, size(thrcofb), info)
     wlmin2 = int(l1f)
-    wlmax2 = min(nlmax + 1, int(l2f))
     call drc3jj(dble(l1), dble(l2), -2d0, 0d0, l1f, l2f, thrcofc, size(thrcofc), info)
     wlmin3 = int(l1f)
-    wlmax3 = min(nlmax + 1, int(l2f))
     elems = 0
     do l3 = wlmin1, wlmax1
         i1   = l3 - wlmin1 + 1
@@ -102,7 +106,7 @@ subroutine calc_coupling_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
     !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin0(wcl, l1, l2, nlmax, coupling(l1-1, l2-1))
+            call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
         end do
     end do
 
@@ -116,14 +120,14 @@ subroutine calc_coupling_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
             end if
 
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin0(wcl, l1, l2, nlmax, coupling(l1-1, l2-1))
+                call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do private(l1) schedule(dynamic)
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin0(wcl, l1, l1, nlmax, coupling(l1-1, l1-1))
+                call calc_coupling_elem_spin0(wcl, l1, l1, coupling(l1-1, l1-1))
             end do
         end if
     end if
@@ -142,7 +146,7 @@ subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_ba
     !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, coupling(l1-1, l2-1, :))
+            call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, coupling(l1-1, l2-1, :))
         end do
     end do
 
@@ -155,14 +159,14 @@ subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_ba
                 lmax_band = nlmax
             end if
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, coupling(l1-1, l2-1, :))
+                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, coupling(l1-1, l2-1, :))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do private(l1) schedule(dynamic)
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l1, nlmax, coupling(l1-1, l1-1, :))
+                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l1, coupling(l1-1, l1-1, :))
             end do
         end if
     end if
@@ -179,7 +183,7 @@ subroutine calc_mcm_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, coupling_arra
     !$omp parallel do private(l2,l1) schedule(dynamic)
     do l1 = 2, nlmax
         do l2 = 2, nlmax
-            call calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, coupling_array(l1-1,l2-1,:))
+            call calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, coupling_array(l1-1,l2-1,:))
         end do
     end do
 

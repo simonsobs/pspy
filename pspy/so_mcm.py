@@ -24,10 +24,10 @@ def mcm_and_bbl_spin0(win1,
                       input_alm=False,
                       unbin=None,
                       save_file=None,
-                      lmax_pad=None,
                       l_exact=None,
                       l_toep=None,
                       l_band=None,
+                      l3_pad=2000,
                       return_coupling_only=False):
 
     """Get the mode coupling matrix and the binning matrix for spin0 fields
@@ -55,9 +55,6 @@ def mcm_and_bbl_spin0(win1,
       return the unbinned mode coupling matrix
     save_file: boolean
       save the mcm and bbl to disk
-    lmax_pad: integer
-      the maximum multipole to consider for the mcm computation
-      lmax_pad should always be greater than lmax
     l_toep: int
     l_band: int
     l_exact: int
@@ -67,8 +64,11 @@ def mcm_and_bbl_spin0(win1,
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
 
-    maxl = lmax
-    if lmax_pad is not None: maxl = lmax_pad
+    l_max_limit = win1.get_lmax_limit()
+
+    if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
+
+    maxl = np.minimum(lmax + l3_pad, l_max_limit)
 
     if input_alm == False:
         win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
@@ -86,11 +86,11 @@ def mcm_and_bbl_spin0(win1,
     if bl1 is None: bl1 = np.ones(len(l)+2)
     if bl2 is None: bl2 = bl1.copy()
     
-    mcm = np.zeros((maxl, maxl))
+    mcm = np.zeros((lmax, lmax))
     
-    if l_toep is None: l_toep = maxl
-    if l_band is None: l_band = maxl
-    if l_exact is None: l_exact = maxl
+    if l_toep is None: l_toep = lmax
+    if l_band is None: l_band = lmax
+    if l_exact is None: l_exact = lmax
 
     mcm_fortran.calc_coupling_spin0(wcl,
                                    l_exact,
@@ -101,13 +101,12 @@ def mcm_and_bbl_spin0(win1,
     # Hack for the last two raws, set their value to the last third raw (these values will not be used)
     mcm[-2:,1:], mcm[-1:,2:] =  mcm[-3,:-1], mcm[-3,:-2]
     
-    if l_toep < maxl:
-        mcm = format_toepliz(mcm, l_toep, maxl)
+    if l_toep < lmax:
+        mcm = format_toepliz(mcm, l_toep, lmax)
     
     # Make the mode coupling symetric
     mcm = mcm + mcm.T - np.diag(np.diag(mcm))
     
-    mcm = mcm[:lmax, :lmax]
     
     if return_coupling_only == True:
         return mcm
@@ -150,7 +149,7 @@ def mcm_and_bbl_spin0and2(win1,
                           pure=False,
                           unbin=None,
                           save_file=None,
-                          lmax_pad=None,
+                          l3_pad=2000,
                           l_exact=None,
                           l_toep=None,
                           l_band=None,
@@ -183,9 +182,6 @@ def mcm_and_bbl_spin0and2(win1,
       return the unbinned mode coupling matrix
     save_file: boolean
       save the mcm and bbl to disk
-    lmax_pad: integer
-      the maximum multipole to consider for the mcm computation
-      lmax_pad should always be greater than lmax
     l_toep: int
     l_band: int
     l_exact: int
@@ -210,9 +206,13 @@ def mcm_and_bbl_spin0and2(win1,
 
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
+    
+    l_max_limit = win1[0].get_lmax_limit()
+            
+    if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
 
-    maxl = lmax
-    if lmax_pad is not None: maxl = lmax_pad
+    maxl = np.minimum(lmax + l3_pad, l_max_limit)
+
 
     if input_alm == False:
         win1 = (sph_tools.map2alm(win1[0], niter=niter,
@@ -222,7 +222,7 @@ def mcm_and_bbl_spin0and2(win1,
                                       lmax=maxl), sph_tools.map2alm(win2[1], niter=niter,
                                                                     lmax=maxl))
     if win2 is None: win2 = deepcopy(win1)
-    if bl1 is None: bl1 = (np.ones(2+maxl), np.ones(2+maxl))
+    if bl1 is None: bl1 = (np.ones(2 + lmax), np.ones(2 + lmax))
     if bl2 is None: bl2 = deepcopy(bl1)
 
     wcl, wbl = {}, {}
@@ -234,13 +234,13 @@ def mcm_and_bbl_spin0and2(win1,
             wcl[spin1 + spin2] *= (2 * np.arange(len(wcl[spin1 + spin2])) + 1)
             wbl[spin1 + spin2] = bl1[i] * bl2[j]
 
-    mcm = np.zeros((5, maxl, maxl))
+    mcm = np.zeros((5, lmax, lmax))
 
     if pure == False:
     
-        if l_toep is None: l_toep = maxl
-        if l_band is None: l_band = maxl
-        if l_exact is None: l_exact = maxl
+        if l_toep is None: l_toep = lmax
+        if l_band is None: l_band = lmax
+        if l_exact is None: l_exact = lmax
         
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
@@ -254,8 +254,8 @@ def mcm_and_bbl_spin0and2(win1,
         for id_mcm in range(5):
             # Hack for the last two raws, set their value to the last third raw (these values will not be used)
             mcm[id_mcm][-2:,1:], mcm[id_mcm][-1:,2:] =  mcm[id_mcm][-3,:-1], mcm[id_mcm][-3,:-2]                
-            if l_toep < maxl:
-                mcm[id_mcm] = format_toepliz(mcm[id_mcm], l_toep, maxl)
+            if l_toep < lmax:
+                mcm[id_mcm] = format_toepliz(mcm[id_mcm], l_toep, lmax)
 
             mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
     else:
@@ -265,7 +265,6 @@ def mcm_and_bbl_spin0and2(win1,
                                             wcl["22"],
                                             mcm.T)
                                             
-    mcm = mcm[:, :lmax, :lmax]
     
     if return_coupling_only == True:
         return mcm

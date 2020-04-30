@@ -127,6 +127,17 @@ class so_map:
             synfast.data = curvedsky.rand_map(self.data.shape, self.data.wcs, ps)
 
         return synfast
+        
+    def get_lmax_limit(self):
+        """Return the maximum lmax corresponding to the ``so_map`` pixellisation
+        """
+
+        if self.pixel == "HEALPIX":
+            l_max_limit = 3 * self.nside - 1
+        elif self.pixel == "CAR":
+            cdelt = self.data.wcs.wcs.cdelt[1]
+            l_max_limit = 360 / cdelt / 4
+        return l_max_limit
 
     def plot(self,
              color="planck",
