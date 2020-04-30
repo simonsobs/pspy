@@ -1,163 +1,126 @@
-! FFLAGS="-fopenmp -fPIC -Ofast -ffree-line-length-none" f2py-2.7 -c -m mcm_fortran mcm_fortran.f90 wigner3j_sub.f -lgomp
+module mcm_compute
+
+contains
+
+subroutine calc_coupling_elem_spin0(wcl, l1, l2, nlmax, elem)
+    implicit none
+    integer, intent(in)   :: l1, l2, nlmax
+    real(8), intent(in)   :: wcl(:)
+    real(8), intent(inout):: elem
+    real(8) :: thrcof0(2*(nlmax+1)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i
+    call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
+    wlmin = int(l1f)
+    wlmax = min(nlmax+1, int(l2f))
+    elem = 0
+    do l3 = wlmin, wlmax
+        i = l3 - wlmin + 1
+        elem = elem + wcl(l3+1)*thrcof0(i)**2
+    end do
+end subroutine
+
+subroutine calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, elems)
+    implicit none
+    integer, intent(in)   :: l1, l2, nlmax
+    real(8), intent(in)   :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
+    real(8), intent(inout):: elems(5)
+    real(8) :: thrcof0(2*(nlmax+1)), thrcof1(2*(nlmax+1)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i
+
+    call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
+    call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcof1, size(thrcof1), info)
+
+    wlmin = int(l1f)
+    wlmax = min(nlmax+1, int(l2f))
+    elems = 0
+    do l3 = wlmin, wlmax
+        i = l3 - wlmin + 1
+        elems(1) = elems(1) + wcl_00(l3+1)*thrcof0(i)**2
+        elems(2) = elems(2) + wcl_02(l3+1)*thrcof0(i)*thrcof1(i)
+        elems(3) = elems(3) + wcl_20(l3+1)*thrcof0(i)*thrcof1(i)
+        elems(4) = elems(4) + wcl_22(l3+1)*thrcof1(i)**2*(1+(-1)**(l1+l2+l3))/2
+        elems(5) = elems(5) + wcl_22(l3+1)*thrcof1(i)**2*(1-(-1)**(l1+l2+l3))/2
+    end do
+end subroutine
 
 subroutine calc_coupling_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
-
     implicit none
     real(8), intent(in)    :: wcl(:)
-    integer, intent(in)   :: l_exact , l_band, l_toeplitz
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
     real(8), intent(inout) :: coupling(:,:)
-    integer :: l1, l2, l3, info, nlmax, lmin, lmax, i, lmax_band
-    real(8) :: l1f(2)
-    real(8) :: thrcof0(2*size(coupling,1))
+    integer :: l1, l2, nlmax, lmax_band
 
-    nlmax = size(coupling,1)-1
+    nlmax = size(coupling,1) - 1
 
-    !$omp parallel do private(l3, l2, l1, info, l1f, thrcof0, lmin, lmax, i) schedule(dynamic)
+    !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-
-            call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-            lmin = INT(l1f(1))
-            lmax = MIN(nlmax+1,INT(l1f(2)))
-
-            do l3 = lmin, lmax
-                i   = l3 - lmin + 1
-                coupling(l1-1, l2-1) = coupling(l1-1, l2-1) + (wcl(l3+1) * thrcof0(i)**2d0)
-
-            end do
+            call calc_coupling_elem_spin0(wcl, l1, l2, nlmax, coupling(l1-1, l2-1))
         end do
     end do
 
     if (l_exact .lt. nlmax) then
-
-        !$omp parallel do private(l3, l2, l1, lmax_band, info, l1f, thrcof0, lmin, lmax, i) schedule(dynamic)
-        do l1 = l_exact+1, l_toeplitz
-
-	    if (l1 .lt. l_toeplitz) then
-		lmax_band = min(l1 + l_band, nlmax)
-	    else
-		lmax_band = nlmax
-	    end if
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
 
             do l2 = l1, lmax_band
-
-                call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-                lmin = INT(l1f(1))
-                lmax = MIN(nlmax+1,INT(l1f(2)))
-
-                do l3 = lmin, lmax
-                    i   = l3 - lmin + 1
-                    coupling(l1-1, l2-1) = coupling(l1-1, l2-1) + (wcl(l3+1) * thrcof0(i)**2d0)
-
-                end do
+                call calc_coupling_elem_spin0(wcl, l1, l2, nlmax, coupling(l1-1, l2-1))
             end do
         end do
 
-
         if (l_toeplitz .lt. nlmax) then
-
-            !$omp parallel do private(l3, l1, info, l1f, thrcof0, lmin, lmax, i) schedule(dynamic)
+            !$omp parallel do private(l1) schedule(dynamic)
             do l1 = l_toeplitz + 1, nlmax
-                call drc3jj(dble(l1), dble(l1), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-                lmin = INT(l1f(1))
-                lmax = MIN(nlmax+1, INT(l1f(2)))
-
-            	do l3 = lmin, lmax
-                    i   = l3 - lmin + 1
-                    coupling(l1-1, l1-1) = coupling(l1-1, l1-1) + (wcl(l3 + 1)*thrcof0(i)**2d0)
-    	        end do
-
+                call calc_coupling_elem_spin0(wcl, l1, l1, nlmax, coupling(l1-1, l1-1))
             end do
         end if
     end if
 
 end subroutine
 
-subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_band, l_toeplitz, mcm_array)
+subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_band, l_toeplitz, coupling)
     implicit none
     real(8), intent(in)    :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
     integer, intent(in)   :: l_exact, l_band, l_toeplitz
-    real(8), intent(inout) :: mcm_array(:,:,:)
+    real(8), intent(inout) :: coupling(:,:,:)
     real(8), parameter     :: pi = 3.14159265358979323846264d0
-    integer :: l1, l2, l3, info, nlmax, lmin, lmax, i, lmax_band
-    real(8) :: l1f(2)
-    real(8) :: thrcof0(2*size(mcm_array,1)),thrcof1(2*size(mcm_array,1))
-    nlmax = size(mcm_array,1)-1
+    integer :: l1, l2, nlmax, lmax_band
+    nlmax = size(coupling, 1) - 1
 
-
-
-    !$omp parallel do private(l3,l2,l1,info,l1f,thrcof0,thrcof1, lmin,lmax,i) schedule(dynamic)
+    !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-
-            call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-            call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f(1), l1f(2), thrcof1, size(thrcof1), info)
-            lmin = INT(l1f(1))
-            lmax = MIN(nlmax+1,INT(l1f(2)))
-            do l3=lmin, lmax
-                i   = l3 - lmin + 1
-                mcm_array(l1-1,l2-1,1) = mcm_array(l1-1,l2-1,1) + (wcl_00(l3+1)*thrcof0(i)**2d0)
-                mcm_array(l1-1,l2-1,2) = mcm_array(l1-1,l2-1,2) + (wcl_02(l3+1)*thrcof0(i)*thrcof1(i))
-                mcm_array(l1-1,l2-1,3) = mcm_array(l1-1,l2-1,3) + (wcl_20(l3+1)*thrcof0(i)*thrcof1(i))
-                mcm_array(l1-1,l2-1,4) = mcm_array(l1-1,l2-1,4) + (wcl_22(l3+1)*thrcof1(i)**2*(1+(-1)**(l1+l2+l3))/2)
-                mcm_array(l1-1,l2-1,5) = mcm_array(l1-1,l2-1,5) + (wcl_22(l3+1)*thrcof1(i)**2*(1-(-1)**(l1+l2+l3))/2)
-            end do
+            call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, coupling(l1-1, l2-1, :))
         end do
     end do
 
     if (l_exact .lt. nlmax) then
-
-        !$omp parallel do private(l3,l2,l1,lmax_band,info,l1f,thrcof0,thrcof1, lmin,lmax,i) schedule(dynamic)
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
         do l1 = l_exact + 1, l_toeplitz
-
-	    if (l1 .lt. l_toeplitz) then
-		lmax_band= min(l1 + l_band, nlmax)
-	    else
-		lmax_band= nlmax
-	    end if
-
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
             do l2 = l1, lmax_band
-
-                call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-                call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f(1), l1f(2), thrcof1, size(thrcof1), info)
-                lmin = INT(l1f(1))
-                lmax = MIN(nlmax+1,INT(l1f(2)))
-                do l3=lmin, lmax
-                    i   = l3 - lmin + 1
-                    mcm_array(l1-1,l2-1,1) = mcm_array(l1-1,l2-1,1) + (wcl_00(l3+1)*thrcof0(i)**2d0)
-                    mcm_array(l1-1,l2-1,2) = mcm_array(l1-1,l2-1,2) + (wcl_02(l3+1)*thrcof0(i)*thrcof1(i))
-                    mcm_array(l1-1,l2-1,3) = mcm_array(l1-1,l2-1,3) + (wcl_20(l3+1)*thrcof0(i)*thrcof1(i))
-                    mcm_array(l1-1,l2-1,4) = mcm_array(l1-1,l2-1,4) + (wcl_22(l3+1)*thrcof1(i)**2*(1+(-1)**(l1+l2+l3))/2)
-                    mcm_array(l1-1,l2-1,5) = mcm_array(l1-1,l2-1,5) + (wcl_22(l3+1)*thrcof1(i)**2*(1-(-1)**(l1+l2+l3))/2)
-                end do
+                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, nlmax, coupling(l1-1, l2-1, :))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
-            !$omp parallel do private(l3,l1,info,l1f,thrcof0,thrcof1, lmin,lmax,i) schedule(dynamic)
+            !$omp parallel do private(l1) schedule(dynamic)
             do l1 = l_toeplitz + 1, nlmax
-                call drc3jj(dble(l1), dble(l1), 0d0, 0d0, l1f(1), l1f(2), thrcof0, size(thrcof0), info)
-                call drc3jj(dble(l1), dble(l1), -2d0, 2d0, l1f(1), l1f(2), thrcof1, size(thrcof1), info)
-                lmin = INT(l1f(1))
-                lmax = MIN(nlmax+1,INT(l1f(2)))
-                do l3=lmin, lmax
-                    i   = l3 - lmin + 1
-                    mcm_array(l1-1,l1-1,1) = mcm_array(l1-1,l1-1,1) + (wcl_00(l3+1)*thrcof0(i)**2d0)
-                    mcm_array(l1-1,l1-1,2) = mcm_array(l1-1,l1-1,2) + (wcl_02(l3+1)*thrcof0(i)*thrcof1(i))
-                    mcm_array(l1-1,l1-1,3) = mcm_array(l1-1,l1-1,3) + (wcl_20(l3+1)*thrcof0(i)*thrcof1(i))
-                    mcm_array(l1-1,l1-1,4) = mcm_array(l1-1,l1-1,4) + (wcl_22(l3+1)*thrcof1(i)**2*(1+(-1)**(l1+l1+l3))/2)
-                    mcm_array(l1-1,l1-1,5) = mcm_array(l1-1,l1-1,5) + (wcl_22(l3+1)*thrcof1(i)**2*(1-(-1)**(l1+l1+l3))/2)
-                end do
+                call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l1, nlmax, coupling(l1-1, l1-1, :))
             end do
         end if
     end if
 
-
 end subroutine
-
-
-
-
 
 
 subroutine calc_mcm_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, mcm_array)
@@ -266,5 +229,5 @@ subroutine binning_matrix(mcm, binLo, binHi, binsize, bbl, doDl)
 end subroutine
 
 
-
+end module
 
