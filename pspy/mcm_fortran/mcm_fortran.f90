@@ -10,12 +10,13 @@ subroutine calc_coupling_elem_spin0(wcl, l1, l2, nlmax, elem)
     real(8) :: thrcof0(2*(nlmax+1)), l1f, l2f
     integer :: info, l3, wlmin, wlmax, i
     call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
+
     wlmin = int(l1f)
     wlmax = min(nlmax+1, int(l2f))
     elem = 0
     do l3 = wlmin, wlmax
         i = l3 - wlmin + 1
-        elem = elem + wcl(l3+1) * thrcof0(i)**2
+        elem = elem + wcl(l3 + 1) * thrcof0(i)**2
     end do
 end subroutine
 
@@ -35,11 +36,11 @@ subroutine calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l2, 
     elems = 0
     do l3 = wlmin, wlmax
         i = l3 - wlmin + 1
-        elems(1) = elems(1) + wcl_00(l3+1) * thrcof0(i)**2
-        elems(2) = elems(2) + wcl_02(l3+1) * thrcof0(i) * thrcof1(i)
-        elems(3) = elems(3) + wcl_20(l3+1) * thrcof0(i) * thrcof1(i)
-        elems(4) = elems(4) + wcl_22(l3+1) * thrcof1(i)**2 * (1 + (-1)**(l1 + l2 + l3)) / 2
-        elems(5) = elems(5) + wcl_22(l3+1) * thrcof1(i)**2 * (1 - (-1)**(l1 + l2 + l3)) / 2
+        elems(1) = elems(1) + wcl_00(l3 + 1) * thrcof0(i)**2
+        elems(2) = elems(2) + wcl_02(l3 + 1) * thrcof0(i) * thrcof1(i)
+        elems(3) = elems(3) + wcl_20(l3 + 1) * thrcof0(i) * thrcof1(i)
+        elems(4) = elems(4) + wcl_22(l3 + 1) * thrcof1(i)**2 * (1 + (-1)**(l1 + l2 + l3)) / 2
+        elems(5) = elems(5) + wcl_22(l3 + 1) * thrcof1(i)**2 * (1 - (-1)**(l1 + l2 + l3)) / 2
     end do
 end subroutine
 
@@ -77,11 +78,11 @@ subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1,
         end if
 
         combin = thrcofa(i1) + fac_b * thrcofb(i2) + fac_c * thrcofc(i3)
-        elems(1) = elems(1) + (wcl_00(l3+1) * thrcof0(i1)**2d0)
-        elems(2) = elems(2) + (wcl_02(l3+1) * thrcof0(i1) * combin)
-        elems(3) = elems(3) + (wcl_20(l3+1) * thrcof0(i1) * combin)
-        elems(4) = elems(4) + (wcl_22(l3+1) * combin**2 * (1 + (-1)**(l1 + l2 + l3)) / 2)
-        elems(5) = elems(5) + (wcl_22(l3+1) * combin**2 * (1 - (-1)**(l1 + l2 + l3)) / 2)
+        elems(1) = elems(1) + (wcl_00(l3 + 1) * thrcof0(i1)**2d0)
+        elems(2) = elems(2) + (wcl_02(l3 + 1) * thrcof0(i1) * combin)
+        elems(3) = elems(3) + (wcl_20(l3 + 1) * thrcof0(i1) * combin)
+        elems(4) = elems(4) + (wcl_22(l3 + 1) * combin**2 * (1 + (-1)**(l1 + l2 + l3)) / 2)
+        elems(5) = elems(5) + (wcl_22(l3 + 1) * combin**2 * (1 - (-1)**(l1 + l2 + l3)) / 2)
     
     end do
 end subroutine
