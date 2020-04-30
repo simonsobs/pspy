@@ -9,7 +9,6 @@ import healpy as hp
 import numpy as np
 from pspy import pspy_utils, sph_tools
 from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
-#from pspy.mcm_fortran import mcm_fortran
 from pspy import so_cov
 
 
