@@ -65,9 +65,7 @@ def mcm_and_bbl_spin0(win1,
     if type == "Cl": doDl = 0
 
     l_max_limit = win1.get_lmax_limit()
-
     if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
-
     maxl = np.minimum(lmax + l3_pad, l_max_limit)
 
     if input_alm == False:
@@ -208,11 +206,8 @@ def mcm_and_bbl_spin0and2(win1,
     if type == "Cl": doDl = 0
     
     l_max_limit = win1[0].get_lmax_limit()
-            
     if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
-
     maxl = np.minimum(lmax + l3_pad, l_max_limit)
-
 
     if input_alm == False:
         win1 = (sph_tools.map2alm(win1[0], niter=niter,
