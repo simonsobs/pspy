@@ -62,6 +62,8 @@ subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1,
     call drc3jj(dble(l1), dble(l2), -2d0, 0d0, l1f, l2f, thrcofc, size(thrcofc), info)
     wlmin3 = int(l1f)
     wlmax3 = min(nlmax + 1, int(l2f))
+    elems = 0
+
     do l3 = wlmin1, wlmax1
         i1   = l3 - wlmin1 + 1
         i2   = l3 - wlmin2 + 1
