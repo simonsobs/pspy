@@ -105,9 +105,8 @@ def mcm_and_bbl_spin0(win1,
     # Make the mode coupling symetric
     mcm = mcm + mcm.T - np.diag(np.diag(mcm))
     
-    
     if return_coupling_only == True:
-        return mcm
+        return mcm[:lmax - 2, :lmax - 2]
 
     fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) * bl1[2:lmax + 2] * bl2[2:lmax + 2]
     mcm *= fac
@@ -262,7 +261,7 @@ def mcm_and_bbl_spin0and2(win1,
                                             
     
     if return_coupling_only == True:
-        return mcm
+        return mcm[:, :lmax - 2, :lmax - 2]
         
     for id_mcm, spairs in enumerate(["00", "02", "20", "22", "22"]):
         fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) *  wbl[spairs][2:lmax + 2]
