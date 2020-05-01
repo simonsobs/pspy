@@ -236,7 +236,8 @@ def mcm_and_bbl_spin0and2(win1,
         if l_toep is None: l_toep = lmax
         if l_band is None: l_band = lmax
         if l_exact is None: l_exact = lmax
-        
+        import time
+        t1=time.time()
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
                                             wcl["20"],
@@ -245,6 +246,7 @@ def mcm_and_bbl_spin0and2(win1,
                                             l_band,
                                             l_toep,
                                             mcm.T)
+        print(time.time()-t1)
 
         for id_mcm in range(5):
             # Hack for the last two raws, set their value to the last third raw (these values will not be used)
