@@ -235,6 +235,7 @@ def mcm_and_bbl_spin0and2(win1,
         if l_toep is None: l_toep = lmax
         if l_band is None: l_band = lmax
         if l_exact is None: l_exact = lmax
+        import time
         t=time.time()
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
