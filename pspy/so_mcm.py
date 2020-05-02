@@ -253,7 +253,6 @@ def mcm_and_bbl_spin0and2(win1,
         for id_mcm in range(5):
             if l_toep < lmax:
                 mcm[id_mcm] = format_toepliz_fortran(mcm[id_mcm], l_toep, lmax)
-            print(time.time()-t)
 
             mcm_fortran.fill_upper(mcm[id_mcm].T)
             
