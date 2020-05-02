@@ -239,8 +239,6 @@ def mcm_and_bbl_spin0and2(win1,
         
         import time
         t=time.time()
-
-
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
                                             wcl["20"],
@@ -255,7 +253,6 @@ def mcm_and_bbl_spin0and2(win1,
                 mcm[id_mcm] = format_toepliz_fortran(mcm[id_mcm], l_toep, lmax)
 
             mcm_fortran.fill_upper(mcm[id_mcm].T)
-            
         print(time.time()-t)
 
             #mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
@@ -334,12 +331,9 @@ def format_toepliz_fortran(coupling, l_toep, lmax):
     lmax: integer
       the maximum multipole of the array
     """
-        
-    toepliz_array = coupling.copy()*0
+    toepliz_array = np.zeros(coupling.shape)
     mcm_fortran.toepliz_array_fortran(toepliz_array.T, coupling.T, l_toep)
-    id = np.where(coupling != 0)
-    toepliz_array[id]= coupling[id]
-    
+    toepliz_array[coupling != 0] = coupling[coupling != 0]
     return toepliz_array
 
 def format_toepliz(coupling, l_toep, lmax):
