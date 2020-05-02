@@ -164,7 +164,7 @@ subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_ba
         end do
 
         if (l_toeplitz .lt. nlmax) then
-            !$omp parallel do private(l1) 
+            !$omp parallel do 
             do l1 = l_toeplitz + 1, nlmax
                 call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l1, coupling(l1-1, l1-1, :))
             end do
