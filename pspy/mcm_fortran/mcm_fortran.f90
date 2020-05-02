@@ -189,6 +189,55 @@ subroutine calc_mcm_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, coupling_arra
 
 end subroutine
 
+subroutine toepliz_array_fortran(toepliz_array, coupling_array, l_toep)
+    implicit none
+    integer, intent(in)    :: l_toep
+    real(8), intent(inout) :: toepliz_array(:,:)
+    real(8), intent(in) :: coupling_array(:,:)
+    real(8) :: diag(size(coupling_array,1)), row(size(coupling_array,1))
+    integer :: l1, l2, nlmax
+
+    nlmax = size(coupling_array, 1) - 1
+
+    !$omp parallel do
+    do l1 = 2, nlmax
+        diag(l1-1) = coupling_array(l1-1, l1-1)**0.5d0
+    end do
+
+    !$omp parallel do
+    do l2 = l_toep, nlmax
+        row(l2 - l_toep + 1)= coupling_array(l_toep-1,l2-1)/(diag(l_toep-1)*diag(l2-1))
+    end do
+
+    !$omp parallel do private(l2,l1) schedule(dynamic)
+    do l1 = 2, l_toep
+        do l2 = l1,  l1 + nlmax - l_toep
+            toepliz_array(l1-1, l2-1) = row(l2-l1+1) * (diag(l1-1)*diag(l2-1))
+        end do
+    end do
+
+  !$omp parallel do private(l2,l1) schedule(dynamic)
+   do l1 = l_toep + 1, nlmax
+        do l2 = l1, nlmax
+            toepliz_array(l1-1, l2-1) = row(l2-l1+1) * (diag(l1-1)*diag(l2-1))
+        end do
+  end do
+
+end subroutine
+
+subroutine fill_upper(mat)
+  implicit none
+  real(8), intent(inout) :: mat(:,:)
+  integer ::  j, k
+  !$omp parallel do private(j,k) schedule(dynamic)
+    do j = 1, size(mat,2)
+      do k = 1, j-1
+        mat(j,k) = mat(k,j)
+      end do
+    end do
+end subroutine
+
+
 
 subroutine bin_mcm(mcm, binLo, binHi, binsize, mbb, doDl)
     ! Bin the given mode coupling matrix mcm(0:lmax,0:lmax) into

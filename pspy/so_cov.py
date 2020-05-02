@@ -49,15 +49,15 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
                                        l_toep,
                                        coupling.T)
 
-        # Hack for the last multipoles
-        coupling[-2:,1:], coupling[-1:,2:] = coupling[-3,:-1], coupling[-3,:-2]
         
         if l_toep < lmax:
             # For toepliz fill the matrix
-            coupling = so_mcm.format_toepliz(coupling, l_toep, lmax)
+            coupling = so_mcm.format_toepliz_fortran(coupling, l_toep, lmax)
 
-        coupling_dict["TaTcTbTd"] = coupling + coupling.T - np.diag(np.diag(coupling))
-        coupling_dict["TaTdTbTc"] = coupling + coupling.T - np.diag(np.diag(coupling))
+        mcm_fortran.fill_upper(coupling.T)
+
+        coupling_dict["TaTcTbTd"] = coupling
+        coupling_dict["TaTdTbTc"] = coupling
         
     else:
         wcl = {}
@@ -78,12 +78,11 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
         cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], l_exact, l_band, l_toep,  coupling.T)
         
         for id_cov, name in enumerate(["TaTcTbTd", "TaTdTbTc"]):
-            # Hack for the last two raws, set their value to the last third raw (these values will not be used)
-            coupling[id_cov][-2:,1:], coupling[id_cov][-1:,2:] =  coupling[id_cov][-3,:-1], coupling[id_cov][-3,:-2]
             if l_toep < lmax:
-                coupling[id_cov] = so_mcm.format_toepliz(coupling[id_cov], l_toep, lmax)
+                coupling[id_cov] = so_mcm.format_toepliz_fortran(coupling[id_cov], l_toep, lmax)
+            mcm_fortran.fill_upper(coupling[id_cov].T)
 
-            coupling_dict[name] = coupling[id_cov] + coupling[id_cov].T - np.diag(np.diag(coupling[id_cov]))
+            coupling_dict[name] = coupling[id_cov]
 
         
     if save_file is not None:
@@ -141,13 +140,10 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                                        l_toep,
                                        coupling[0].T)
 
-        # Hack for the last multipoles
-        coupling[0][-2:,1:] =  coupling[0][-3,:-1]
-        coupling[0][-1:,2:] =  coupling[0][-3,:-2]
         
         if l_toep < lmax:
             # For toepliz fill the matrix
-            coupling[0] = so_mcm.format_toepliz(coupling[0], l_toep, maxl)
+            coupling[0] = so_mcm.format_toepliz_fortran(coupling[0], l_toep, maxl)
 
         indexlist=np.zeros(32, dtype=np.int8)
 
@@ -193,11 +189,10 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
 
         indexlist = np.arange(32)
         for name, index in zip(win_list, indexlist):
-            coupling[index][-2:,1:], coupling[index][-1:,2:] =  coupling[index][-3,:-1], coupling[index][-3,:-2]
             if l_toep < lmax:
                 coupling[index] = so_mcm.format_toepliz(coupling[index], l_toep, lmax)
-
-            coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
+            mcm_fortran.fill_upper(coupling[index].T)
+            coupling_dict[name] = coupling[index]
 
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)

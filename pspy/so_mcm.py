@@ -96,14 +96,13 @@ def mcm_and_bbl_spin0(win1,
                                    l_toep,
                                    mcm.T)
 
-    # Hack for the last two raws, set their value to the last third raw (these values will not be used)
-    mcm[-2:,1:], mcm[-1:,2:] =  mcm[-3,:-1], mcm[-3,:-2]
     
     if l_toep < lmax:
-        mcm = format_toepliz(mcm, l_toep, lmax)
+        mcm = format_toepliz_fortran(mcm, l_toep, lmax)
     
     # Make the mode coupling symetric
-    mcm = mcm + mcm.T - np.diag(np.diag(mcm))
+    mcm_fortran.fill_upper(mcm.T)
+    #mcm = mcm + mcm.T - np.diag(np.diag(mcm))
     
     if return_coupling_only == True:
         return mcm[:lmax - 2, :lmax - 2]
@@ -236,8 +235,6 @@ def mcm_and_bbl_spin0and2(win1,
         if l_toep is None: l_toep = lmax
         if l_band is None: l_band = lmax
         if l_exact is None: l_exact = lmax
-        import time
-        t1=time.time()
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
                                             wcl["20"],
@@ -246,15 +243,12 @@ def mcm_and_bbl_spin0and2(win1,
                                             l_band,
                                             l_toep,
                                             mcm.T)
-        print(time.time()-t1)
 
         for id_mcm in range(5):
-            # Hack for the last two raws, set their value to the last third raw (these values will not be used)
-            mcm[id_mcm][-2:,1:], mcm[id_mcm][-1:,2:] =  mcm[id_mcm][-3,:-1], mcm[id_mcm][-3,:-2]                
             if l_toep < lmax:
-                mcm[id_mcm] = format_toepliz(mcm[id_mcm], l_toep, lmax)
-
-            mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
+                mcm[id_mcm] = format_toepliz_fortran(mcm[id_mcm], l_toep, lmax)
+            mcm_fortran.fill_upper(mcm[id_mcm].T)
+            #mcm[id_mcm] = mcm[id_mcm] + mcm[id_mcm].T - np.diag(np.diag(mcm[id_mcm]))
     else:
         mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"],
                                             wcl["02"],
@@ -316,21 +310,42 @@ def mcm_and_bbl_spin0and2(win1,
             save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs)
         return mbb_inv, Bbl
 
-def format_toepliz(coupling, l_toep, lmax):
-    """take a matrix and apply the toepliz appoximation
+def format_toepliz_fortran(coupling, l_toep, lmax):
+    """take a matrix and apply the toepliz appoximation (fortran)
     Parameters
     ----------
 
-    toepliz_array: array
-    consist of an array where the upper part is the exact matrix and
-    the lower part is the diagonal. We will feed the off diagonal
-    of the lower part using the measurement of the correlation from the exact computatio
+    coupling: array
+      consist of an array where the upper part is the exact matrix and
+      the lower part is the diagonal. We will feed the off diagonal
+      of the lower part using the measurement of the correlation from the exact computatio
     l_toep: integer
-    the l at which we start the approx
+      the l at which we start the approx
     lmax: integer
-    the maximum multipole of the array
-
+      the maximum multipole of the array
     """
+        
+    toepliz_array = coupling.copy()*0
+    mcm_fortran.toepliz_array_fortran(toepliz_array.T, coupling.T, l_toep)
+    id = np.where(coupling != 0)
+    toepliz_array[id]= coupling[id]
+    
+    return toepliz_array
+
+def format_toepliz(coupling, l_toep, lmax):
+    """take a matrix and apply the toepliz appoximation (python)
+    Parameters
+    ----------
+    coupling: array
+      consist of an array where the upper part is the exact matrix and
+      the lower part is the diagonal. We will feed the off diagonal
+      of the lower part using the measurement of the correlation from the exact computatio
+    l_toep: integer
+      the l at which we start the approx
+    lmax: integer
+      the maximum multipole of the array
+    """
+    coupling[-2:,1:], coupling[-1:,2:] =  coupling[-3,:-1], coupling[-3,:-2]
 
     toepliz_array = coupling.copy()*0
     diag = np.sqrt(np.diag(coupling))
@@ -341,12 +356,14 @@ def format_toepliz(coupling, l_toep, lmax):
     for ell in range(l_toep - 2, lmax):
         pix = ell - (l_toep - 2)
         toepliz_array[ell:, ell] = corr[l_toep - 2:lmax - pix, l_toep - 2]
-    
+
     toepliz_array = toepliz_array * np.outer(diag, diag)
     id = np.where(coupling != 0)
     toepliz_array[id]= coupling[id]
-
+    
     return toepliz_array
+
+
 
 
 
