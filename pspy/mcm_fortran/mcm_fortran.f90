@@ -225,6 +225,52 @@ subroutine toepliz_array_fortran(toepliz_array, coupling_array, l_toep)
 
 end subroutine
 
+
+subroutine toepliz_array_fortran2(toepliz_array, coupling_array, l_toep, l_exact)
+    implicit none
+    integer, intent(in)    :: l_toep, l_exact
+    real(8), intent(inout) :: toepliz_array(:,:)
+    real(8), intent(in) :: coupling_array(:,:)
+    real(8) :: diag(size(coupling_array,1)), row_toep(size(coupling_array,1)), row_exact(size(coupling_array,1))
+    integer :: l1, l2, nlmax
+
+    nlmax = size(coupling_array, 1) - 1
+
+    !$omp parallel do
+    do l1 = 2, nlmax
+        diag(l1-1) = coupling_array(l1-1, l1-1)**0.5d0
+    end do
+
+    !$omp parallel do
+    do l2 = l_toep, nlmax
+        row_toep(l2 - l_toep + 1)= coupling_array(l_toep-1,l2-1)/(diag(l_toep-1)*diag(l2-1))
+    end do
+
+    !$omp parallel do
+    do l2 = l_exact, nlmax
+        row_exact(l2 - l_exact + 1) = coupling_array(l_exact-1,l2-1)/(diag(l_exact-1)*diag(l2-1))
+    end do
+
+    !$omp parallel do private(l2,l1) schedule(dynamic)
+    do l1 = 2, l_toep
+        do l2 = l1,  l1 + nlmax - l_toep
+            toepliz_array(l1-1, l2-1) = row_toep(l2-l1+1) * (diag(l1-1)*diag(l2-1))
+        end do
+        do l2 = l1 + nlmax - l_toep + 1,   nlmax
+            toepliz_array(l1-1, l2-1) = row_exact(l2-l1+1) * (diag(l1-1)*diag(l2-1))
+        end do
+    end do
+
+  !$omp parallel do private(l2,l1) schedule(dynamic)
+   do l1 = l_toep + 1, nlmax
+        do l2 = l1, nlmax
+            toepliz_array(l1-1, l2-1) = row_toep(l2-l1+1) * (diag(l1-1)*diag(l2-1))
+        end do
+  end do
+
+end subroutine
+
+
 subroutine fill_upper(mat)
   implicit none
   real(8), intent(inout) :: mat(:,:)
