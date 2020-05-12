@@ -4,8 +4,8 @@ routines for window function generation
 
 import healpy as hp
 import numpy as np
-from pixell import enmap, curvedsky
 
+from pixell import curvedsky, enmap
 from pspy import sph_tools
 
 
@@ -19,6 +19,9 @@ def get_distance(binary, rmax=None):
     """
 
     dist = binary.copy()
+    # Make sure distances are floating point number
+    dist.data = dist.data.astype(float)
+
     if binary.pixel == "HEALPIX":
         dist.data[:] = enmap.distance_transform_healpix(binary.data, method="heap", rmax=rmax)
         dist.data[:] *= 180 / np.pi
