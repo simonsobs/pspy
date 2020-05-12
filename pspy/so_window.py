@@ -19,7 +19,7 @@ def get_distance(binary, rmax=None):
     """
 
     dist = binary.copy()
-    # Make sure distance are floating point number
+    # Make sure distances are floating point number
     dist.data = dist.data.astype(float)
 
     if binary.pixel == "HEALPIX":
