@@ -7,9 +7,9 @@ from copy import deepcopy
 
 import healpy as hp
 import numpy as np
-from pspy import pspy_utils, sph_tools
+
+from pspy import pspy_utils, so_cov, sph_tools
 from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
-from pspy import so_cov
 
 
 def mcm_and_bbl_spin0(win1,
@@ -83,9 +83,9 @@ def mcm_and_bbl_spin0(win1,
 
     if bl1 is None: bl1 = np.ones(len(l)+2)
     if bl2 is None: bl2 = bl1.copy()
-    
+
     mcm = np.zeros((lmax, lmax))
-    
+
     if l_toep is None: l_toep = lmax
     if l_band is None: l_band = lmax
     if l_exact is None: l_exact = lmax
@@ -98,20 +98,20 @@ def mcm_and_bbl_spin0(win1,
 
     if l_toep < lmax:
         mcm = format_toepliz_fortran2(mcm, l_toep, l_exact, lmax)
-    
+
     mcm_fortran.fill_upper(mcm.T)
-    
+
     if return_coupling_only == True:
         return mcm[:lmax - 2, :lmax - 2]
 
     fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) * bl1[2:lmax + 2] * bl2[2:lmax + 2]
     mcm *= fac
-    
+
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
     mbb = np.zeros((n_bins, n_bins))
     mcm_fortran.bin_mcm(mcm.T, bin_lo, bin_hi, bin_size, mbb.T, doDl)
-    
+
     Bbl = np.zeros((n_bins, lmax))
     mcm_fortran.binning_matrix(mcm.T, bin_lo, bin_hi, bin_size, Bbl.T, doDl)
     mbb_inv = np.linalg.inv(mbb)
@@ -179,7 +179,7 @@ def mcm_and_bbl_spin0and2(win1,
 
     save_coupling: str
     """
-    
+
     def get_coupling_dict(array, fac=1.0):
         ncomp, dim1, dim2 = array.shape
         dict = {}
@@ -197,7 +197,7 @@ def mcm_and_bbl_spin0and2(win1,
 
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
-    
+
     if input_alm == False:
         l_max_limit = win1[0].get_lmax_limit()
         if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
@@ -225,13 +225,11 @@ def mcm_and_bbl_spin0and2(win1,
     mcm = np.zeros((5, lmax, lmax))
 
     if pure == False:
-    
+
         if l_toep is None: l_toep = lmax
         if l_band is None: l_band = lmax
         if l_exact is None: l_exact = lmax
-        
-        import time
-        t=time.time()
+
         mcm_fortran.calc_coupling_spin0and2(wcl["00"],
                                             wcl["02"],
                                             wcl["20"],
@@ -245,11 +243,9 @@ def mcm_and_bbl_spin0and2(win1,
         for id_mcm in range(5):
             if l_toep < lmax:
                 mcm[id_mcm] = format_toepliz_fortran2(mcm[id_mcm], l_toep, l_exact, lmax)
-        
-                
-            mcm_fortran.fill_upper(mcm[id_mcm].T)
 
-        print(time.time()-t)
+
+            mcm_fortran.fill_upper(mcm[id_mcm].T)
 
     else:
         mcm_fortran.calc_mcm_spin0and2_pure(wcl["00"],
@@ -257,10 +253,10 @@ def mcm_and_bbl_spin0and2(win1,
                                             wcl["20"],
                                             wcl["22"],
                                             mcm.T)
-                                            
+
     if return_coupling_only == True:
         return mcm[:, :lmax - 2, :lmax - 2]
-        
+
     for id_mcm, spairs in enumerate(["00", "02", "20", "22", "22"]):
         fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) *  wbl[spairs][2:lmax + 2]
         mcm[id_mcm] *= fac
@@ -272,14 +268,14 @@ def mcm_and_bbl_spin0and2(win1,
     Bbl_array = np.zeros((5, n_bins, lmax))
 
     for id_mcm in range(5):
-    
+
         mcm_fortran.bin_mcm((mcm[id_mcm, :, :]).T,
                             bin_lo,
                             bin_hi,
                             bin_size,
                             (mbb_array[id_mcm, :, :]).T,
                             doDl)
-                            
+
         mcm_fortran.binning_matrix((mcm[id_mcm, :, :]).T,
                                     bin_lo,
                                     bin_hi,
@@ -291,7 +287,7 @@ def mcm_and_bbl_spin0and2(win1,
     Bbl = get_coupling_dict(Bbl_array, fac=1.0)
 
     spin_pairs = ["spin0xspin0", "spin0xspin2", "spin2xspin0", "spin2xspin2"]
-    
+
     mbb_inv = {}
     for s in spin_pairs:
         mbb_inv[s] = np.linalg.inv(mbb[s])
@@ -381,7 +377,7 @@ def format_toepliz(coupling, l_toep, lmax):
     toepliz_array = toepliz_array * np.outer(diag, diag)
     id = np.where(coupling != 0)
     toepliz_array[id]= coupling[id]
-    
+
     return toepliz_array
 
 def coupling_dict_to_array(dict):
