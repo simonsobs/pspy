@@ -220,7 +220,7 @@ def mcm_and_bbl_spin0and2(win1,
         for j, spin2 in enumerate(spins):
             wcl[spin1 + spin2] = hp.alm2cl(win1[i], win2[j])
             wcl[spin1 + spin2] *= (2 * np.arange(len(wcl[spin1 + spin2])) + 1)
-            wbl[spin1 + spin2] = bl1[i] * bl2[j]
+            wbl[spin1 + spin2] = bl1[i][2:lmax + 2] * bl2[j][2:lmax + 2]
 
     mcm = np.zeros((5, lmax, lmax))
 
@@ -258,7 +258,7 @@ def mcm_and_bbl_spin0and2(win1,
         return mcm[:, :lmax - 2, :lmax - 2]
 
     for id_mcm, spairs in enumerate(["00", "02", "20", "22", "22"]):
-        fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) *  wbl[spairs][2:lmax + 2]
+        fac = (2 * np.arange(2, lmax + 2) + 1) / (4 * np.pi) *  wbl[spairs]
         mcm[id_mcm] *= fac
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
