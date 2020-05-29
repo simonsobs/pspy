@@ -87,6 +87,19 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
 
+def read_beam_file(beamfile):
+    """ Read beam file with formal, l, bl, stuff and normalize it
+    
+    Parameters
+    __________
+    beamfile: string
+      the name of the beam file
+    """
+
+    beam = np.loadtxt(beamfile)
+    l, bl = beam[:,0], beam[:,1]
+    
+    return l, bl/bl[0]
 
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
     """ Create a (constant) binning file, and optionnaly write it to disk
