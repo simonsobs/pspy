@@ -94,6 +94,8 @@ def read_beam_file(beamfile, lmax = None):
     __________
     beamfile: string
       the name of the beam file
+    lmax: integer
+      the maximum multipole to consider
     """
 
     beam = np.loadtxt(beamfile)
