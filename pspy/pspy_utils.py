@@ -87,7 +87,7 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
 
-def read_beam_file(beamfile, lmax = None):
+def read_beam_file(beamfile, lmax=None):
     """ Read beam file with formal, l, bl, stuff and normalize it
     
     Parameters
