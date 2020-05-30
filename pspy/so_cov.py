@@ -506,7 +506,7 @@ def g(a, b, c, d, ns):
     return result
 
 
-def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
+def chi(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
     """doc not ready yet
     """
     exp_alpha, f_alpha = alpha.split("_")
@@ -526,7 +526,7 @@ def chi(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
     return chi
 
 
-def chi_planck(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
+def chi_planck(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
     """doc not ready yet
         """
     exp_alpha, f_alpha = alpha.split("_")
