@@ -289,7 +289,7 @@ class so_map:
                         plot.img.show()
 
 
-def read_map(file, coordinate=None, fields_healpix=None, car_box=None):
+def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=None):
     """Create a ``so_map`` object from a fits file.
 
     Parameters
@@ -338,6 +338,8 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None):
         if car_box is not None:
             car_box = np.array(car_box) * np.pi / 180
             new_map.data = enmap.read_map(file, box=car_box)
+        elif geometry is not None:
+            new_map.data = enmap.read_map(file, geometry=geometry)        
         else:
             new_map.data = enmap.read_map(file)
 
