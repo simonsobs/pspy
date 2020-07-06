@@ -73,7 +73,7 @@ Dependencies
 
 Authors
 ------------
-* Thibaut Louis
+* `Thibaut Louis <https://thibautlouis.github.io>`_
 * Steve Choi
 * DW Han
 * Xavier Garrido
