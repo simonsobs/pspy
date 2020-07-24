@@ -3,6 +3,7 @@ Routines for power spectra estimation and debiasing.
 """
 import healpy as hp, numpy as np
 from pspy import pspy_utils,so_mcm
+from pixell import curvedsky
 
 def get_spectra(alm1, alm2=None, spectra=None):
     """Get the power spectrum of alm1 and alm2, we use healpy.alm2cl for doing this.
@@ -54,6 +55,46 @@ def get_spectra(alm1, alm2=None, spectra=None):
             cl_dict[spec] = cls[i]
 
     return l, cl_dict
+    
+    
+def get_spectra_pixell(alm1, alm2=None, spectra=None):
+    """Get the power spectrum of alm1 and alm2, we use pixell.alm2cl (this is faster)
+    Parameters
+    ----------
+    alm1: 1d array
+      the spherical harmonic transform of map1
+    alm2: 1d array
+      the spherical harmonic transform of map2
+    spectra: list of strings
+    needed for spin0 and spin2 cross correlation, the arrangement of the spectra
+  
+    Return
+    ----------
+    
+    The function returns the multipole array l and cl a 1d power spectrum array or
+    cl_dict (for spin0 and spin2) a dictionnary of cl with entry spectra
+    """
+    
+    
+    if spectra is None:
+        if alm2 is None:
+            cls = curvedsky.alm2cl(alm1)
+        else:
+            cls = curvedsky.alm2cl(alm1, alm2)
+        l = np.arange(len(cls))
+        return l, cls
+        
+        
+    cls = curvedsky.alm2cl(alm1[:,None], alm2[None,:])
+    l = np.arange(len(cls[0,0]))
+    cl_dict = {}
+    for i, l1 in enumerate(["T","E","B"]):
+        for j, l2 in enumerate(["T","E","B"]):
+            cl_dict[l1+l2] = cls[i,j]
+            
+    return(l, cl_dict)
+
+
 
 def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm_inv=None):
     """Bin the power spectra according to a binning file and optionnaly deconvolve the mode coupling matrix
