@@ -51,6 +51,10 @@ class fft2D:
 
         return ft
         
+    def map_from_fft(self):
+        return enmap.ifft(self.kmap, normalize="phys")
+
+        
 class power2D:
     """
     a class describing the 2-D power spectra of a so_map
@@ -155,7 +159,7 @@ def fft_from_so_map(so_map):
     ft.lymap, ft.lxmap = so_map.data.lmap()
     ft.ly, ft.lx = ft.lymap[:,0], ft.lxmap[0,:]
     ft.lmap = np.sqrt(ft.lxmap**2 + ft.lymap**2)
-    ft.thetamap = np.arctan2(ft.lymap,ft.lxmap) * 180/np.pi
+    ft.thetamap = np.arctan2(ft.lymap, ft.lxmap) * 180 / np.pi
     ft.ncomp = so_map.ncomp
     ft.kmap = enmap.fft(so_map.data, normalize="phys")
     
