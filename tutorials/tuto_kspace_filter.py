@@ -15,8 +15,8 @@ ncomp = 3
 apo_type = "C1"
 apo_radius_degree = 1
 niter = 0
-lmax = 2000
-nsims = 30
+lmax = 2500
+nsims = 10
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 vk_mask = [-90, 90]
 hk_mask = None
@@ -51,8 +51,10 @@ for iii in range(nsims):
     print("sim number %03d" % iii)
     for run in ["standard", "filtered"]:
         cmb = template.synfast(clfile)
+        if iii == 0: cmb.plot(file_name="%s/cmb"%(test_dir))
         if run == "filtered":
             cmb = so_map_preprocessing.kspace_filter(cmb, vk_mask=vk_mask, hk_mask=hk_mask)
+            if iii == 0: cmb.plot(file_name="%s/cmb_filter"%(test_dir))
 
         alm_cmb = sph_tools.get_alms(cmb, window, niter, lmax)
         l, ps = so_spectra.get_spectra_pixell(alm_cmb, alm_cmb, spectra=spectra)
@@ -67,11 +69,25 @@ for iii in range(nsims):
         for spec in spectra:
             Db_list[run, spec] += [Db_dict[spec]]
 
+mean = {}
+std = {}
 for spec in spectra:
-    for run in ["standard", "filtered"]:
-        Db = np.mean(Db_list[run, spec], axis=0)
-        std = np.std(Db_list[run, spec], axis=0)
 
-        plt.errorbar(lb, Db, std, fmt=".", label="%s" % run)
+    mean["standard"]= np.mean(Db_list["standard", spec], axis=0)
+    mean["filtered"]= np.mean(Db_list["filtered", spec], axis=0)
+    std["standard"]= np.std(Db_list["standard", spec], axis=0)
+    std["filtered"]= np.std(Db_list["filtered", spec], axis=0)
+
+
+    plt.errorbar(lb, mean["standard"], std["standard"], fmt=".", label="standard")
+    plt.errorbar(lb, mean["filtered"], std["filtered"], fmt=".", label="filtered")
     plt.legend()
-    plt.show()
+    plt.savefig("%s/spectra_%s.png" % (test_dir, spec))
+    plt.clf()
+    plt.close()
+
+    if spec in ["TT", "EE", "TE", "BB"] :
+        plt.plot(lb, mean["filtered"]/mean["standard"])
+        plt.savefig("%s/tf_%s.png" % (test_dir, spec))
+        plt.clf()
+        plt.close()
