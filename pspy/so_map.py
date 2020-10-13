@@ -10,14 +10,14 @@ import astropy.io.fits as pyfits
 import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
-
 from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
+
 from pspy.pspy_utils import ps_lensed_theory_to_dict
 
 
 class so_map:
-    """Class defining a ``so_map`` object.
-    """
+    """Class defining a ``so_map`` object."""
+
     def __init__(self):
         self.pixel = None
         self.nside = None
@@ -27,14 +27,12 @@ class so_map:
         self.coordinate = None
 
     def copy(self):
-        """ Create a copy of the ``so_map`` object.
-        """
+        """Create a copy of the ``so_map`` object."""
 
         return deepcopy(self)
 
     def info(self):
-        """ Print information about the ``so_map`` object.
-        """
+        """Print information about the ``so_map`` object."""
 
         print("pixellisation:", self.pixel)
         print("number of components:", self.ncomp)
@@ -67,7 +65,7 @@ class so_map:
 
         """
 
-        assert (factor % 2 == 0), "factor should be a factor of 2"
+        assert factor % 2 == 0, "factor should be a factor of 2"
 
         upgrade = self.copy()
         if self.pixel == "HEALPIX":
@@ -89,7 +87,7 @@ class so_map:
 
         """
 
-        assert (factor % 2 == 0), "factor should be a factor of 2"
+        assert factor % 2 == 0, "factor should be a factor of 2"
 
         downgrade = self.copy()
         if self.pixel == "HEALPIX":
@@ -117,20 +115,18 @@ class so_map:
             if self.ncomp == 1:
                 synfast.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
             else:
-                synfast.data = hp.sphtfunc.synfast((ps["TT"], ps["EE"], ps["BB"], ps["TE"]),
-                                                   self.nside,
-                                                   new=True,
-                                                   verbose=False)
+                synfast.data = hp.sphtfunc.synfast(
+                    (ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True, verbose=False
+                )
 
         if self.pixel == "CAR":
-            ps = powspec.read_spectrum(clfile)[:self.ncomp, :self.ncomp]
+            ps = powspec.read_spectrum(clfile)[: self.ncomp, : self.ncomp]
             synfast.data = curvedsky.rand_map(self.data.shape, self.data.wcs, ps)
 
         return synfast
-        
+
     def get_lmax_limit(self):
-        """Return the maximum lmax corresponding to the ``so_map`` pixellisation
-        """
+        """Return the maximum lmax corresponding to the ``so_map`` pixellisation"""
 
         if self.pixel == "HEALPIX":
             l_max_limit = 3 * self.nside - 1
@@ -139,14 +135,16 @@ class so_map:
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
 
-    def plot(self,
-             color="planck",
-             color_range=None,
-             file_name=None,
-             ticks_spacing_car=1,
-             title="",
-             cbar=True,
-             hp_gnomv=None):
+    def plot(
+        self,
+        color="planck",
+        color_range=None,
+        file_name=None,
+        ticks_spacing_car=1,
+        title="",
+        cbar=True,
+        hp_gnomv=None,
+    ):
         """Plot a ``so_map``.
 
         Parameters
@@ -172,8 +170,11 @@ class so_map:
             colorize.mpl_setdefault(color)
         except KeyError:
             if self.pixel == "CAR":
-                raise KeyError("Color name must be a pixell color map name {}!".format(
-                    list(colorize.schemes.keys())))
+                raise KeyError(
+                    "Color name must be a pixell color map name {}!".format(
+                        list(colorize.schemes.keys())
+                    )
+                )
 
         if self.pixel == "HEALPIX":
             cmap = plt.get_cmap(color)
@@ -186,24 +187,28 @@ class so_map:
 
                 if hp_gnomv is not None:
                     lon, lat, xsize, reso = hp_gnomv
-                    hp.gnomview(self.data,
-                                min=min_range,
-                                max=max_range,
-                                cmap=cmap,
-                                notext=True,
-                                title=title,
-                                cbar=cbar,
-                                rot=(lon, lat, 0),
-                                xsize=xsize,
-                                reso=reso)
+                    hp.gnomview(
+                        self.data,
+                        min=min_range,
+                        max=max_range,
+                        cmap=cmap,
+                        notext=True,
+                        title=title,
+                        cbar=cbar,
+                        rot=(lon, lat, 0),
+                        xsize=xsize,
+                        reso=reso,
+                    )
                 else:
-                    hp.mollview(self.data,
-                                min=min_range,
-                                max=max_range,
-                                cmap=cmap,
-                                notext=True,
-                                title=title,
-                                cbar=cbar)
+                    hp.mollview(
+                        self.data,
+                        min=min_range,
+                        max=max_range,
+                        cmap=cmap,
+                        notext=True,
+                        title=title,
+                        cbar=cbar,
+                    )
                 if file_name is not None:
                     plt.savefig(file_name + ".png", bbox_inches="tight")
                     plt.clf()
@@ -222,24 +227,28 @@ class so_map:
                 for data, field in zip(self.data, fields):
                     if hp_gnomv is not None:
                         lon, lat, xsize, reso = hp_gnomv
-                        hp.gnomview(data,
-                                    min=min_ranges[field],
-                                    max=max_ranges[field],
-                                    cmap=cmap,
-                                    notext=True,
-                                    title=field + "" + title,
-                                    cbar=cbar,
-                                    rot=(lon, lat, 0),
-                                    xsize=xsize,
-                                    reso=reso)
+                        hp.gnomview(
+                            data,
+                            min=min_ranges[field],
+                            max=max_ranges[field],
+                            cmap=cmap,
+                            notext=True,
+                            title=field + "" + title,
+                            cbar=cbar,
+                            rot=(lon, lat, 0),
+                            xsize=xsize,
+                            reso=reso,
+                        )
                     else:
-                        hp.mollview(data,
-                                    min=min_ranges[field],
-                                    max=max_ranges[field],
-                                    cmap=cmap,
-                                    notext=True,
-                                    title=field + "" + title,
-                                    cbar=cbar)
+                        hp.mollview(
+                            data,
+                            min=min_ranges[field],
+                            max=max_ranges[field],
+                            cmap=cmap,
+                            notext=True,
+                            title=field + "" + title,
+                            cbar=cbar,
+                        )
                     if file_name is not None:
                         plt.savefig(file_name + "_%s" % field + ".png", bbox_inches="tight")
                         plt.clf()
@@ -254,11 +263,9 @@ class so_map:
                 else:
                     max_range = "%s" % (np.max(self.data))
 
-                plots = enplot.get_plots(self.data,
-                                         color=color,
-                                         range=max_range,
-                                         colorbar=1,
-                                         ticks=ticks_spacing_car)
+                plots = enplot.get_plots(
+                    self.data, color=color, range=max_range, colorbar=1, ticks=ticks_spacing_car
+                )
 
                 for plot in plots:
                     if file_name is not None:
@@ -272,20 +279,21 @@ class so_map:
                 if color_range is not None:
                     max_range = "%s:%s:%s" % (color_range[0], color_range[1], color_range[2])
                 else:
-                    max_range = "%s:%s:%s" % (np.max(self.data[0]), np.max(
-                        self.data[1]), np.max(self.data[2]))
+                    max_range = "%s:%s:%s" % (
+                        np.max(self.data[0]),
+                        np.max(self.data[1]),
+                        np.max(self.data[2]),
+                    )
 
-                plots = enplot.get_plots(self.data,
-                                         color=color,
-                                         range=max_range,
-                                         colorbar=1,
-                                         ticks=ticks_spacing_car)
+                plots = enplot.get_plots(
+                    self.data, color=color, range=max_range, colorbar=1, ticks=ticks_spacing_car
+                )
 
                 for (plot, field) in zip(plots, fields):
                     if file_name is not None:
                         enplot.write(file_name + "_%s" % field + ".png", plot)
                     else:
-                        #enplot.show(plot,method="ipython")
+                        # enplot.show(plot,method="ipython")
                         plot.img.show()
 
 
@@ -329,7 +337,7 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
 
     except:
         header = hdulist[0].header
-        new_map.pixel = (header["CTYPE1"][-3:])
+        new_map.pixel = header["CTYPE1"][-3:]
         try:
             new_map.ncomp = header["NAXIS3"]
         except:
@@ -339,7 +347,7 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
             car_box = np.array(car_box) * np.pi / 180
             new_map.data = enmap.read_map(file, box=car_box)
         elif geometry is not None:
-            new_map.data = enmap.read_map(file, geometry=geometry)        
+            new_map.data = enmap.read_map(file, geometry=geometry)
         else:
             new_map.data = enmap.read_map(file)
 
@@ -375,7 +383,7 @@ def from_components(T, Q, U):
     Q = enmap.read_map(Q)
     U = enmap.read_map(U)
     shape, wcs = T.geometry
-    shape = ((ncomp, ) + shape)
+    shape = (ncomp,) + shape
     new_map = so_map()
     new_map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     new_map.data[0] = T
@@ -458,7 +466,7 @@ def from_enmap(emap):
     new_map = so_map()
     hdulist = emap.wcs.to_fits()
     header = hdulist[0].header
-    new_map.pixel = (header["CTYPE1"][-3:])
+    new_map.pixel = header["CTYPE1"][-3:]
     try:
         new_map.ncomp = header["NAXIS3"]
     except:
@@ -497,22 +505,26 @@ def healpix2car(healpix_map, template, lmax=None):
     elif healpix_map.coordinate == template.coordinate:
         rot = None
     else:
-        print("will rotate from %s to %s coordinate system" %
-              (healpix_map.coordinate, template.coordinate))
+        print(
+            "will rotate from %s to %s coordinate system"
+            % (healpix_map.coordinate, template.coordinate)
+        )
         rot = "%s,%s" % (healpix_map.coordinate, template.coordinate)
     if lmax is None:
         lmax = 3 * healpix_map.nside - 1
     if lmax > 3 * healpix_map.nside - 1:
         print("WARNING: your lmax is too large, setting it to 3*nside-1 now")
         lmax = 3 * healpix_map.nside - 1
-    project.data = reproject.enmap_from_healpix(healpix_map.data,
-                                                template.data.shape,
-                                                template.data.wcs,
-                                                ncomp=healpix_map.ncomp,
-                                                unit=1,
-                                                lmax=lmax,
-                                                rot=rot,
-                                                first=0)
+    project.data = reproject.enmap_from_healpix(
+        healpix_map.data,
+        template.data.shape,
+        template.data.wcs,
+        ncomp=healpix_map.ncomp,
+        unit=1,
+        lmax=lmax,
+        rot=rot,
+        first=0,
+    )
 
     project.ncomp == healpix_map.ncomp
     if project.ncomp == 1:
@@ -553,9 +565,9 @@ def healpix_template(ncomp, nside, coordinate=None):
     temp = so_map()
 
     if ncomp == 3:
-        temp.data = np.zeros((3, 12 * nside**2))
+        temp.data = np.zeros((3, 12 * nside ** 2))
     else:
-        temp.data = np.zeros((12 * nside**2))
+        temp.data = np.zeros((12 * nside ** 2))
 
     temp.pixel = "HEALPIX"
     temp.ncomp = ncomp
@@ -579,7 +591,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     """
 
     if ncomp == 3:
-        pre = (3, )
+        pre = (3,)
     else:
         pre = ()
 
@@ -615,9 +627,9 @@ def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     rad_to_arcmin = 60 * 180 / np.pi
     if noise.pixel == "HEALPIX":
         nside = noise.nside
-        pixArea = hp.pixelfunc.nside2pixarea(nside) * rad_to_arcmin**2
+        pixArea = hp.pixelfunc.nside2pixarea(nside) * rad_to_arcmin ** 2
     if noise.pixel == "CAR":
-        pixArea = noise.data.pixsizemap() * rad_to_arcmin**2
+        pixArea = noise.data.pixsizemap() * rad_to_arcmin ** 2
     if noise.ncomp == 1:
         if noise.pixel == "HEALPIX":
             size = len(noise.data)
@@ -661,7 +673,7 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
         for i in range(n_holes):
             random_index1 = np.random.choice(idx[0])
             vec = hp.pixelfunc.pix2vec(binary.nside, random_index1)
-            disc = hp.query_disc(binary.nside, vec, hole_radius_arcmin / (60. * 180) * np.pi)
+            disc = hp.query_disc(binary.nside, vec, hole_radius_arcmin / (60.0 * 180) * np.pi)
             mask.data[disc] = 0
 
     if binary.pixel == "CAR":
@@ -670,5 +682,36 @@ def simulate_source_mask(binary, n_holes, hole_radius_arcmin):
         mask.data[random_index1, random_index2] = 0
         dist = enmap.distance_transform(mask.data)
         mask.data[dist * 60 * 180 / np.pi < hole_radius_arcmin] = 0
+
+    return mask
+
+
+def generate_source_mask(binary, coordinates, point_source_radius_arcmin):
+    """Generate a point source mask in a binary template
+
+    Parameters
+    ----------
+    binary:  ``so_map`` binary template
+      the binay map in which we generate the source mask
+    coordinates: list
+      the list of point sources in DEC, RA coordinates (radians)
+    point_source_radius_arcmin: float
+      the radius of the point sources
+    """
+    mask = binary.copy()
+
+    if mask.pixel == "HEALPIX":
+        vectors = hp.ang2vec(np.pi / 2.0 - coordinates[0], 2 * np.pi - coordinates[1])
+        for vec in vectors:
+            disc = hp.query_disc(mask.nside, vec, point_source_radius_arcmin / (60.0 * 180) * np.pi)
+            mask.data[disc] = 0
+
+    if mask.pixel == "CAR":
+        xpix, ypix = mask.data.sky2pix(coordinates).astype(int)
+        mask.data[xpix, ypix] = 0
+        dist = enmap.distance_transform(
+            mask.data, rmax=2 * point_source_radius_arcmin * np.pi / (60.0 * 180)
+        )
+        mask.data[dist * 60 * 180 / np.pi < point_source_radius_arcmin] = 0
 
     return mask
