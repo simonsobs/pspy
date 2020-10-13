@@ -5,6 +5,7 @@ import numpy as np
 from pixell import enmap
 from pspy import so_map
 import pylab as plt
+from copy import deepcopy
 
 class fft2D:
     """
@@ -63,7 +64,7 @@ class power2D:
         pass
         
     def copy(self):
-        return copy.deepcopy(self)
+        return deepcopy(self)
 
     def create_kspace_mask(self, vertical_stripe=None, horizontal_stripe=None):
         mask = self.powermap["II"].copy()
@@ -141,12 +142,12 @@ class power2D:
             plt.xlabel(r'$\ell_x$',fontsize=15)
             plt.ylabel(r'$\ell_y$',fontsize=15)
      
-            if show:
-                plt.show()
-            if png_file is not  None:
-                plt.savefig(png_file)
+            if png_file is not None:
+                plt.savefig("%s_%s.png" % (png_file, spec))
                 plt.clf()
                 plt.close()
+            else:
+                plt.show()
 
 
 
