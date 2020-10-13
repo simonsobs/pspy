@@ -1,5 +1,7 @@
 """
-This script tests the kspace filter used to remove systematics in the ACT data
+This script display the effect of the kspace filter used to remove systematics in the ACT data.
+We show the transfer function (or its effect) in 1d and in 2d.
+You can play with the survey parameter and the number of simulations.
 """
 #import matplotlib
 #matplotlib.use("Agg")
@@ -9,13 +11,13 @@ import pylab as plt
 import os
 
 # survey and computation specifications
-ra0, ra1, dec0, dec1 = -10, 10, -10, 10
+ra0, ra1, dec0, dec1 = -20, 20, -20, 20
 res = 1
 ncomp = 3
 apo_type = "C1"
 apo_radius_degree = 2
 niter = 0
-lmax = 1000
+lmax = 2000
 nsims = 5
 
 vk_mask = [-90, 90]
@@ -45,11 +47,10 @@ mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(window, binning_file, lmax=lmax, typ
 
 
 # Let's run nsims, and apply the transfer function, we will compute both the SPHT and the FFT of the initial and filtered maps.
-# Then we compute the associated 1d and 2d power spectra
+# Then we compute the associated 1d and 2d power spectra, we will store the value of the resulting
+# computation for each simulation in a list (to inspect the mean later).
 
 clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
-
-
 
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 spectra_2d = ["II", "IQ", "IU", "QI", "QQ", "QU", "UI", "UQ", "UU"]
@@ -93,7 +94,7 @@ for iii in range(nsims):
             p2d_list[run, spec] += [p2d_dict.powermap[spec]]
 
 
-# First the 1d part with the effect of the transfer function
+# First the 1d part with the associated transfer functions
 
 mean = {}
 std = {}
