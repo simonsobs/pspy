@@ -21,7 +21,7 @@ lmax = 2000
 nsims = 5
 
 vk_mask = [-90, 90]
-hk_mask = None
+hk_mask = [-50, 50]
 
 test_dir = "result_kspace"
 try:
