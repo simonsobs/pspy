@@ -12,7 +12,7 @@ def kspace_filter(map, vk_mask=None, hk_mask=None, window=None):
     if vk_mask is not None:
         id_vk = np.where((ft.lx > vk_mask[0]) & (ft.lx < vk_mask[1]))
     if hk_mask is not None:
-        id_hk = np.where((ft.lx > hk_mask[0]) & (ft.lx < hk_mask[1]))
+        id_hk = np.where((ft.ly > hk_mask[0]) & (ft.ly < hk_mask[1]))
 
     if map.ncomp == 1:
         if vk_mask is not None:
