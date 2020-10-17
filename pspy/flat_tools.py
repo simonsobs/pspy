@@ -3,7 +3,7 @@ Routines for handling flat maps (inspired by flipper from sudeep das)
 """
 import numpy as np
 from pixell import enmap
-from pspy import so_map
+from pspy import so_map, pspy_utils
 import pylab as plt
 from copy import deepcopy
 
@@ -51,6 +51,21 @@ class fft2D:
         ft.thetamap = np.arctan2(ft.lymap,ft.lxmap) * 180/np.pi
 
         return ft
+        
+        
+    def create_kspace_mask(self, vertical_stripe=None, horizontal_stripe=None):
+        mask = np.real(self.kmap.copy())
+        if mask.ndim == 3:
+            mask = mask[0]
+        mask[:,:] = 1.
+        if vertical_stripe is not None:
+            idx = np.where((self.lx < vertical_stripe[1]) & (self.lx > vertical_stripe[0]))
+            mask[:,idx] = 0.
+        if vertical_stripe is not None:
+            idy = np.where((self.ly < horizontal_stripe[1]) & (self.ly > horizontal_stripe[0]))
+            mask[idy,:] = 0.
+        self.kmask = mask
+        
         
     def map_from_fft(self):
         return enmap.ifft(self.kmap, normalize="phys")

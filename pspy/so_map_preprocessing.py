@@ -1,5 +1,5 @@
 import numpy as np, pylab as plt
-from pspy import flat_tools
+from pspy import flat_tools, pspy_utils
 
 def kspace_filter(map, vk_mask=None, hk_mask=None, window=None):
 
@@ -31,5 +31,24 @@ def kspace_filter(map, vk_mask=None, hk_mask=None, window=None):
     return filtered_map
 
 
+def analytical_tf(map, binning_file, lmax, vk_mask=None, hk_mask=None):
 
+    ft = flat_tools.fft_from_so_map(map)
+    ft.create_kspace_mask(vertical_stripe=vk_mask, horizontal_stripe=hk_mask)
+c'est
+    lmap = ft.lmap
+    kmask = ft.kmask
+    twod_index = lmap.copy()
 
+    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
+    nbins = len(bin_lo)
+    tf = np.zeros(nbins)
+    for ii in range(nbins):
+        id = np.where( (lmap >= bin_lo[ii]) & (lmap <= bin_hi[ii]))
+        twod_index *= 0
+        twod_index[id] = 1
+        bin_area = np.sum(twod_index)
+        masked_bin_area= np.sum(twod_index * kmask)
+        tf[ii] = masked_bin_area / bin_area
+        
+    return bin_c, tf

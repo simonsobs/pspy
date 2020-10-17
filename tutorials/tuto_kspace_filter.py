@@ -18,7 +18,7 @@ apo_type = "C1"
 apo_radius_degree = 2
 niter = 0
 lmax = 2000
-nsims = 5
+nsims = 10
 
 vk_mask = [-90, 90]
 hk_mask = [-50, 50]
@@ -68,6 +68,7 @@ for iii in range(nsims):
     print("sim number %03d" % iii)
     for run in ["standard", "filtered"]:
         cmb = template.synfast(clfile)
+        
         if iii == 0: cmb.plot(file_name="%s/cmb"%(test_dir))
         if run == "filtered":
             cmb = so_map_preprocessing.kspace_filter(cmb, vk_mask=vk_mask, hk_mask=hk_mask)
@@ -90,11 +91,15 @@ for iii in range(nsims):
             Db_list[run, spec] += [Db_dict[spec]]
             
         ells, p2d_dict = flat_tools.power_from_fft(fft_cmb, fft_cmb, type=type)
+        
         for spec in spectra_2d:
             p2d_list[run, spec] += [p2d_dict.powermap[spec]]
 
 
 # First the 1d part with the associated transfer functions
+# we also compute a simple analytical version of the transfer function
+
+lb, analytic_tf = so_map_preprocessing.analytical_tf(cmb, binning_file, lmax, vk_mask=vk_mask, hk_mask=hk_mask)
 
 mean = {}
 std = {}
@@ -113,7 +118,8 @@ for spec in spectra:
     plt.close()
 
     if spec in ["TT", "EE", "TE", "BB"] :
-        plt.plot(lb, mean["filtered"]/mean["standard"])
+        plt.plot(lb, analytic_tf)
+        plt.plot(lb, mean["filtered"]/mean["standard"], ".")
         plt.savefig("%s/tf_%s.png" % (test_dir, spec))
         plt.clf()
         plt.close()
