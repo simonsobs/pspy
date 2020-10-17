@@ -35,7 +35,6 @@ def analytical_tf(map, binning_file, lmax, vk_mask=None, hk_mask=None):
 
     ft = flat_tools.fft_from_so_map(map)
     ft.create_kspace_mask(vertical_stripe=vk_mask, horizontal_stripe=hk_mask)
-c'est
     lmap = ft.lmap
     kmask = ft.kmask
     twod_index = lmap.copy()
