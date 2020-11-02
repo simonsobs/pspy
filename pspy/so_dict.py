@@ -2,12 +2,9 @@
 @brief: python routines for reading a dictionnary file
 """
 
-from __future__ import print_function
-import os
-import string
 
-def ask_for( key ):
-    s = raw_input( "so_dict: enter value for '%s': " % key )
+def ask_for(key):
+    s = input("so_dict: enter value for '%s': " % key)
     try:
         val = eval(s)
     except NameError:
@@ -15,79 +12,71 @@ def ask_for( key ):
         val = s
     return val
 
-class so_dict( dict ):
 
-    def __init__( self, ask = False):
+class so_dict(dict):
+    def __init__(self, ask=False):
         """
         @param ask if the dict doesn't have an entry for a key, ask for the associated value and assign
         """
         dict.__init__(self)
         self.ask = ask
 
-    def __getitem__( self, key ):
+    def __getitem__(self, key):
         if key not in self:
             if self.ask:
-                print ("so_dict: parameter '%s' not found" % key)
-                val = ask_for( key )
-                print ("so_dict: setting '%s' = %s" % (key,repr(val)))
-                dict.__setitem__( self, key, val )
+                print("so_dict: parameter '%s' not found" % key)
+                val = ask_for(key)
+                print("so_dict: setting '%s' = %s" % (key, repr(val)))
+                dict.__setitem__(self, key, val)
             else:
-                return None
-        return dict.__getitem__( self, key )
+                raise ValueError("Missing '{}' key value in dictionary".format(key))
+        return dict.__getitem__(self, key)
 
-    def read_from_file( self, filename ):
-        f = open( filename )
-        old = ''
+    def get(self, key, default=None, raise_error=False):
+        res = super().get(key, default)
+        if res is None and raise_error:
+            raise ValueError("Missing '{}' key value in dictionary".format(key))
+        return res
+
+    def read_from_file(self, filename):
+        f = open(filename)
+        old = ""
         for line in f:
             line = line.strip()
-            if len(line) == 0 or line[0] == '#':
+            if len(line) == 0 or line[0] == "#":
                 continue
-            s = line.split('#')
+            s = line.split("#")
             line = s[0]
-            s = line.split('\\')
+            s = line.split("\\")
             if len(s) > 1:
-                old = old.join( s[0])
+                old = old.join(s[0])
                 continue
             else:
                 line = old.join(s[0])
-                old = ''
+                old = ""
             for i in range(len(line)):
-                if line[i]!=' ':
+                if line[i] != " ":
                     line = line[i:]
                     break
             exec(line, globals())
-            s = line.split('=')
+            s = line.split("=")
             if len(s) != 2:
-                print ("Error parsing line:")
-                print (line)
+                print("Error parsing line:")
+                print(line)
                 continue
             key = s[0].strip()
-            val = eval(s[1].strip()) # XXX:make safer
+            val = eval(s[1].strip())  # XXX:make safer
             self[key] = val
         f.close()
 
     readFromFile = read_from_file
 
-    def write_to_file( self, filename, mode = 'w' ):
-        f = open( filename, mode )
+    def write_to_file(self, filename, mode="w"):
+        f = open(filename, mode)
         keys = self.keys()
         keys.sort()
         for key in keys:
-            f.write( "%s = %s\n" % (key,repr(self[key])) )
+            f.write("%s = %s\n" % (key, repr(self[key])))
         f.close()
 
     writeToFile = write_to_file
-
-    def cmp( self, otherDict ):
-        
-        diff = []
-        ks = self.keys()
-        for k in ks:
-            try:
-                if otherDict[k] == self.params[k]:
-                    continue
-                diff += [k]
-                break
-            except KeyError:
-                diff += [k]
-        return otherDict
