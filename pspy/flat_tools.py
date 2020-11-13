@@ -67,8 +67,8 @@ class fft2D:
         self.kmask = mask
         
         
-    def map_from_fft(self):
-        return enmap.ifft(self.kmap, normalize="phys")
+    def map_from_fft(self, normalize="phys"):
+        return enmap.ifft(self.kmap, normalize=normalize)
 
         
 class power2D:
@@ -166,7 +166,7 @@ class power2D:
 
 
 
-def fft_from_so_map(so_map):
+def fft_from_so_map(so_map, normalize="phys"):
     """
     Creates an fft2D object out of a so_map
     """
@@ -177,7 +177,7 @@ def fft_from_so_map(so_map):
     ft.lmap = np.sqrt(ft.lxmap**2 + ft.lymap**2)
     ft.thetamap = np.arctan2(ft.lymap, ft.lxmap) * 180 / np.pi
     ft.ncomp = so_map.ncomp
-    ft.kmap = enmap.fft(so_map.data, normalize="phys")
+    ft.kmap = enmap.fft(so_map.data, normalize=normalize)
     
     return ft
     
@@ -221,7 +221,7 @@ def power_from_fft(ft, ft2=None, type = "Cl"):
     return p2d.lmap, p2d
 
 
-def get_ffts(so_map, window, lmax=None):
+def get_ffts(so_map, window, lmax=None, normalize="phys"):
 
     windowed_map = so_map.copy()
     if so_map.ncomp == 3:
@@ -230,7 +230,7 @@ def get_ffts(so_map, window, lmax=None):
         windowed_map.data[2] = so_map.data[2]*window[1].data
     if so_map.ncomp == 1:
         windowed_map.data = so_map.data * window.data
-    ffts = fft_from_so_map(windowed_map)
+    ffts = fft_from_so_map(windowed_map, normalize=normalize)
     if lmax is not None:
         ffts=ffts.trim_fft(lmax)
     return ffts
