@@ -89,7 +89,7 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
 
 def read_beam_file(beamfile, lmax=None):
     """ Read beam file with formal, l, bl, stuff and normalize it
-    
+
     Parameters
     __________
     beamfile: string
@@ -102,7 +102,7 @@ def read_beam_file(beamfile, lmax=None):
     l, bl = beam[:,0], beam[:,1]
     if lmax is not None:
         l, bl = l[:lmax], bl[:lmax]
-    
+
     return l, bl/bl[0]
 
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
@@ -132,7 +132,7 @@ def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
         return bin_low, bin_hi, bin_cent
     else:
         f = open("%s" % file_name, mode="w")
-        for i in range(n_bins):
+        for i in range(len(bin_low)):
             f.write("%0.2f %0.2f %0.2f\n" % (bin_low[i], bin_hi[i], bin_cent[i]))
         f.close()
 
