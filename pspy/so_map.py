@@ -763,6 +763,7 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
     return_values: bool
       Return mono/dipole values with the subtracted map (default: False)
     """
+    map_cleaned = emap.copy()
     if healpix:
         map_masked = hp.ma(emap)
         if mask is not None:
@@ -775,10 +776,10 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
             ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
             ipix = ipix[(np.isfinite(emap.flat[ipix]))]
             x, y, z = hp.pix2vec(nside, ipix, False)
-            emap.flat[ipix] -= dipole[0] * x
-            emap.flat[ipix] -= dipole[1] * y
-            emap.flat[ipix] -= dipole[2] * z
-            emap.flat[ipix] -= mono
+            map_cleaned.flat[ipix] -= dipole[0] * x
+            map_cleaned.flat[ipix] -= dipole[1] * y
+            map_cleaned.flat[ipix] -= dipole[2] * z
+            map_cleaned.flat[ipix] -= mono
 
     else:
         if mask is not None:
@@ -837,11 +838,11 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
                 ipix = ipix[mask.flat[ipix] > 0]
 
             x, y, z = _get_xyz(theta=np.pi / 2 - dec[ipix], phi=ra[ipix])
-            emap.flat[ipix] -= dipole[0] * x
-            emap.flat[ipix] -= dipole[1] * y
-            emap.flat[ipix] -= dipole[2] * z
-            emap.flat[ipix] -= mono
+            map_cleaned.flat[ipix] -= dipole[0] * x
+            map_cleaned.flat[ipix] -= dipole[1] * y
+            map_cleaned.flat[ipix] -= dipole[2] * z
+            map_cleaned.flat[ipix] -= mono
 
     if return_values:
-        return emap, mono, dipole
-    return emap
+        return map_cleaned, mono, dipole
+    return map_cleaned
