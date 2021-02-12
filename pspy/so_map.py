@@ -301,29 +301,28 @@ class so_map:
 
         Parameters
         ----------
-        mask: ``so_map``
+        mask: a tuple of ``so_map`` (temperature and polarization masks)
           a mask to put on top of the map
         bunch: int
           the bunch size (default: 24)
         """
-
-        if mask is not None:
-            if mask.ncomp > 1 and mask.ncomp != self.ncomp:
-                raise ValueError("The number of components (I, Q, U) differs between map and mask!")
-        else:
-            mask = self.copy()
-            mask.data[:] = 1
+        if mask is not None and not isinstance(mask, (list, tuple)):
+            raise ValueError("Mask must be a tuple of so_map mask!")
 
         if self.ncomp == 1:
-            mask.data = mask.data if mask.ncomp == 1 else mask.data[0]
             self.data = subtract_mono_dipole(
-                self.data, mask.data, healpix=self.pixel == "HEALPIX", bunch=bunch
+                emap=self.data,
+                mask=None if mask is None else mask[0].data,
+                healpix=self.pixel == "HEALPIX",
+                bunch=bunch,
             )
         else:
             for i in range(self.ncomp):
-                mask.data = mask.data if mask.ncomp == 1 else mask.data[i]
                 self.data[i] = subtract_mono_dipole(
-                    self.data[i], mask.data, healpix=self.pixel == "HEALPIX", bunch=bunch
+                    emap=self.data[i],
+                    mask=None if mask is None else mask[i if i < 2 else 1].data,
+                    healpix=self.pixel == "HEALPIX",
+                    bunch=bunch,
                 )
 
 
@@ -782,18 +781,18 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
             map_cleaned.flat[ipix] -= mono
 
     else:
-        if mask is not None:
-            emap *= mask
+
+        def _get_xyz(dec, ra):
+            x = np.cos(dec) * np.cos(ra)
+            y = np.cos(dec) * np.sin(ra)
+            z = np.sin(dec)
+            return x, y, z
 
         dec, ra = emap.posmap()
         dec = dec.flatten()
         ra = ra.flatten()
-
-        def _get_xyz(theta, phi):
-            x = np.sin(theta) * np.cos(phi)
-            y = np.sin(theta) * np.sin(phi)
-            z = np.cos(theta)
-            return x, y, z
+        weights = emap.pixsizemap()
+        weights = weights.flatten() / (4 * np.pi)
 
         npix = dec.size
         bunchsize = npix // bunch
@@ -805,22 +804,24 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
             if mask is not None:
                 ipix = ipix[mask.flat[ipix] > 0]
 
-            x, y, z = _get_xyz(theta=np.pi / 2 - dec[ipix], phi=ra[ipix])
+            x, y, z = _get_xyz(dec[ipix], ra[ipix])
+            w = weights[ipix]
 
-            aa[0, 0] += ipix.size
-            aa[1, 0] += x.sum()
-            aa[2, 0] += y.sum()
-            aa[3, 0] += z.sum()
-            aa[1, 1] += (x ** 2).sum()
-            aa[2, 1] += (x * y).sum()
-            aa[3, 1] += (x * z).sum()
-            aa[2, 2] += (y ** 2).sum()
-            aa[3, 2] += (y * z).sum()
-            aa[3, 3] += (z ** 2).sum()
-            v[0] += emap.flat[ipix].sum()
-            v[1] += (emap.flat[ipix] * x).sum()
-            v[2] += (emap.flat[ipix] * y).sum()
-            v[3] += (emap.flat[ipix] * z).sum()
+            # aa[0, 0] += ipix.size
+            aa[0, 0] += np.sum(w)
+            aa[1, 0] += np.sum(x * w)
+            aa[2, 0] += np.sum(y * w)
+            aa[3, 0] += np.sum(z * w)
+            aa[1, 1] += np.sum(x ** 2 * w)
+            aa[2, 1] += np.sum(x * y * w)
+            aa[3, 1] += np.sum(x * z * w)
+            aa[2, 2] += np.sum(y ** 2 * w)
+            aa[3, 2] += np.sum(y * z * w)
+            aa[3, 3] += np.sum(z ** 2 * w)
+            v[0] += np.sum(emap.flat[ipix] * w)
+            v[1] += np.sum(emap.flat[ipix] * x * w)
+            v[2] += np.sum(emap.flat[ipix] * y * w)
+            v[3] += np.sum(emap.flat[ipix] * z * w)
 
         aa[0, 1] = aa[1, 0]
         aa[0, 2] = aa[2, 0]
@@ -834,10 +835,8 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
 
         for ibunch in range(npix // bunchsize):
             ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
-            if mask is not None:
-                ipix = ipix[mask.flat[ipix] > 0]
 
-            x, y, z = _get_xyz(theta=np.pi / 2 - dec[ipix], phi=ra[ipix])
+            x, y, z = _get_xyz(dec[ipix], ra[ipix])
             map_cleaned.flat[ipix] -= dipole[0] * x
             map_cleaned.flat[ipix] -= dipole[1] * y
             map_cleaned.flat[ipix] -= dipole[2] * z
