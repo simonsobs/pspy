@@ -76,7 +76,7 @@ class SOMapTests(unittest.TestCase):
         # Test so_map method
         m.ncomp = 3
         m.data = np.tile(m.data, (3, 1))
-        m.subtract_mono_dipole(mask)
+        m.subtract_mono_dipole(mask=(mask, mask))
         np.testing.assert_almost_equal(m.data, 0.0)
 
     def test_subtract_mono_dipole_car(self):
@@ -104,7 +104,7 @@ class SOMapTests(unittest.TestCase):
         # Test so_map method
         m.ncomp = 3
         m.data = np.tile(m.data, (3, 1, 1))
-        m.subtract_mono_dipole(mask)
+        m.subtract_mono_dipole(mask=(mask, mask))
         np.testing.assert_almost_equal(m.data, 0.0)
 
 
