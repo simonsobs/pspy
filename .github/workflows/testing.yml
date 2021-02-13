@@ -44,8 +44,9 @@ jobs:
 
     - name: Unit tests
       run: |
-        python -m unittest pspy.tests.test_so_dict
-        python -m unittest pspy.tests.test_so_map
+        cd pspy/tests
+        python -m unittest test_so_dict
+        python -m unittest test_so_map
 
     # - name: Test notebooks (Only on Linux for saving time)
     #   if: matrix.os == 'ubuntu-latest'
