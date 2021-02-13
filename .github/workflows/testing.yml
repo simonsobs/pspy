@@ -32,7 +32,7 @@ jobs:
         brew install fftw
 
     - name: Apt packages
-      if: matrix.os == 'ubuntu'
+      if: matrix.os == 'ubuntu-latest'
       run: |
         apt-get install libfftw3-dev
 
