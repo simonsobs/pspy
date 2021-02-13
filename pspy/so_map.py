@@ -296,6 +296,35 @@ class so_map:
                         # enplot.show(plot,method="ipython")
                         plot.img.show()
 
+    def subtract_mono_dipole(self, mask=None, bunch=24):
+        """Subtract monopole and dipole from a ``so_map`` object.
+
+        Parameters
+        ----------
+        mask: a tuple of ``so_map`` (temperature and polarization masks)
+          a mask to put on top of the map
+        bunch: int
+          the bunch size (default: 24)
+        """
+        if mask is not None and not isinstance(mask, (list, tuple)):
+            raise ValueError("Mask must be a tuple of so_map mask!")
+
+        if self.ncomp == 1:
+            self.data = subtract_mono_dipole(
+                emap=self.data,
+                mask=None if mask is None else mask[0].data,
+                healpix=self.pixel == "HEALPIX",
+                bunch=bunch,
+            )
+        else:
+            for i in range(self.ncomp):
+                self.data[i] = subtract_mono_dipole(
+                    emap=self.data[i],
+                    mask=None if mask is None else mask[i if i < 2 else 1].data,
+                    healpix=self.pixel == "HEALPIX",
+                    bunch=bunch,
+                )
+
 
 def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=None):
     """Create a ``so_map`` object from a fits file.
@@ -715,3 +744,104 @@ def generate_source_mask(binary, coordinates, point_source_radius_arcmin):
         mask.data[dist * 60 * 180 / np.pi < point_source_radius_arcmin] = 0
 
     return mask
+
+
+def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=False):
+    """Subtract monopole and dipole from a ``enmap`` object.
+
+    Parameters
+    ----------
+    emap: ``enmap`` or numpy array
+      the map from which to compute mono/dipole values
+    mask: ``enmap`` or numpy array
+      a mask to put on top of the map
+    healpix: bool
+      flag for using HEALPIX (default) or CAR pixellisation
+    bunch: int
+      the bunch size (default: 24)
+    return_values: bool
+      Return mono/dipole values with the subtracted map (default: False)
+    """
+    map_cleaned = emap.copy()
+    if healpix:
+        map_masked = hp.ma(emap)
+        if mask is not None:
+            map_masked.mask = mask < 1
+        mono, dipole = hp.fit_dipole(map_masked)
+        npix = len(emap)
+        nside = hp.npix2nside(npix)
+        bunchsize = npix // bunch
+        for ibunch in range(npix // bunchsize):
+            ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
+            ipix = ipix[(np.isfinite(emap.flat[ipix]))]
+            x, y, z = hp.pix2vec(nside, ipix, False)
+            map_cleaned.flat[ipix] -= dipole[0] * x
+            map_cleaned.flat[ipix] -= dipole[1] * y
+            map_cleaned.flat[ipix] -= dipole[2] * z
+            map_cleaned.flat[ipix] -= mono
+
+    else:
+
+        def _get_xyz(dec, ra):
+            x = np.cos(dec) * np.cos(ra)
+            y = np.cos(dec) * np.sin(ra)
+            z = np.sin(dec)
+            return x, y, z
+
+        dec, ra = emap.posmap()
+        dec = dec.flatten()
+        ra = ra.flatten()
+        weights = emap.pixsizemap()
+        weights = weights.flatten() / (4 * np.pi)
+
+        npix = dec.size
+        bunchsize = npix // bunch
+
+        aa = np.zeros((4, 4))
+        v = np.zeros(4)
+        for ibunch in range(npix // bunchsize):
+            ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
+            if mask is not None:
+                ipix = ipix[mask.flat[ipix] > 0]
+
+            x, y, z = _get_xyz(dec[ipix], ra[ipix])
+            w = weights[ipix]
+
+            # aa[0, 0] += ipix.size
+            aa[0, 0] += np.sum(w)
+            aa[1, 0] += np.sum(x * w)
+            aa[2, 0] += np.sum(y * w)
+            aa[3, 0] += np.sum(z * w)
+            aa[1, 1] += np.sum(x ** 2 * w)
+            aa[2, 1] += np.sum(x * y * w)
+            aa[3, 1] += np.sum(x * z * w)
+            aa[2, 2] += np.sum(y ** 2 * w)
+            aa[3, 2] += np.sum(y * z * w)
+            aa[3, 3] += np.sum(z ** 2 * w)
+            v[0] += np.sum(emap.flat[ipix] * w)
+            v[1] += np.sum(emap.flat[ipix] * x * w)
+            v[2] += np.sum(emap.flat[ipix] * y * w)
+            v[3] += np.sum(emap.flat[ipix] * z * w)
+
+        aa[0, 1] = aa[1, 0]
+        aa[0, 2] = aa[2, 0]
+        aa[0, 3] = aa[3, 0]
+        aa[1, 2] = aa[2, 1]
+        aa[1, 3] = aa[3, 1]
+        aa[2, 3] = aa[3, 2]
+        res = np.dot(np.linalg.inv(aa), v)
+        mono = res[0]
+        dipole = res[1:4]
+
+        for ibunch in range(npix // bunchsize):
+            ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
+
+            x, y, z = _get_xyz(dec[ipix], ra[ipix])
+            map_cleaned.flat[ipix] -= dipole[0] * x
+            map_cleaned.flat[ipix] -= dipole[1] * y
+            map_cleaned.flat[ipix] -= dipole[2] * z
+            map_cleaned.flat[ipix] -= mono
+
+    if return_values:
+        return map_cleaned, mono, dipole
+    return map_cleaned
