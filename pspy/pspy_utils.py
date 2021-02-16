@@ -44,7 +44,7 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
 
 
 def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
-    """ Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
+    """Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
 
     Parameters
     ----------
@@ -70,7 +70,9 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
     lth = np.arange(2, lmax + 2)
     nl_th = {}
     if spectra is None:
-        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[2:lmax + 2]**2
+        nl_th["TT"] = (
+            np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[2 : lmax + 2] ** 2
+        )
         if type == "Dl":
             nl_th["TT"] *= lth * (lth + 1) / (2 * np.pi)
         return nl_th
@@ -79,16 +81,17 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
             rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         for spec in spectra:
             nl_th[spec] = np.zeros(lmax)
-        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180))**2 / bl[:lmax]**2
-        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
-        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180))**2 / bl[:lmax]**2
+        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
+        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
+        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
         if type == "Dl":
             for spec in spectra:
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
     return nl_th
 
+
 def read_beam_file(beamfile, lmax=None):
-    """ Read beam file with formal, l, bl, stuff and normalize it
+    """Read beam file with formal, l, bl, stuff and normalize it
 
     Parameters
     __________
@@ -99,14 +102,15 @@ def read_beam_file(beamfile, lmax=None):
     """
 
     beam = np.loadtxt(beamfile)
-    l, bl = beam[:,0], beam[:,1]
+    l, bl = beam[:, 0], beam[:, 1]
     if lmax is not None:
         l, bl = l[:lmax], bl[:lmax]
 
-    return l, bl/bl[0]
+    return l, bl / bl[0]
+
 
 def create_binning_file(bin_size, n_bins, lmax=None, file_name=None):
-    """ Create a (constant) binning file, and optionnaly write it to disk
+    """Create a (constant) binning file, and optionnaly write it to disk
 
     Parameters
     ----------
@@ -153,8 +157,8 @@ def read_binning_file(file_name, lmax):
     bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
     if bin_low[0] < 2:
         bin_low[0] = 2
-    bin_hi = bin_hi.astype(np.int)
-    bin_low = bin_low.astype(np.int)
+    bin_hi = bin_hi.astype(int)
+    bin_low = bin_low.astype(int)
     bin_size = bin_hi - bin_low + 1
     return bin_low, bin_hi, bin_cent, bin_size
 
@@ -211,5 +215,5 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     fac = beam_fwhm_rad / np.sqrt(8 * np.log(2))
 
     ell = np.arange(2, lmax)
-    bl = np.exp(-ell * (ell + 1) * fac**2 / 2.)
+    bl = np.exp(-ell * (ell + 1) * fac ** 2 / 2.0)
     return ell, bl
