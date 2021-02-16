@@ -42,14 +42,14 @@ class SOSpectraTests(unittest.TestCase):
         # l, ps_theory = pspy_utils.ps_lensed_theory_to_dict(cl_file, "Dl", lmax=lmax)
         # ps_theory_b = so_mcm.apply_Bbl(Bbl, ps_theory, spectra=spectra)
 
-        with open("./data/ref_spectra_spin0and2.pkl", "rb") as f:
+        with open("./data/unit_test_spectra_spin0and2.pkl", "rb") as f:
             Db_ref = pickle.load(f)["healpix" if healpix else "car"]
             for k, v in Db_dict.items():
                 for spec in spectra:
                     np.testing.assert_almost_equal(v[spec], Db_ref[k][spec], decimal=2)
 
     def test_spectra_spin0and2_car(self):
-        np.random.seed(666)
+        np.random.seed(14)
         ra0, ra1, dec0, dec1 = -25, 25, -25, 25
         res = 1
         ncomp = 3
@@ -67,7 +67,7 @@ class SOSpectraTests(unittest.TestCase):
         self.organic_test_spectra(template_car, window)
 
     def test_spectra_spin0and2_healpix(self):
-        np.random.seed(666)
+        np.random.seed(14)
         lon, lat = 30, 50
         radius = 25
         nside = 1024
