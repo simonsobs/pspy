@@ -10,8 +10,8 @@ python example notebooks for an introductory set of examples on how to use the p
    :target: https://pypi.python.org/pypi/pspy/
 .. image:: https://img.shields.io/badge/license-BSD-yellow
    :target: https://github.com/simonsobs/pspy/blob/master/LICENSE
-.. image:: https://travis-ci.com/simonsobs/pspy.svg?branch=master
-   :target: https://travis-ci.com/simonsobs/pspy
+.. image:: https://img.shields.io/github/workflow/status/simonsobs/pspy/Testing/feature-github-actions
+   :target: https://github.com/simonsobs/pspy/actions?query=workflow%3ATesting
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
    :target: https://pspy.readthedocs.io/en/latest/?badge=latest
 .. image:: https://mybinder.org/badge_logo.svg
@@ -77,6 +77,6 @@ Authors
 * Steve Choi
 * DW Han
 * Xavier Garrido
-* Sigurd Naess 
+* Sigurd Naess
 
 The code is part of `PSpipe <https://github.com/simonsobs/PSpipe>`_ the Simons Observatory power spectrum pipeline.

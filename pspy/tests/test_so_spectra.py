@@ -46,7 +46,7 @@ class SOSpectraTests(unittest.TestCase):
             Db_ref = pickle.load(f)["healpix" if healpix else "car"]
             for k, v in Db_dict.items():
                 for spec in spectra:
-                    np.testing.assert_almost_equal(v[spec], Db_ref[k][spec])
+                    np.testing.assert_almost_equal(v[spec], Db_ref[k][spec], decimal=2)
 
     def test_spectra_spin0and2_car(self):
         np.random.seed(666)
