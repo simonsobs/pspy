@@ -38,7 +38,7 @@ class SOMapTests(unittest.TestCase):
 
     # def test_car_synfast(self):
     #     # Fix seed
-    #     np.random.seed(666)
+    #     np.random.seed(14)
     #     ra0, ra1, dec0, dec1 = -5, 5, -5, 5
     #     res = 1
     #     ncomp = 3
@@ -48,7 +48,7 @@ class SOMapTests(unittest.TestCase):
 
     # def test_healpix_synfast(self):
     #     # Fix seed
-    #     np.random.seed(666)
+    #     np.random.seed(14)
     #     nside = 256
     #     ncomp = 3
     #     so_map1 = so_map.healpix_template(ncomp, nside)
