@@ -31,6 +31,8 @@ class SOSpectraTests(unittest.TestCase):
         kinds = ["car", "healpix"]
         datas = ["cmb", "window", "mbb_inv", "bbl", "spectra"]
         for kind, data in product(kinds, datas):
+            if kind == "healpix" and data == "window":
+                continue
             self.compare(
                 self.reference.get(kind).get(data),
                 self.current.get(kind).get(data),
