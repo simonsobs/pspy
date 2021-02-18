@@ -23,7 +23,11 @@ class SOSpectraTests(unittest.TestCase):
             for k in ref.keys():
                 self.compare(ref[k], current[k], msg=msg)
         elif isinstance(ref, np.ndarray):
-            np.testing.assert_almost_equal(ref, current, err_msg=msg)
+            try:
+                np.testing.assert_almost_equal(ref, current, err_msg=msg)
+            except AssertionError as e:
+                print(e)
+                print(ref - current)
         else:
             self.assertTrue(True, f"Data type {type(ref)} are not compared!")
 
