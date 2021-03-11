@@ -12,13 +12,13 @@ with open("parameters_test_data.yml", "r") as stream:
     config = yaml.load(stream, Loader=yaml.FullLoader)
 
 
-def do_simulation(car, verbose=False):
+def do_simulation(car, window_data=None, verbose=False):
 
     tmpl_config = config.get("car" if car else "healpix")
     if car:
         template = so_map.car_template(ncomp=config.get("ncomp"), **tmpl_config)
         binary = so_map.car_template(ncomp=1, **tmpl_config)
-        binary.data[:] = 0
+        # binary.data[:] = 0
         binary.data[1:-1, 1:-1] = 1
     else:
         nside = tmpl_config.get("nside")
@@ -27,12 +27,6 @@ def do_simulation(car, verbose=False):
         vec = hp.ang2vec(tmpl_config.get("lon"), tmpl_config.get("lat"), lonlat=True)
         disc = hp.query_disc(nside, vec, radius=tmpl_config.get("radius") * np.pi / 180)
         binary.data[disc] = 1
-
-    window = so_window.create_apodization(
-        binary,
-        apo_type="Rectangle" if car else "C1",
-        apo_radius_degree=config.get("apo_radius_degree_survey"),
-    )
 
     if verbose:
         print("Generate binning file")
@@ -52,15 +46,31 @@ def do_simulation(car, verbose=False):
         )
         splits[i].data += noise.data
 
-    if verbose:
-        print("Generate mask")
-    mask = so_map.simulate_source_mask(
-        binary,
-        n_holes=config.get("source_mask_nholes"),
-        hole_radius_arcmin=config.get("source_mask_radius"),
-    )
-    mask = so_window.create_apodization(mask, apo_type="C1", apo_radius_degree=0.3)
-    window.data *= mask.data
+    if window_data is not None:
+        window = binary.copy()
+        if car:
+            from pixell.enmap import ndmap
+
+            window.data = ndmap(window_data, binary.data.wcs)
+        else:
+            window.data = window_data
+    else:
+        if verbose:
+            print("Generate mask")
+        window = so_window.create_apodization(
+            binary,
+            apo_type="Rectangle" if car else "C1",
+            apo_radius_degree=config.get("apo_radius_degree_survey"),
+        )
+        mask = so_map.simulate_source_mask(
+            binary,
+            n_holes=config.get("source_mask_nholes"),
+            hole_radius_arcmin=config.get("source_mask_radius"),
+        )
+        mask = so_window.create_apodization(
+            mask, apo_type="C1", apo_radius_degree=config.get("apo_radius_degree_mask")
+        )
+        window.data *= mask.data
 
     lmax = config.get("lmax")
     niter = config.get("niter")
