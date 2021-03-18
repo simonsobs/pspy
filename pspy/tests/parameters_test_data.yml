@@ -1,0 +1,29 @@
+seed: 14
+
+car:
+  ra0: -25
+  ra1: +25
+  dec0: -25
+  dec1: +25
+  res: 5
+
+healpix:
+  nside: 256
+  lon: 30
+  lat: 50
+  radius: 25
+
+ncomp: 3
+
+spectra: [TT, TE, TB, ET, BT, EE, EB, BE, BB]
+
+cl_file: "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
+nsplits: 2
+rms_uKarcmin_T: 20
+
+lmax: 600
+niter: 0
+apo_radius_degree_survey: 1
+source_mask_nholes: 10
+source_mask_radius: 20
+apo_radius_degree_mask: 1
