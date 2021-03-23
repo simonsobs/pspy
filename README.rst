@@ -31,6 +31,14 @@ To install, you will need to have or to install ``numpy``. Then, run
 
     $ pip install pspy [--user]
 
+You can test your installation by running
+
+.. code:: shell
+
+    $ test-pspy
+
+If everything goes fine, no errors will occur. Otherwise, you can report your problem on the `Issues tracker <https://github.com/simonsobs/pspy/issues>`_.
+
 If you plan to develop ``pspy``, it is better to checkout the latest version by doing
 
 .. code:: shell
