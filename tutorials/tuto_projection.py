@@ -26,7 +26,7 @@ ncomp = 3
 lmax = 5000
 
 #We read a CAMB lensed power spectrum and generate alms from it
-clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls.dat"
+clfile = "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
 ps = powspec.read_spectrum(clfile)[:ncomp, :ncomp]
 
 alms = curvedsky.rand_alm(ps, lmax=lmax)

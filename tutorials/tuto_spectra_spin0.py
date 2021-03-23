@@ -29,7 +29,7 @@ nside = 1024
 # ncomp = 1 mean that we are going to use only spin0 field (ncomp = 3 for spin 0 and 2 fields
 ncomp = 1
 # clfile are the camb lensed power spectra
-clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
+clfile = "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
 # n_splits stand for the number of splits we want to simulate
 n_splits = 2
 # the maximum multipole to consider

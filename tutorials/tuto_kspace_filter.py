@@ -50,7 +50,7 @@ mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(window, binning_file, lmax=lmax, typ
 # Then we compute the associated 1d and 2d power spectra, we will store the value of the resulting
 # computation for each simulation in a list (to inspect the mean later).
 
-clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
+clfile = "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
 
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 spectra_2d = ["II", "IQ", "IU", "QI", "QQ", "QU", "UI", "UQ", "UU"]

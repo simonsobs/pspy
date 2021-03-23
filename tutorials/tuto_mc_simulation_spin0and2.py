@@ -2,14 +2,17 @@
 This script tests the generation of simulation of spin0and2 spectra, including an option to use mpi
 """
 import matplotlib
+
 matplotlib.use("Agg")
-from pspy import so_map, so_window, so_mcm, sph_tools, so_spectra, pspy_utils, so_cov, so_mpi
+import os
+import time
+
 import healpy as hp
 import numpy as np
 import pylab as plt
-import os,time
+from pspy import pspy_utils, so_cov, so_map, so_mcm, so_mpi, so_spectra, so_window, sph_tools
 
-#We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
+# We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
 # It will have a resolution of 1 arcminute
 ra0, ra1, dec0, dec1 = -10, 10, -8, 8
 res = 2.5
@@ -19,13 +22,13 @@ ncomp = 3
 # note that if you are doing cross correlation between galaxy and kappa for example, you should follow a similar structure
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 # clfile are the camb lensed power spectra
-clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
+clfile = "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
 # n_splits stands for the number of splits we want to simulate
 n_splits = 2
 # The type of power spectra we want to compute
 type = "Dl"
 # a binningfile with format, lmin,lmax,lmean
-binning_file = "../data/BIN_ACTPOL_50_4_SC_low_ell_startAt2"
+binning_file = "./data/BIN_ACTPOL_50_4_SC_low_ell_startAt2"
 # the maximum multipole to consider
 lmax = 2000
 # the number of iteration in map2alm
@@ -61,35 +64,38 @@ binary = so_map.car_template(1, ra0, ra1, dec0, dec1, res)
 binary.data[:] = 0
 binary.data[1:-1, 1:-1] = 1
 
-#we then apodize the survey mask
-window = so_window.create_apodization(binary, apo_type=apo_type, apo_radius_degree=apo_radius_degree_survey)
-#we create a point source mask
-mask = so_map.simulate_source_mask(binary, n_holes=source_mask_nholes, hole_radius_arcmin=source_mask_radius)
-#... and we apodize it
+# we then apodize the survey mask
+window = so_window.create_apodization(
+    binary, apo_type=apo_type, apo_radius_degree=apo_radius_degree_survey
+)
+# we create a point source mask
+mask = so_map.simulate_source_mask(
+    binary, n_holes=source_mask_nholes, hole_radius_arcmin=source_mask_radius
+)
+# ... and we apodize it
 mask = so_window.create_apodization(mask, apo_type="C1", apo_radius_degree=apo_radius_degree_mask)
-#the window is given by the product of the survey window and the mask window
+# the window is given by the product of the survey window and the mask window
 window.data *= mask.data
 
-#for spin0 and 2 the window need to be a tuple made of two objects
-#the window used for spin0 and the one used for spin 2
+# for spin0 and 2 the window need to be a tuple made of two objects
+# the window used for spin0 and the one used for spin 2
 window_tuple = (window, window)
 
 
-#the window is going to couple mode together, we compute a mode coupling matrix in order to undo this effect
-mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(window_tuple,
-                                            binning_file,
-                                            lmax=lmax,
-                                            type="Dl",
-                                            niter=niter)
+# the window is going to couple mode together, we compute a mode coupling matrix in order to undo this effect
+mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
+    window_tuple, binning_file, lmax=lmax, type="Dl", niter=niter
+)
 
 
 nameList = []
 specList = []
 for i in range(n_splits):
     nameList += ["split_%d" % i]
-for c1, name1 in  enumerate(nameList):
+for c1, name1 in enumerate(nameList):
     for c2, name2 in enumerate(nameList):
-        if c1 > c2: continue
+        if c1 > c2:
+            continue
         spec_name = "%sx%s" % (name1, name2)
         specList += [spec_name]
 
@@ -115,24 +121,21 @@ for iii in subtasks:
     for s in splitlist:
         almList += [sph_tools.get_alms(s, window_tuple, niter, lmax)]
 
-    for name1, alm1, c1  in zip(nameList, almList, np.arange(n_splits)):
-        for name2, alm2, c2  in zip(nameList, almList, np.arange(n_splits)):
-            if c1 > c2: continue
+    for name1, alm1, c1 in zip(nameList, almList, np.arange(n_splits)):
+        for name2, alm2, c2 in zip(nameList, almList, np.arange(n_splits)):
+            if c1 > c2:
+                continue
             ls, ps = so_spectra.get_spectra(alm1, alm2, spectra=spectra)
             spec_name = "%sx%s" % (name1, name2)
-            lb, Db = so_spectra.bin_spectra(ls,
-                                            ps,
-                                            binning_file,
-                                            lmax,
-                                            type=type,
-                                            mbb_inv=mbb_inv,
-                                            spectra=spectra)
-                                                
-            so_spectra.write_ps("%s/sim_spectra_%s_%04d.dat"%(test_dir, spec_name, iii),
-                                lb,
-                                Db,
-                                type=type,
-                                spectra=spectra)
-    print("sim number %04d took %s second to compute" % (iii, time.time()-t))
+            lb, Db = so_spectra.bin_spectra(
+                ls, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv, spectra=spectra
+            )
 
-
+            so_spectra.write_ps(
+                "%s/sim_spectra_%s_%04d.dat" % (test_dir, spec_name, iii),
+                lb,
+                Db,
+                type=type,
+                spectra=spectra,
+            )
+    print("sim number %04d took %s second to compute" % (iii, time.time() - t))
