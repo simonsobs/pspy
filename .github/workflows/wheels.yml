@@ -32,6 +32,7 @@ jobs:
           CIBW_BEFORE_BUILD: "python -m pip install numpy"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BUILD: "cp3?-*x86_64"
+          CIBW_SKIP: "cp3{5,6}-*"
 
       - uses: actions/upload-artifact@v2
         with:
