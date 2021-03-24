@@ -25,8 +25,6 @@ python example notebooks for an introductory set of examples on how to use the p
 Installing
 ----------
 
-To install, you will need to have or to install ``numpy``. Then, run
-
 .. code:: shell
 
     $ pip install pspy [--user]
@@ -69,7 +67,7 @@ Others tutorials can be found under the ``tutorials`` directory.
 Dependencies
 ------------
 
-* Python >= 3.5
+* Python >= 3.7
 * ``pyFFTW`` https://pyfftw.readthedocs.io
 * ``healpy`` https://healpy.readthedocs.io
 * ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
