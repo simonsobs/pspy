@@ -1,6 +1,7 @@
 import setuptools
 from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
+from setuptools import find_packages
 
 import versioneer
 
@@ -9,17 +10,25 @@ with open("README.rst") as readme_file:
 
 compile_opts = {
     "extra_f90_compile_args": [
-        "-fopenmp", "-ffree-line-length-none", "-fdiagnostics-color=always", "-Wno-tabs"],
+        "-fopenmp",
+        "-ffree-line-length-none",
+        "-fdiagnostics-color=always",
+        "-Wno-tabs",
+    ],
     "f2py_options": ["skip:", "map_border", "calc_weights", ":"],
-    "extra_link_args": ["-fopenmp"]
+    "extra_link_args": ["-fopenmp"],
 }
 
-mcm = Extension(name="pspy.mcm_fortran.mcm_fortran",
-                sources=["pspy/mcm_fortran/mcm_fortran.f90", "pspy/wigner3j/wigner3j_sub.f"],
-                **compile_opts)
-cov = Extension(name="pspy.cov_fortran.cov_fortran",
-                sources=["pspy/cov_fortran/cov_fortran.f90", "pspy/wigner3j/wigner3j_sub.f"],
-                **compile_opts)
+mcm = Extension(
+    name="pspy.mcm_fortran.mcm_fortran",
+    sources=["pspy/mcm_fortran/mcm_fortran.f90", "pspy/wigner3j/wigner3j_sub.f"],
+    **compile_opts
+)
+cov = Extension(
+    name="pspy.cov_fortran.cov_fortran",
+    sources=["pspy/cov_fortran/cov_fortran.f90", "pspy/wigner3j/wigner3j_sub.f"],
+    **compile_opts
+)
 
 setup(
     name="pspy",
@@ -29,6 +38,7 @@ setup(
     url="https://github.com/simonsobs/pspy",
     description="Python power spectrum code",
     long_description=readme,
+    long_description_content_type="text/x-rst",
     license="BSD license",
     python_requires=">=3.5",
     classifiers=[
@@ -39,15 +49,19 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8"
-        ],
+        "Programming Language :: Python :: 3.8",
+    ],
     entry_points={},
     ext_modules=[mcm, cov],
     install_requires=[
         "numpy",
         "healpy",
         "pyFFTW",
-        "pillow", # this one should be installed by pixell
-        "pixell>=0.7.0"],
-    packages=["pspy"],
+        "pillow",  # this one should be installed by pixell
+        "pixell>=0.7.0",
+    ],
+    packages=find_packages(),
+    package_data={"pspy": ["pspy/tests/data/*.pkl"]},
+    include_package_data=True,
+    scripts=["scripts/test-pspy"],
 )

@@ -31,6 +31,14 @@ To install, you will need to have or to install ``numpy``. Then, run
 
     $ pip install pspy [--user]
 
+You can test your installation by running
+
+.. code:: shell
+
+    $ test-pspy
+
+If everything goes fine, no errors will occur. Otherwise, you can report your problem on the `Issues tracker <https://github.com/simonsobs/pspy/issues>`_.
+
 If you plan to develop ``pspy``, it is better to checkout the latest version by doing
 
 .. code:: shell
@@ -45,10 +53,6 @@ Then you can install the ``pspy`` library and its dependencies *via*
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
 to reinstall at every changes.
-
-Instructions for installing ``pspy`` at ``NERSC`` are available at  `INSTALL_NERSC <https://github.com/simonsobs/pspy/blob/master/INSTALL_NERSC.rst>`_.
-
-Instructions for installing ``pspy`` on ``MAC OS`` are available at  `INSTALL_MACOS <https://github.com/simonsobs/pspy/blob/master/INSTALL_MACOS.rst>`_.
 
 
 Ipython notebooks

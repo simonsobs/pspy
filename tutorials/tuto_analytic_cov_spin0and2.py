@@ -4,14 +4,17 @@ It is done in CAR pixellisation.
 We also provide an option for monte-carlo verification of the covariance matrix
 """
 import matplotlib
+
 matplotlib.use("Agg")
-from pspy import so_map, so_window, so_mcm, sph_tools, so_spectra, pspy_utils, so_cov
+import os
+import time
+
 import healpy as hp
 import numpy as np
 import pylab as plt
-import os,time
+from pspy import pspy_utils, so_cov, so_map, so_mcm, so_spectra, so_window, sph_tools
 
-#We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
+# We start by specifying the CAR survey parameters, it will go from ra0 to ra1 and from dec0 to dec1 (all in degrees)
 # It will have a resolution of 1 arcminute
 ra0, ra1, dec0, dec1 = -10, 10, -8, 8
 res = 2.5
@@ -21,13 +24,13 @@ ncomp = 3
 # note that if you are doing cross correlation between galaxy and kappa for example, you should follow a similar structure
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 # clfile are the camb lensed power spectra
-clfile = "../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
+clfile = "./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat"
 # n_splits stands for the number of splits we want to simulate
 n_splits = 2
 # The type of power spectra we want to compute
 type = "Dl"
 # a binningfile with format, lmin,lmax,lmean
-binning_file = "../data/BIN_ACTPOL_50_4_SC_low_ell_startAt2"
+binning_file = "./data/BIN_ACTPOL_50_4_SC_low_ell_startAt2"
 # the maximum multipole to consider
 lmax = 2000
 # the number of iteration in map2alm
@@ -63,28 +66,30 @@ binary = so_map.car_template(1, ra0, ra1, dec0, dec1, res)
 binary.data[:] = 0
 binary.data[1:-1, 1:-1] = 1
 
-#we then apodize the survey mask
-window = so_window.create_apodization(binary, apo_type=apo_type, apo_radius_degree=apo_radius_degree_survey)
-#we create a point source mask
-mask = so_map.simulate_source_mask(binary, n_holes=source_mask_nholes, hole_radius_arcmin=source_mask_radius)
-#... and we apodize it
+# we then apodize the survey mask
+window = so_window.create_apodization(
+    binary, apo_type=apo_type, apo_radius_degree=apo_radius_degree_survey
+)
+# we create a point source mask
+mask = so_map.simulate_source_mask(
+    binary, n_holes=source_mask_nholes, hole_radius_arcmin=source_mask_radius
+)
+# ... and we apodize it
 mask = so_window.create_apodization(mask, apo_type="C1", apo_radius_degree=apo_radius_degree_mask)
-#the window is given by the product of the survey window and the mask window
+# the window is given by the product of the survey window and the mask window
 window.data *= mask.data
 
-window.plot(file_name="%s/window"%(test_dir))
+window.plot(file_name="%s/window" % (test_dir))
 
-#for spin0 and 2 the window need to be a tuple made of two objects
-#the window used for spin0 and the one used for spin 2
+# for spin0 and 2 the window need to be a tuple made of two objects
+# the window used for spin0 and the one used for spin 2
 window_tuple = (window, window)
 
 
-#the window is going to couple mode together, we compute a mode coupling matrix in order to undo this effect
-mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(window_tuple,
-                                            binning_file,
-                                            lmax=lmax,
-                                            type="Dl",
-                                            niter=niter)
+# the window is going to couple mode together, we compute a mode coupling matrix in order to undo this effect
+mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
+    window_tuple, binning_file, lmax=lmax, type="Dl", niter=niter
+)
 
 l_th, ps_theory = pspy_utils.ps_lensed_theory_to_dict(clfile, type, lmax=lmax)
 nl_th = pspy_utils.get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=spectra)
@@ -95,9 +100,9 @@ survey_name = ["split_0", "split_1", "split_0", "split_1"]
 name_list = []
 id_list = []
 for field in ["T", "E"]:
-    for s,id in zip(survey_name,survey_id):
-        name_list += ["%s%s" % (field,s)]
-        id_list += ["%s%s" % (field,id)]
+    for s, id in zip(survey_name, survey_id):
+        name_list += ["%s%s" % (field, s)]
+        id_list += ["%s%s" % (field, id)]
 
 
 Clth_dict = {}
@@ -107,10 +112,10 @@ for name1, id1 in zip(name_list, id_list):
         Clth_dict[id1 + id2] = ps_theory[spec] + nl_th[spec] * so_cov.delta2(name1, name2)
 
 
-coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter, planck = planck)
+coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter, planck=planck)
 analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
 
-np.save("%s/analytic_cov.npy"%test_dir, analytic_cov)
+np.save("%s/analytic_cov.npy" % test_dir, analytic_cov)
 
 if (do_MonteCarlo == True) or (read_MonteCarlo == True):
     Db_list = {}
@@ -119,9 +124,10 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
     specList = []
     for i in range(n_splits):
         nameList += ["split_%d" % i]
-    for c1, name1 in  enumerate(nameList):
+    for c1, name1 in enumerate(nameList):
         for c2, name2 in enumerate(nameList):
-            if c1 > c2: continue
+            if c1 > c2:
+                continue
             spec_name = "%sx%s" % (name1, name2)
             specList += [spec_name]
             Db_list[spec_name] = []
@@ -141,32 +147,32 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
             for s in splitlist:
                 almList += [sph_tools.get_alms(s, window_tuple, niter, lmax)]
 
-            for name1, alm1, c1  in zip(nameList, almList, np.arange(n_splits)):
-                for name2, alm2, c2  in zip(nameList, almList, np.arange(n_splits)):
-                    if c1 > c2: continue
+            for name1, alm1, c1 in zip(nameList, almList, np.arange(n_splits)):
+                for name2, alm2, c2 in zip(nameList, almList, np.arange(n_splits)):
+                    if c1 > c2:
+                        continue
                     ls, ps = so_spectra.get_spectra(alm1, alm2, spectra=spectra)
                     spec_name = "%sx%s" % (name1, name2)
-                    lb, Db = so_spectra.bin_spectra(ls,
-                                                    ps,
-                                                    binning_file,
-                                                    lmax,
-                                                    type=type,
-                                                    mbb_inv=mbb_inv,
-                                                    spectra=spectra)
+                    lb, Db = so_spectra.bin_spectra(
+                        ls, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv, spectra=spectra
+                    )
                     vec = []
                     for spec in ["TT", "TE", "ET", "EE"]:
                         vec = np.append(vec, Db[spec])
                     Db_list[spec_name] += [vec]
 
-            print("sim number %04d took %s second to compute" % (iii, time.time()-t))
+            print("sim number %04d took %s second to compute" % (iii, time.time() - t))
 
         elif read_MonteCarlo:
-            print("reading sim %04d spectra"%iii)
-            for name1, c1  in zip(nameList, np.arange(n_splits)):
-                for name2, c2  in zip(nameList, np.arange(n_splits)):
-                    if c1 > c2: continue
-                    spec_name = "%sx%s" % (name1,name2)
-                    lb, Db = so_spectra.read_ps("%s/sim_spectra_%s_%04d.dat"%(mc_dir, spec_name, iii),spectra=spectra)
+            print("reading sim %04d spectra" % iii)
+            for name1, c1 in zip(nameList, np.arange(n_splits)):
+                for name2, c2 in zip(nameList, np.arange(n_splits)):
+                    if c1 > c2:
+                        continue
+                    spec_name = "%sx%s" % (name1, name2)
+                    lb, Db = so_spectra.read_ps(
+                        "%s/sim_spectra_%s_%04d.dat" % (mc_dir, spec_name, iii), spectra=spectra
+                    )
                     vec = []
                     for spec in ["TT", "TE", "ET", "EE"]:
                         vec = np.append(vec, Db[spec])
@@ -179,11 +185,15 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
             cov[spec1, spec2] = 0
             for iii in range(n_sims):
                 cov[spec1, spec2] += np.outer(Db_list[spec1][iii], Db_list[spec2][iii])
-            cov[spec1, spec2] = cov[spec1, spec2] / n_sims - np.outer(np.mean(Db_list[spec1], axis=0), np.mean(Db_list[spec2], axis=0))
+            cov[spec1, spec2] = cov[spec1, spec2] / n_sims - np.outer(
+                np.mean(Db_list[spec1], axis=0), np.mean(Db_list[spec2], axis=0)
+            )
 
-    cov = cov["%sx%s" % (survey_name[0], survey_name[1]), "%sx%s" %(survey_name[2], survey_name[3])]
+    cov = cov[
+        "%sx%s" % (survey_name[0], survey_name[1]), "%sx%s" % (survey_name[2], survey_name[3])
+    ]
 
-    np.save("%s/montecarlo_cov.npy"%test_dir, cov)
+    np.save("%s/montecarlo_cov.npy" % test_dir, cov)
 
     corr = so_cov.cov2corr(cov)
     analytic_corr = so_cov.cov2corr(analytic_cov)
@@ -197,23 +207,23 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
     plt.title("Analytic correlation matrix", fontsize=22)
     plt.imshow(analytic_corr, vmin=-0.5, vmax=0.5, origin="lower")
     plt.colorbar()
-    plt.savefig("%s/correlation_matrix.png"%(test_dir), bbox_inches="tight")
+    plt.savefig("%s/correlation_matrix.png" % (test_dir), bbox_inches="tight")
     plt.clf()
     plt.close()
 
     plt.figure(figsize=(15, 15))
     count = 1
-    for bl in ["TTTT", "TETE", "ETET", "EEEE",
-               "TTTE", "TTET", "TTEE", "TEET",
-               "TEEE", "ETEE"]:
-        
+    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE"]:
+
         plt.subplot(2, 5, count)
         cov_select = so_cov.selectblock(cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl)
-        analytic_cov_select = so_cov.selectblock(analytic_cov,  ["TT", "TE", "ET", "EE"], n_bins,block=bl)
+        analytic_cov_select = so_cov.selectblock(
+            analytic_cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl
+        )
         var = cov_select.diagonal()
         analytic_var = analytic_cov_select.diagonal()
-        
-        plt.plot(lb[1:], analytic_var[1:]/var[1:])
+
+        plt.plot(lb[1:], analytic_var[1:] / var[1:])
         if count == 1 or count == 6:
             plt.ylabel(r"$\sigma^{2, \rm analytic}_{\ell}/ \sigma^{2, \rm MC}_{\ell}$", fontsize=22)
         if count > 5:
@@ -221,26 +231,26 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
         plt.legend()
         count += 1
 
-    plt.savefig("%s/ratio_variance.png"%(test_dir), bbox_inches="tight")
+    plt.savefig("%s/ratio_variance.png" % (test_dir), bbox_inches="tight")
     plt.clf()
     plt.close()
 
     plt.figure(figsize=(15, 15))
     count = 1
-    for bl in ["TTTT", "TETE", "ETET", "EEEE",
-               "TTTE", "TTET", "TTEE", "TEET",
-               "TEEE", "ETEE"]:
-        
+    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE"]:
+
         plt.subplot(2, 5, count)
         cov_select = so_cov.selectblock(cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl)
-        analytic_cov_select = so_cov.selectblock(analytic_cov,  ["TT", "TE", "ET", "EE"], n_bins,block=bl)
+        analytic_cov_select = so_cov.selectblock(
+            analytic_cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl
+        )
         var = cov_select.diagonal()
         analytic_var = analytic_cov_select.diagonal()
         # plt.semilogy()
         if count == 1:
             plt.semilogy()
-        plt.plot(lb[1:], var[1:], "o", label="MC %sx%s"%(bl[:2],bl[2:4]))
-        plt.plot(lb[1:], analytic_var[1:],label="Analytic %sx%s"%(bl[:2],bl[2:4]))
+        plt.plot(lb[1:], var[1:], "o", label="MC %sx%s" % (bl[:2], bl[2:4]))
+        plt.plot(lb[1:], analytic_var[1:], label="Analytic %sx%s" % (bl[:2], bl[2:4]))
         if count == 1 or count == 6:
             plt.ylabel(r"$\sigma^{2}_{\ell}$", fontsize=22)
         if count > 5:
@@ -248,7 +258,6 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
         plt.legend()
         count += 1
 
-    plt.savefig("%s/cov_element_comparison.png"%(test_dir), bbox_inches="tight")
+    plt.savefig("%s/cov_element_comparison.png" % (test_dir), bbox_inches="tight")
     plt.clf()
     plt.close()
-

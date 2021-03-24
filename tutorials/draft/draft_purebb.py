@@ -30,7 +30,7 @@ ncomp=3
 # note that if you are doing cross correlation between galaxy and kappa for example, you should follow a similar structure
 spectra=['TT','TE','TB','ET','BT','EE','EB','BE','BB']
 # clfile are the camb lensed power spectra
-clfile='../data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat'
+clfile='./data/bode_almost_wmap5_lmax_1e4_lensedCls_startAt2.dat'
 # nSplits stand for the number of splits we want to simulate
 nSplits=1
 # a binningfile with format, lmin,lmax,lmean
