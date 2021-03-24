@@ -54,7 +54,7 @@ setup(
     entry_points={},
     ext_modules=[mcm, cov],
     install_requires=[
-        "numpy",
+        "numpy>=1.20",
         "healpy",
         "pyFFTW",
         "pillow",  # this one should be installed by pixell
