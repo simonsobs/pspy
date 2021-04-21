@@ -611,6 +611,7 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
       will be displayed.
     """
 
+    mat_plot = mat.copy()
     try:
         colorize.mpl_setdefault(color)
     except KeyError:
@@ -618,15 +619,16 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
                 list(colorize.schemes.keys())))
 
     if color_range is None:
-        max_range = np.maximum(np.max(mat),np.abs(np.min(mat)))
+        max_range = np.maximum(np.max(mat_plot),np.abs(np.min(mat_plot)))
         color_range = "%s" % (max_range)
 
-
-    wcs = enmap.create_wcs(mat.shape, proj="car")
-    mat = enmap.enmap(mat,wcs)
     # We need to revert the order of the array to make the plot it similar to matplotlib imshow
-    mat = mat[::-1, ::-1]
-    plots = enplot.get_plots(mat,
+
+    mat_plot = mat_plot[::-1, ::-1]
+
+    wcs = enmap.create_wcs(mat_plot.shape, proj="car")
+    mat_plot = enmap.enmap(mat_plot,wcs)
+    plots = enplot.get_plots(mat_plot,
                              color=color,
                              range=color_range,
                              colorbar=1,
