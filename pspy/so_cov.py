@@ -624,6 +624,8 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
 
     wcs = enmap.create_wcs(mat.shape, proj="car")
     mat = enmap.enmap(mat,wcs)
+    # We need to revert the order of the array to make the plot it similar to matplotlib imshow
+    mat = mat[::-1, ::-1]
     plots = enplot.get_plots(mat,
                              color=color,
                              range=color_range,
