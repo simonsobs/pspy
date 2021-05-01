@@ -70,9 +70,9 @@ def alm2map(alms, so_map):
     else:
         spin = [0,2]
     if so_map.pixel == "HEALPIX":
-        so_map.data = curvedsky.alm2map_healpix(alms, so_map.data, spin)
+        so_map.data = curvedsky.alm2map_healpix(alms, so_map.data, spin = spin)
     elif so_map.pixel == "CAR":
-        so_map.data = curvedsky.alm2map(alms, so_map.data, spin)
+        so_map.data = curvedsky.alm2map(alms, so_map.data, spin = spin)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
     return so_map
