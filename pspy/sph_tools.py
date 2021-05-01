@@ -8,7 +8,7 @@ from pixell import curvedsky, enmap
 from pspy import so_window
 
 
-def map2alm(map, niter, lmax, theta_range=None):
+def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
     """Map2alm transform (for healpix or CAR).
 
     Parameters
@@ -41,7 +41,6 @@ def map2alm(map, niter, lmax, theta_range=None):
                                                      lmax=lmax,
                                                      theta_min=theta_range[0],
                                                      theta_max=theta_range[1])
-        return alm
 
     elif map.pixel=="CAR":
         alm = curvedsky.map2alm(map.data, lmax=lmax)
@@ -52,7 +51,7 @@ def map2alm(map, niter, lmax, theta_range=None):
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
 
-    alm = alm.astype(np.complex128)
+    alm = alm.astype(dtype)
     return alm
 
 def alm2map(alms, so_map):
@@ -77,7 +76,7 @@ def alm2map(alms, so_map):
         raise ValueError("Map is neither a CAR nor a HEALPIX")
     return so_map
 
-def get_alms(so_map, window, niter, lmax, theta_range=None):
+def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128):
     """Get a map, multiply by a window and return alms
     This is basically map2alm but with application of the
     window functions.
@@ -102,7 +101,7 @@ def get_alms(so_map, window, niter, lmax, theta_range=None):
         windowed_map.data[2] = so_map.data[2]*window[1].data
     if so_map.ncomp == 1:
         windowed_map.data = so_map.data * window.data
-    alms = map2alm(windowed_map, niter, lmax, theta_range=theta_range)
+    alms = map2alm(windowed_map, niter, lmax, theta_range=theta_range, dtype=dtype)
     return alms
 
 
