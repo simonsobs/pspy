@@ -105,25 +105,33 @@ mean = {}
 std = {}
 for spec in spectra:
 
-    mean["standard"]= np.mean(Db_list["standard", spec], axis=0)
-    mean["filtered"]= np.mean(Db_list["filtered", spec], axis=0)
-    std["standard"]= np.std(Db_list["standard", spec], axis=0)
-    std["filtered"]= np.std(Db_list["filtered", spec], axis=0)
+    mean["standard", spec]= np.mean(Db_list["standard", spec], axis=0)
+    mean["filtered", spec]= np.mean(Db_list["filtered", spec], axis=0)
+    std["standard", spec]= np.std(Db_list["standard", spec], axis=0)
+    std["filtered", spec]= np.std(Db_list["filtered", spec], axis=0)
 
-    plt.errorbar(lb, mean["standard"], std["standard"], fmt=".", label="standard")
-    plt.errorbar(lb, mean["filtered"], std["filtered"], fmt=".", label="filtered")
+    plt.errorbar(lb, mean["standard", spec], std["standard", spec], fmt=".", label="standard")
+    plt.errorbar(lb, mean["filtered", spec], std["filtered", spec], fmt=".", label="filtered")
     plt.legend()
     plt.savefig("%s/spectra_%s.png" % (test_dir, spec))
     plt.clf()
     plt.close()
+    
 
     if spec in ["TT", "EE", "TE", "BB"] :
         plt.plot(lb, analytic_tf)
-        plt.plot(lb, mean["filtered"]/mean["standard"], ".")
+        plt.plot(lb, mean["filtered", spec]/mean["standard", spec], ".")
         plt.savefig("%s/tf_%s.png" % (test_dir, spec))
         plt.clf()
         plt.close()
 
+
+plt.plot(lb, analytic_tf)
+for spec in ["TT", "EE"] :
+    plt.plot(lb, mean["filtered", spec]/mean["standard", spec], ".", label = spec)
+plt.savefig("%s/tf_TT_and_EE.png" % (test_dir))
+plt.clf()
+plt.close()
 
 # Now the 2d part with the plot of the effect of the filter
 
