@@ -1,13 +1,13 @@
 import numpy as np, pylab as plt
 from pspy import flat_tools, pspy_utils
 
-def kspace_filter(map, vk_mask=None, hk_mask=None, window=None):
-
+def kspace_filter(map, vk_mask=None, hk_mask=None, window=None, normalize=False):
+    print("yes bro")
     filtered_map = map.copy()
 
-    ft = flat_tools.fft_from_so_map(map, normalize=False)
+    ft = flat_tools.fft_from_so_map(map, normalize=normalize)
     if window is not None:
-        ft = flat_tools.get_ffts(map, window, normalize=False)
+        ft = flat_tools.get_ffts(map, window, normalize=normalize)
 
     if vk_mask is not None:
         id_vk = np.where((ft.lx > vk_mask[0]) & (ft.lx < vk_mask[1]))
@@ -27,7 +27,7 @@ def kspace_filter(map, vk_mask=None, hk_mask=None, window=None):
             if hk_mask is not None:
                 ft.kmap[i, id_hk , :] = 0.
 
-    filtered_map.data[:] = ft.map_from_fft(normalize=False)
+    filtered_map.data[:] = ft.map_from_fft(normalize=normalize)
     return filtered_map
 
 

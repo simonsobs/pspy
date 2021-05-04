@@ -18,7 +18,7 @@ apo_type = "C1"
 apo_radius_degree = 2
 niter = 0
 lmax = 2000
-nsims = 10
+nsims = 4
 
 vk_mask = [-90, 90]
 hk_mask = [-50, 50]
@@ -71,7 +71,7 @@ for iii in range(nsims):
         
         if iii == 0: cmb.plot(file_name="%s/cmb"%(test_dir))
         if run == "filtered":
-            cmb = so_map_preprocessing.kspace_filter(cmb, vk_mask=vk_mask, hk_mask=hk_mask)
+            cmb = so_map_preprocessing.kspace_filter(cmb, vk_mask=vk_mask, hk_mask=hk_mask, normalize="phys")
             if iii == 0: cmb.plot(file_name="%s/cmb_filter"%(test_dir))
 
         alm_cmb = sph_tools.get_alms(cmb, window, niter, lmax)
