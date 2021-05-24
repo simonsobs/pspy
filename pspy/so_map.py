@@ -134,7 +134,8 @@ class so_map:
             cdelt = self.data.wcs.wcs.cdelt[1]
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
-
+        
+                
     def plot(
         self,
         color="planck",
@@ -628,6 +629,33 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     res = res * np.pi / (180 * 60)
     temp = so_map()
     shape, wcs = enmap.geometry(box, res=res, pre=pre)
+    temp.data = enmap.zeros(shape, wcs=wcs, dtype=None)
+    temp.pixel = "CAR"
+    temp.nside = None
+    temp.ncomp = ncomp
+    temp.geometry = temp.data.geometry[1:]
+    temp.coordinate = "equ"
+    return temp
+
+def full_sky_car_template(ncomp, res):
+    """Create a ``so_map`` full sky template with CAR pixellisation in equ coordinates.
+
+    Parameters
+    ----------
+    ncomp: integer
+        the number of components of the map can be 1 or 3 (for T,Q,U)
+    res: float
+        resolution in arcminute
+    """
+
+    if ncomp == 3:
+        pre = (3,)
+    else:
+        pre = ()
+
+    res = res * np.pi / (180 * 60)
+    temp = so_map()
+    shape, wcs = enmap.fullsky_geometry(res=res, dims=pre)
     temp.data = enmap.zeros(shape, wcs=wcs, dtype=None)
     temp.pixel = "CAR"
     temp.nside = None
