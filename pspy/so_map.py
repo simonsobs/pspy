@@ -213,7 +213,7 @@ class so_map:
                 if file_name is not None:
                     plt.savefig(file_name + ".png", bbox_inches="tight")
                     plt.clf()
-                    plt.close
+                    plt.close()
                 else:
                     plt.show()
             else:
@@ -253,7 +253,7 @@ class so_map:
                     if file_name is not None:
                         plt.savefig(file_name + "_%s" % field + ".png", bbox_inches="tight")
                         plt.clf()
-                        plt.close
+                        plt.close()
                     else:
                         plt.show()
 
