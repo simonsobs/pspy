@@ -428,7 +428,7 @@ def from_components(T, Q, U):
     return new_map
 
 
-def get_submap_car(map_car, box, mode):
+def get_submap_car(map_car, box, mode="round"):
     """Cut a CAR submap (using pixell).
 
     Parameters
