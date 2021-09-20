@@ -43,6 +43,56 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
     return l, ps
 
 
+
+def ps_from_params(cosmo_params, output_type, ell_max, start_at_zero=False):
+
+    """Given a set of cosmological parameters compute the corresponding lensed power spectrum
+       You need to have camb installed to use this function
+      ----------
+      cosmo_params: dict
+        dictionnary of cosmological parameters
+        # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
+      output_type :  string
+        'Cl' or 'Dl'
+      lmax: integer
+        the maximum multipole to consider
+      start_at_zero : boolean
+        if True, ps start at l=0 and cl(l=0) and cl(l=1) are set to 0
+        else, start at l=2
+    """
+    try:
+        import camb
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install camb to use this function")
+
+    if start_at_zero:
+        ell_min = 0
+    else:
+        ell_min = 2
+        
+    camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
+    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": ell_max, "lens_potential_accuracy": 1})
+    pars = camb.set_params(**camb_cosmo)
+    results = camb.get_results(pars)
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
+    l = np.arange(ell_min, ell_max)
+    ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
+    ps["ET"] = ps["TE"]
+    for spec in ["TB", "BT", "EB", "BE" ]:
+        ps[spec] = ps["TT"] * 0
+    
+    scale = l * (l + 1) / (2 * np.pi)
+    if output_type == "Cl":
+        if start_at_zero:
+            ps[2:] /= scale[2:]
+        else:
+            ps[:] /= scale[:]
+
+        
+    return l, ps
+    
+    
+
 def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
     """Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
 
@@ -219,32 +269,3 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     return ell, bl
 
 
-def dls_from_params(cosmo_params, ell_max):
-
-    """Given a set of cosmological parameters compute the corresponding Dls
-       You need to have camb installed to use this function
-      ----------
-      cosmo_params: dict
-        dictionnary of cosmological parameters
-        # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
-      lmax: integer
-        the maximum multipole to consider
-    """
-    try:
-        import camb
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("you need to install camb to use this function")
-
-    ell_min = 2
-    camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
-    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": ell_max, "lens_potential_accuracy": 1})
-    pars = camb.set_params(**camb_cosmo)
-    results = camb.get_results(pars)
-    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
-    l = np.arange(ell_min, ell_max)
-    ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
-    ps["ET"] = ps["TE"]
-    for spec in ["TB", "BT", "EB", "BE" ]:
-        ps[spec] = ps["TT"] * 0
-    
-    return l, ps
