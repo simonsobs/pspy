@@ -241,10 +241,10 @@ def dls_from_params(cosmo_params, ell_max):
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
     powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
-    ell = np.arange(ell_min, ell_max)
-    dls = {spec: powers["total"][ell][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
-    dls["ET"] = dls["TE"]
+    l = np.arange(ell_min, ell_max)
+    ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
+    ps["ET"] = ps["TE"]
     for spec in ["TB", "BT", "EB", "BE" ]:
-        dls[spec] = dls["TT"] * 0
+        ps[spec] = ps["TT"] * 0
     
-    return ell, dls
+    return l, ps
