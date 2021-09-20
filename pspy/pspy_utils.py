@@ -130,9 +130,9 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
             rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         for spec in spectra:
             nl_th[spec] = np.zeros(lmax)
-        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
-        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
-        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[:lmax] ** 2
+        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
+        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
+        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
         if type == "Dl":
             for spec in spectra:
                 nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
