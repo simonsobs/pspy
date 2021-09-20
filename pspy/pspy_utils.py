@@ -217,3 +217,34 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     ell = np.arange(2, lmax)
     bl = np.exp(-ell * (ell + 1) * fac ** 2 / 2.0)
     return ell, bl
+
+
+def dls_from_params(cosmo_params, ell_max):
+
+    """Given a set of cosmological parameters compute the corresponding Dls
+       You need to have camb installed to use this function
+      ----------
+      cosmo_params: dict
+        dictionnary of cosmological parameters
+        # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
+      lmax: integer
+        the maximum multipole to consider
+    """
+    try:
+        import camb
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install camb to use this function")
+
+    ell_min = 2
+    camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
+    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": ell_max, "lens_potential_accuracy": 1})
+    pars = camb.set_params(**camb_cosmo)
+    results = camb.get_results(pars)
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
+    ell = np.arange(ell_min, ell_max)
+    dls = {spec: powers["total"][ell][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
+    dls["ET"] = dls["TE"]
+    for spec in ["TB", "BT", "EB", "BE" ]:
+        dls[spec] = dls["TT"] * 0
+    
+    return ell, dls
