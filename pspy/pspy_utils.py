@@ -44,7 +44,7 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
 
 
 
-def ps_from_params(cosmo_params, output_type, ell_max, start_at_zero=False):
+def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False):
 
     """Given a set of cosmological parameters compute the corresponding lensed power spectrum
        You need to have camb installed to use this function
@@ -66,16 +66,16 @@ def ps_from_params(cosmo_params, output_type, ell_max, start_at_zero=False):
         raise ModuleNotFoundError("you need to install camb to use this function")
 
     if start_at_zero:
-        ell_min = 0
+        lmin = 0
     else:
-        ell_min = 2
+        lmin = 2
         
     camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
-    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": ell_max, "lens_potential_accuracy": 1})
+    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": lmax, "lens_potential_accuracy": 1})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
     powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
-    l = np.arange(ell_min, ell_max)
+    l = np.arange(lmin, lmax)
     ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
     ps["ET"] = ps["TE"]
     for spec in ["TB", "BT", "EB", "BE" ]:
@@ -88,7 +88,6 @@ def ps_from_params(cosmo_params, output_type, ell_max, start_at_zero=False):
         else:
             ps[:] /= scale[:]
 
-        
     return l, ps
     
     
