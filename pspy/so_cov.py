@@ -308,6 +308,7 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
 
     return analytic_cov
 
+    
 def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
@@ -315,67 +316,37 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
     ----------
 
     Clth_dict: dictionnary
-      A dictionnary of theoretical power spectrum (auto and cross) for the different split combinaison ('XaYb' etc)
+        A dictionnary of theoretical power spectrum (auto and cross) for the different split combinaison ('XaYb' etc)
     coupling_dict: dictionnary
-      a dictionnary containing the coupling kernel
+        a dictionnary containing the coupling kernel
     binning_file: data file
-      a binning file with format bin low, bin high, bin mean
+        a binning file with format bin low, bin high, bin mean
     lmax: int
-      the maximum multipole to consider
+        the maximum multipole to consider
     mbb_inv_ab: 2d array
-      the inverse mode coupling matrix for the 'XaYb' power spectrum
+        the inverse mode coupling matrix for the 'XaYb' power spectrum
     mbb_inv_cd: 2d array
-      the inverse mode coupling matrix for the 'XcYd' power spectrum
+        the inverse mode coupling matrix for the 'XcYd' power spectrum
     """
 
-    TaTc, TbTd, TaTd, TbTc = symmetrize(Clth_dict["TaTc"]), symmetrize(Clth_dict["TbTd"]), symmetrize(Clth_dict["TaTd"]), symmetrize(Clth_dict["TbTc"])
-    EaEc, EbEd, EaEd, EbEc = symmetrize(Clth_dict["EaEc"]), symmetrize(Clth_dict["EbEd"]), symmetrize(Clth_dict["EaEd"]), symmetrize(Clth_dict["EbEc"])
-    TaEc, TaEd, TbEc, TbEd = symmetrize(Clth_dict["TaEc"]), symmetrize(Clth_dict["TaEd"]), symmetrize(Clth_dict["TbEc"]), symmetrize(Clth_dict["TbEd"])
-    EaTc, EaTd, EbTc, EbTd = symmetrize(Clth_dict["EaTc"]), symmetrize(Clth_dict["EaTd"]), symmetrize(Clth_dict["EbTc"]), symmetrize(Clth_dict["EbTd"])
-    
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
     analytic_cov = np.zeros((4*n_bins, 4*n_bins))
-
-    #TaTbTcTd
-    M_00 = TaTc * TbTd * coupling_dict["TaTcTbTd"] + TaTd * TbTc * coupling_dict["TaTdTbTc"]
-    analytic_cov[0*n_bins:1*n_bins, 0*n_bins:1*n_bins] = bin_mat(M_00, binning_file, lmax)
     
-    #TaEbTcEd
-    M_11 = TaTc * EbEd * coupling_dict["TaTcPbPd"] + TaEd * EbTc * coupling_dict["TaPdPbTc"]
-    analytic_cov[1*n_bins:2*n_bins, 1*n_bins:2*n_bins] = bin_mat(M_11, binning_file, lmax)
-    
-    #EaTbEcTd
-    M_22 = EaEc * TbTd * coupling_dict["PaPcTbTd"] + EaTd * TbEc * coupling_dict["PaTdTbPc"]
-    analytic_cov[2*n_bins:3*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_22, binning_file, lmax)
+    speclist = ["TT", "TE", "ET", "EE"]
+    for i, sp1 in enumerate(speclist):
+        for j, sp2 in enumerate(speclist):
+            if i > j : continue
+                
+            id0 = sp1[0] + "a" + sp2[0] + "c"
+            id1 = sp1[1] + "b" + sp2[1] + "d"
+            id2 = sp1[0] + "a" + sp2[1] + "d"
+            id3 = sp1[1] + "b" + sp2[0] + "c"
+            print(id0, id1, id2, id3)
+            M = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1]) * coupling_dict[id0.replace("E","P") + id1.replace("E","P")]
+            M += symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3]) * coupling_dict[id2.replace("E","P") + id3.replace("E","P")]
 
-    #EaEbEcEd
-    M_33 = EaEc * EbEd * coupling_dict["PaPcPbPd"] + EaEd * EbEc * coupling_dict["PaPdPbPc"]
-    analytic_cov[3*n_bins:4*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_33, binning_file, lmax)
-    
-    #TaTbTcEd
-    M_01 = TaTc * TbEd * coupling_dict["TaTcTbPd"] + TaEd * TbTc * coupling_dict["TaPdTbTc"]
-    analytic_cov[0*n_bins:1*n_bins, 1*n_bins:2*n_bins] = bin_mat(M_01, binning_file, lmax)
-
-    #TaTbEcTd
-    M_02 = TaEc * TbTd * coupling_dict["TaPcTbTd"] + TaTd * TbEc * coupling_dict["TaTdTbPc"]
-    analytic_cov[0*n_bins:1*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_02, binning_file, lmax)
-
-    #TaTbEcEd
-    M_03 = TaEc * TbEd * coupling_dict["TaPcTbPd"] + TaEd * TbEc * coupling_dict["TaPdTbPc"]
-    analytic_cov[0*n_bins:1*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_03, binning_file, lmax)
-
-    #TaEbEcTd
-    M_12 = TaEc * EbTd * coupling_dict["TaPcPbTd"] + TaTd * EbEc * coupling_dict["TaTdPbPc"]
-    analytic_cov[1*n_bins:2*n_bins, 2*n_bins:3*n_bins] = bin_mat(M_12, binning_file, lmax)
-
-    #TaEbEcEd
-    M_13 = TaEc * EbEd * coupling_dict["TaPcPbPd"] + TaEd * EbEc * coupling_dict["TaPdPbPc"]
-    analytic_cov[1*n_bins:2*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_13, binning_file, lmax)
-
-    #EaTbEcEd
-    M_23 = EaEc * TbEd * coupling_dict["PaPcTbPd"] + EaEd * TbEc * coupling_dict["PaPdTbPc"]
-    analytic_cov[2*n_bins:3*n_bins, 3*n_bins:4*n_bins] = bin_mat(M_23, binning_file, lmax)
+            analytic_cov[i * n_bins:(i + 1) * n_bins, j * n_bins:(j + 1) * n_bins] = bin_mat(M, binning_file, lmax)
 
     analytic_cov = np.triu(analytic_cov) + np.tril(analytic_cov.T, -1)
 
@@ -385,6 +356,7 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
     analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
 
     return analytic_cov
+
 
 
 def extract_TTTEEE_mbb(mbb_inv):
