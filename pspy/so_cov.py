@@ -342,7 +342,7 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
             id1 = sp1[1] + "b" + sp2[1] + "d"
             id2 = sp1[0] + "a" + sp2[1] + "d"
             id3 = sp1[1] + "b" + sp2[0] + "c"
-            print(id0, id1, id2, id3)
+
             M = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1]) * coupling_dict[id0.replace("E","P") + id1.replace("E","P")]
             M += symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3]) * coupling_dict[id2.replace("E","P") + id3.replace("E","P")]
 
