@@ -14,6 +14,8 @@ python example notebooks for an introductory set of examples on how to use the p
    :target: https://github.com/simonsobs/pspy/actions?query=workflow%3ATesting
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
    :target: https://pspy.readthedocs.io/en/latest/?badge=latest
+.. image:: https://codecov.io/gh/simonsobs/pspy/branch/master/graph/badge.svg?token=HHAJ7NQ5CE
+   :target: https://codecov.io/gh/simonsobs/pspy
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=notebooks/%2Findex.ipynb
 

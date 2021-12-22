@@ -10,7 +10,7 @@ from pspy import so_map
 TEST_DATA_PREFIX = os.path.join(os.path.dirname(__file__), "data")
 
 
-def test_maps_equality(so_map1, so_map2):
+def maps_are_equal(so_map1, so_map2):
     assert so_map1.pixel == so_map2.pixel
     assert so_map1.nside == so_map2.nside
     assert so_map1.ncomp == so_map2.ncomp
@@ -34,7 +34,7 @@ class SOMapTests(unittest.TestCase):
         ra0, ra1, dec0, dec1 = -1, 2, -3, 4
         so_map1 = so_map.car_template(ncomp, ra0, ra1, dec0, dec1, res)
         so_map2 = so_map1.copy()
-        test_maps_equality(so_map1, so_map2)
+        maps_are_equal(so_map1, so_map2)
 
     # def test_car_synfast(self):
     #     # Fix seed
