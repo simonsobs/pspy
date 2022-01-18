@@ -8,7 +8,7 @@ from pixell import curvedsky, enmap
 from pspy import so_window
 
 
-def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
+def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128, tweak=True):
     """Map2alm transform (for healpix or CAR).
 
     Parameters
@@ -43,18 +43,18 @@ def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
                                                      theta_max=theta_range[1])
 
     elif map.pixel=="CAR":
-        alm = curvedsky.map2alm(map.data, lmax=lmax)
+        alm = curvedsky.map2alm(map.data, lmax=lmax, tweak=tweak)
         if niter != 0:
             map_copy = map.copy()
             for _ in range(niter):
-                alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm, map_copy.data), lmax=lmax)
+                alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm, map_copy.data), lmax=lmax, tweak=tweak)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
 
     alm = alm.astype(dtype)
     return alm
 
-def alm2map(alms, so_map):
+def alm2map(alms, so_map, tweak=True):
     """alm2map transform (for healpix and CAR).
 
     Parameters
@@ -71,7 +71,7 @@ def alm2map(alms, so_map):
     if so_map.pixel == "HEALPIX":
         so_map.data = curvedsky.alm2map_healpix(alms, so_map.data, spin = spin)
     elif so_map.pixel == "CAR":
-        so_map.data = curvedsky.alm2map(alms, so_map.data, spin = spin)
+        so_map.data = curvedsky.alm2map(alms, so_map.data, spin = spin, tweak=tweak)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
     return so_map
