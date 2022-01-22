@@ -53,7 +53,7 @@ def apply_sigurd_filter(imap, ivar, filter, tol=1e-4, ref=0.9):
     return filtered_map
 
 def analytical_tf(map, filter, binning_file, lmax):
-    lmap  = enmap.modlmap(map.data.shape, map.data.wcs, method="auto")
+    lmap  = map.data.modlmap() 
     twod_index = lmap.copy()
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     nbins = len(bin_lo)
