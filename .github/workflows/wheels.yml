@@ -27,7 +27,7 @@ jobs:
           sudo apt-get install libfftw3-dev
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v1.9.0
+        uses: pypa/cibuildwheel@v2.3.1
         env:
           CIBW_BEFORE_BUILD: "python -m pip install numpy"
           CIBW_BUILD_VERBOSITY: 3
