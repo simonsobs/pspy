@@ -109,8 +109,8 @@ def taskrange(imax, imin = 0, shift = 0):
             delta     = 1
             remainder = 0
         else:
-            delta     = ntask/size
-            remainder = ntask%size
+            delta     = ntask // size
+            remainder = ntask % size
 
         # correction for remainder 
         start      = imin + rank*delta
