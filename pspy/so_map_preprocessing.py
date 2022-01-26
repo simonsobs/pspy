@@ -9,10 +9,10 @@ def build_std_filter(shape, wcs, vk_mask, hk_mask, dtype=np.float64):
     filter = enmap.ones(shape[-2:], wcs, dtype)
     if vk_mask is not None:
         id_vk = np.where((lx > vk_mask[0]) & (lx < vk_mask[1]))
+        filter[:, id_vk] = 0
     if hk_mask is not None:
         id_hk = np.where((ly > hk_mask[0]) & (ly < hk_mask[1]))
-    filter[:, id_vk] = 0
-    filter[id_hk, :] = 0
+        filter[id_hk, :] = 0
     return filter
 
 def apply_std_filter(imap, filter):
