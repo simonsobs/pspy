@@ -113,10 +113,10 @@ class so_map:
         if self.pixel == "HEALPIX":
             l, ps = ps_lensed_theory_to_dict(clfile, output_type="Cl", start_at_zero=True)
             if self.ncomp == 1:
-                synfast.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True, verbose=False)
+                synfast.data = hp.sphtfunc.synfast(ps["TT"], self.nside, new=True)
             else:
                 synfast.data = hp.sphtfunc.synfast(
-                    (ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True, verbose=False
+                    (ps["TT"], ps["EE"], ps["BB"], ps["TE"]), self.nside, new=True
                 )
 
         if self.pixel == "CAR":
@@ -134,8 +134,7 @@ class so_map:
             cdelt = self.data.wcs.wcs.cdelt[1]
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
-        
-                
+
     def plot(
         self,
         color="planck",
@@ -350,13 +349,13 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
         new_map.pixel = "HEALPIX"
         if fields_healpix is None:
             new_map.ncomp = header["TFIELDS"]
-            new_map.data = hp.fitsfunc.read_map(file, field=np.arange(new_map.ncomp), verbose=False)
+            new_map.data = hp.fitsfunc.read_map(file, field=np.arange(new_map.ncomp))
         else:
             try:
                 new_map.ncomp = len(fields_healpix)
             except:
                 new_map.ncomp = 1
-            new_map.data = hp.fitsfunc.read_map(file, verbose=False, field=fields_healpix)
+            new_map.data = hp.fitsfunc.read_map(file, field=fields_healpix)
 
         new_map.nside = hp.pixelfunc.get_nside(new_map.data)
         new_map.geometry = "healpix geometry"
@@ -636,6 +635,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     temp.geometry = temp.data.geometry[1:]
     temp.coordinate = "equ"
     return temp
+
 
 def full_sky_car_template(ncomp, res):
     """Create a ``so_map`` full sky template with CAR pixellisation in equ coordinates.
