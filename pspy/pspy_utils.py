@@ -268,3 +268,43 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     return ell, bl
 
 
+def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None):
+    """
+    This function return a binning scheme with non constant bin size
+    you specify a list of bin size: delta_l_list, and the corresponding bound at
+    which this bin size ceases to apply: l_bound_list
+    optionnaly write to disk a binning file in format, lmin, lmax, lmean
+
+    Parameters
+    ----------
+    delta_l_list: list of integers
+        the different binsize we want to consider
+    l_bound_list: list of integers
+        the multipole at which the binsize ceases to apply
+    write_binning_file: string
+        if you want to write to disk, pass a string with the name of the file
+    """
+ 
+    lmin_list = []
+    lmax_list = []
+    lmean_list = []
+    
+    lmin = 2
+    for count, ells in enumerate(l_bound_list):
+        while True:
+            lmax = lmin +  delta_l_list[count]
+
+            if lmax > l_bound_list[count]:
+                break
+
+            lmean = (lmax + lmin) / 2
+
+            lmin_list += [lmin]
+            lmax_list += [lmax]
+            lmean_list += [lmean]
+            
+            lmin = lmax + 1
+    if binning_file is not None:
+        np.savetxt(binning_file, np.transpose([lmin_list, lmax_list, lmean_list]))
+    
+    return lmin_list, lmax_list, lmean_list
