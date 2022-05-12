@@ -308,3 +308,27 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
         np.savetxt(binning_file, np.transpose([lmin_list, lmax_list, lmean_list]))
     
     return lmin_list, lmax_list, lmean_list
+
+def maximum_likelihood_combination(cov_mat, P_mat, data_vec):
+    """
+     This function solve for the maximum likelihood data_vec and covariance for a problem of the form
+     chi2 = (data_vec - P ML_data_vec).T cov_mat ** -1 data_vec - P ML_data_vec)
+
+
+     Parameters
+     ----------
+     cov_mat: 2d array
+         the covariance matrix of data_vec, of size N_ini x N_ini
+     P_mat: 2d array
+        the "pointing matrix" that project the final data vector of size N_f into the initial data vector space N_ini
+        shape is (N_ini, N_f)
+    data_vec: 1d array
+        the initial data vector
+    """
+    
+    inv_cov_mat = np.linalg.inv(cov_mat)
+
+    ML_cov_mat = np.linalg.inv(np.dot(np.dot(P_mat, inv_cov_mat), P_mat.T))
+    ML_data_vec = np.dot(ML_cov_mat, np.dot(P_mat, np.dot(inv_cov_mat, data_vec)))
+
+    return ML_cov_mat, ML_data_vec
