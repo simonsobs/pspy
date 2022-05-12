@@ -309,7 +309,7 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
     
     return lmin_list, lmax_list, lmean_list
 
-def maximum_likelihood_combination(cov_mat, P_mat, data_vec):
+def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
     """
     This function solve for the maximum likelihood data_vec and covariance for a problem of the form
     chi2 = (data_vec - P ML_data_vec).T cov_mat ** -1 data_vec - P ML_data_vec)
@@ -330,6 +330,10 @@ def maximum_likelihood_combination(cov_mat, P_mat, data_vec):
 
     ML_cov_mat = np.linalg.inv(np.dot(np.dot(P_mat, inv_cov_mat), P_mat.T))
     ML_data_vec = np.dot(ML_cov_mat, np.dot(P_mat, np.dot(inv_cov_mat, data_vec)))
+    
+    if test_matrix:
+        is_symmetric(mat, tol=1e-7)
+        is_pos_def(mat)
 
     return ML_cov_mat, ML_data_vec
 
