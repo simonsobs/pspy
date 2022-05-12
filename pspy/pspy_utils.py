@@ -332,8 +332,8 @@ def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
     ML_data_vec = np.dot(ML_cov_mat, np.dot(P_mat, np.dot(inv_cov_mat, data_vec)))
     
     if test_matrix:
-        is_symmetric(mat, tol=1e-7)
-        is_pos_def(mat)
+        is_symmetric(ML_cov_mat, tol=1e-7)
+        is_pos_def(ML_cov_mat)
 
     return ML_cov_mat, ML_data_vec
 
