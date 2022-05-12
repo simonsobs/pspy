@@ -311,15 +311,15 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
 
 def maximum_likelihood_combination(cov_mat, P_mat, data_vec):
     """
-     This function solve for the maximum likelihood data_vec and covariance for a problem of the form
-     chi2 = (data_vec - P ML_data_vec).T cov_mat ** -1 data_vec - P ML_data_vec)
+    This function solve for the maximum likelihood data_vec and covariance for a problem of the form
+    chi2 = (data_vec - P ML_data_vec).T cov_mat ** -1 data_vec - P ML_data_vec)
 
 
-     Parameters
-     ----------
-     cov_mat: 2d array
-         the covariance matrix of data_vec, of size N_ini x N_ini
-     P_mat: 2d array
+    Parameters
+    ----------
+    cov_mat: 2d array
+        the covariance matrix of data_vec, of size N_ini x N_ini
+    P_mat: 2d array
         the "pointing matrix" that project the final data vector of size N_f into the initial data vector space N_ini
         shape is (N_ini, N_f)
     data_vec: 1d array
@@ -332,3 +332,41 @@ def maximum_likelihood_combination(cov_mat, P_mat, data_vec):
     ML_data_vec = np.dot(ML_cov_mat, np.dot(P_mat, np.dot(inv_cov_mat, data_vec)))
 
     return ML_cov_mat, ML_data_vec
+
+
+def is_symmetric(mat, tol=1e-8):
+    """
+    This function check if a matrix is symmetric
+    
+    Parameters
+    ----------
+    mat: 2d array
+        the matrix tested
+    tol:
+        the absolute tolerance on assymetry
+    """
+    if np.all(np.abs(mat-mat.T) < tol):
+        print("the tested matrix is symmetric")
+    else:
+        print("the tested matrix is not symmetric")
+    return
+
+
+def is_pos_def(mat):
+    """
+    This function check if a matrix is positive definite
+    
+    Parameters
+    ----------
+    mat: 2d array
+        the matrix tested
+    """
+    if np.all(np.linalg.eigvals(mat) > 0):
+        print("the tested matrix is positive definite")
+    else:
+        print("the tested matrix is not positive definite")
+        print(np.linalg.eigvals(mat))
+    return
+
+
+    
