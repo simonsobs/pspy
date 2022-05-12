@@ -83,10 +83,13 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False):
     
     scale = l * (l + 1) / (2 * np.pi)
     if output_type == "Cl":
-        if start_at_zero:
-            ps[2:] /= scale[2:]
-        else:
-            ps[:] /= scale[:]
+        fields = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
+        for f in fields:
+
+            if start_at_zero:
+                ps[f][2:] /= scale[2:]
+            else:
+                ps[f][:] /= scale[:]
 
     return l, ps
     
