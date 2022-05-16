@@ -38,7 +38,7 @@ jobs:
 
     - name: Install dependencies via pip
       run: |
-        python -m pip install --upgrade pip wheel
+        python -m pip install --upgrade pip
         python -m pip install numpy pytest pytest-cov
         python -m pip install camb pymaster
         python -m pip install -e .
