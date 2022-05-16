@@ -8,8 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest] #, macos-latest]
-        python-version: ["3.8", "3.9", "3.10"]
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.8"] #, "3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -29,12 +29,16 @@ jobs:
     - name: Brew packages
       if: matrix.os == 'macos-latest'
       run: |
-        brew install fftw cfitsio automake
+        brew install automake cfitsio gsl fftw
+        export CXX=g++-10
+        export CC=gcc-10
+        export LDFLAGS=-L/usr/local/lib
+        export CPPFLAGS=-I/usr/local/include
 
     - name: Apt packages
       if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo apt-get install libfftw3-dev libcfitsio-dev
+        sudo apt-get install libcfitsio-dev libfftw3-dev
 
     - name: Install dependencies via pip
       run: |
