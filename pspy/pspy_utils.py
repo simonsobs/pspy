@@ -69,31 +69,21 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False):
         lmin = 0
     else:
         lmin = 2
-        
+
     camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
     camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": lmax, "lens_potential_accuracy": 1})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
-    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=output_type == "Cl")
     l = np.arange(lmin, lmax)
     ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
     ps["ET"] = ps["TE"]
     for spec in ["TB", "BT", "EB", "BE" ]:
         ps[spec] = ps["TT"] * 0
-    
-    scale = l * (l + 1) / (2 * np.pi)
-    if output_type == "Cl":
-        fields = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-        for f in fields:
-
-            if start_at_zero:
-                ps[f][2:] /= scale[2:]
-            else:
-                ps[f][:] /= scale[:]
 
     return l, ps
-    
-    
+
+
 
 def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
     """Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
@@ -287,11 +277,11 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
     write_binning_file: string
         if you want to write to disk, pass a string with the name of the file
     """
- 
+
     lmin_list = []
     lmax_list = []
     lmean_list = []
-    
+
     lmin = 2
     for count, ells in enumerate(l_bound_list):
         while True:
@@ -305,11 +295,11 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
             lmin_list += [lmin]
             lmax_list += [lmax]
             lmean_list += [lmean]
-            
+
             lmin = lmax + 1
     if binning_file is not None:
         np.savetxt(binning_file, np.transpose([lmin_list, lmax_list, lmean_list]))
-    
+
     return lmin_list, lmax_list, lmean_list
 
 def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
@@ -328,12 +318,12 @@ def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
     data_vec: 1d array
         the initial data vector
     """
-    
+
     inv_cov_mat = np.linalg.inv(cov_mat)
 
     ML_cov_mat = np.linalg.inv(np.dot(np.dot(P_mat, inv_cov_mat), P_mat.T))
     ML_data_vec = np.dot(ML_cov_mat, np.dot(P_mat, np.dot(inv_cov_mat, data_vec)))
-    
+
     if test_matrix:
         is_symmetric(ML_cov_mat, tol=1e-7)
         is_pos_def(ML_cov_mat)
@@ -344,7 +334,7 @@ def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
 def is_symmetric(mat, tol=1e-8):
     """
     This function check if a matrix is symmetric
-    
+
     Parameters
     ----------
     mat: 2d array
@@ -362,7 +352,7 @@ def is_symmetric(mat, tol=1e-8):
 def is_pos_def(mat):
     """
     This function check if a matrix is positive definite
-    
+
     Parameters
     ----------
     mat: 2d array
@@ -374,6 +364,3 @@ def is_pos_def(mat):
         print("the tested matrix is not positive definite")
         print(np.linalg.eigvals(mat))
     return
-
-
-    
