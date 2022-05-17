@@ -45,11 +45,13 @@ jobs:
     - name: Install namaster on Mac
       if: matrix.os == 'macos-latest'
       run: |
-        export CXX=g++-10
-        export CC=gcc-10
-        export LDFLAGS=-L/usr/local/lib
-        export CPPFLAGS=-I/usr/local/include
         python -m pip install pymaster
+      env:
+        CXX: g++-10
+        CC: gcc-10
+        LDFLAGS: -L/usr/local/lib
+        CPPFLAGS: -I/usr/local/include
+
 
     - name: Install extra dependencies (camb, namaster)
       run: |
