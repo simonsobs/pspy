@@ -56,8 +56,8 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
 
         mcm_fortran.fill_upper(coupling.T)
 
-        coupling_dict["TaTcTbTd"] = coupling
-        coupling_dict["TaTdTbTc"] = coupling
+        coupling_dict["TaTcTbTd"] = coupling[:lmax - 2, :lmax - 2]
+        coupling_dict["TaTdTbTc"] = coupling[:lmax - 2, :lmax - 2]
         
     else:
         wcl = {}
@@ -82,7 +82,7 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
                 coupling[id_cov] = so_mcm.format_toepliz_fortran(coupling[id_cov], l_toep, lmax)
             mcm_fortran.fill_upper(coupling[id_cov].T)
 
-            coupling_dict[name] = coupling[id_cov]
+            coupling_dict[name] = coupling[id_cov][:lmax - 2, :lmax - 2]
 
         
     if save_file is not None:
@@ -149,6 +149,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
 
         for name,index in zip(win_list, indexlist):
             coupling_dict[name] = coupling[index] + coupling[index].T - np.diag(np.diag(coupling[index]))
+            coupling_dict[name] = coupling_dict[name][:lmax - 2, :lmax - 2]
     else:
         wcl={}
         
@@ -192,7 +193,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
             if l_toep < lmax:
                 coupling[index] = so_mcm.format_toepliz(coupling[index], l_toep, lmax)
             mcm_fortran.fill_upper(coupling[index].T)
-            coupling_dict[name] = coupling[index]
+            coupling_dict[name] = coupling[index][:lmax - 2, :lmax - 2]
 
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)
@@ -260,7 +261,7 @@ def symmetrize(Clth, mode="arithm"):
     if mode == "arithm":
         return np.add.outer(Clth, Clth) / 2
 
-def bin_mat(mat, binning_file, lmax):
+def bin_mat(mat, binning_file, lmax, speclist=["TT"]):
     """Take a matrix and bin it Mbb'= Pbl Pb'l' Mll' with  Pbl =1/Nb sum_(l in b)
 
     Parameters
@@ -272,14 +273,27 @@ def bin_mat(mat, binning_file, lmax):
     """
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
+
     n_bins = len(bin_hi)
-    coupling_b = np.zeros((n_bins, n_bins))
-    for i in range(n_bins):
-        for j in range(n_bins):
-            coupling_b[i,j] = np.mean(mat[bin_lo[i]-2:bin_hi[i]-1, bin_lo[j]-2:bin_hi[j]-1])
+    n_spec = len(speclist)
+    print(mat.shape[0] / n_spec)
+    n_ell = int(mat.shape[0] / n_spec)
+   
+
+    coupling_b = np.zeros((n_spec * n_bins, n_spec * n_bins))
+
+    for i, s1 in enumerate(speclist):
+        for j, s2 in enumerate(speclist):
+        
+            block = mat[i * n_ell : (i + 1) * n_ell,  j * n_ell : (j + 1) * n_ell]
+            binned_block = np.zeros((n_bins, n_bins))
+            mcm_fortran.bin_mcm(block.T, bin_lo, bin_hi, bin_size, binned_block.T, 0)
+            binned_block /= bin_size
+            coupling_b[i * n_bins : (i + 1) * n_bins,  j * n_bins : (j + 1) * n_bins] = binned_block
+
     return coupling_b
 
-def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
+def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
     """From the two point functions and the coupling kernel construct the spin0 analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
     Parameters
@@ -301,15 +315,18 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
 
     cov = symmetrize(Clth_dict["TaTc"]) * symmetrize(Clth_dict["TbTd"]) * coupling_dict["TaTcTbTd"]
     cov += symmetrize(Clth_dict["TaTd"]) * symmetrize(Clth_dict["TbTc"]) * coupling_dict["TaTdTbTc"]
-    
-    analytic_cov = bin_mat(cov, binning_file, lmax)
-    
-    analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
 
+    if binned_mcm == True:
+        analytic_cov = bin_mat(cov, binning_file, lmax)
+        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+    else:
+        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, cov), mbb_inv_cd.T)
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
+        
     return analytic_cov
 
     
-def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd):
+def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
     Parameters
@@ -331,7 +348,9 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
-    analytic_cov = np.zeros((4*n_bins, 4*n_bins))
+    n_ell = Clth_dict["TaTb"].shape[0]
+        
+    full_analytic_cov = np.zeros((4 * n_ell, 4 * n_ell))
     
     speclist = ["TT", "TE", "ET", "EE"]
     for i, sp1 in enumerate(speclist):
@@ -345,15 +364,21 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
             M = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1]) * coupling_dict[id0.replace("E","P") + id1.replace("E","P")]
             M += symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3]) * coupling_dict[id2.replace("E","P") + id3.replace("E","P")]
-
-            analytic_cov[i * n_bins:(i + 1) * n_bins, j * n_bins:(j + 1) * n_bins] = bin_mat(M, binning_file, lmax)
-
-    analytic_cov = np.triu(analytic_cov) + np.tril(analytic_cov.T, -1)
-
+            
+            full_analytic_cov[i * n_ell:(i + 1) * n_ell, j * n_ell:(j + 1) * n_ell] = M
+    
+    full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
+    
+    
     mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
     mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
 
-    analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+    if binned_mcm == True:
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+    else:
+        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
 
     return analytic_cov
 
@@ -611,7 +636,34 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
         else:
             plot.img.show()
 
-                       
+
+def mc_cov_from_spectra_list(sim_spectra_list, spectra=None):
+    """Return the montecarlo covariance of spectra estimated from simulations
+
+    Parameters
+    ----------
+    sim_spectra_list: list of array (or list of dict if spectra is not None)
+        a list of ps computed from simulation (each entry of the list is a ps)
+    spectra: list of strings
+        needed for spin0 and spin2 cross correlation, the arrangement of the spectra
+    """
+
+    if spectra is None: n_sims = len(sim_spectra_list)
+    else: n_sims = len(sim_spectra_list[spectra[0]])
+    
+    vec_all = []
+    for iii in range(n_sims):
+        if spectra is None:  vec_all += [sim_spectra_list[iii]]
+        else:
+            vec = []
+            for spec in spectra:
+                vec = np.append(vec, sim_spectra_list[spec][iii])
+            vec_all +=  [vec]
+            
+    mc_cov = np.cov(vec_all, rowvar=False)
+    
+    return mc_cov
+
                        
 
 #def chi_old(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
