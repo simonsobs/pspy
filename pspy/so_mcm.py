@@ -60,6 +60,8 @@ def mcm_and_bbl_spin0(win1,
 
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
+    if type not in ["Dl", "Cl"]:
+        raise ValueError("Unkown 'type' value! Must be either 'Dl' or 'Cl')
 
     if input_alm == False:
         l_max_limit = win1.get_lmax_limit()
@@ -198,6 +200,8 @@ def mcm_and_bbl_spin0and2(win1,
 
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
+    if type not in ["Dl", "Cl"]:
+        raise ValueError("Unkown 'type' value! Must be either 'Dl' or 'Cl')
 
     if input_alm == False:
         l_max_limit = win1[0].get_lmax_limit()
