@@ -425,7 +425,7 @@ def save_coupling(prefix, mode_coupling_inv, Bbl, spin_pairs=None):
 
     prefix: string
       the prefix for the name of the file
-    mode_coupling: 2d array (or dict of 2d array)
+    mode_coupling_inv: 2d array (or dict of 2d array)
       the inverse of the mode coupling matrix, if spin pairs is not none, should be a dictionnary with entries
       -  spin0xspin0, spin0xspin2, spin2xspin0, spin2xspin2
     Bbl: 2d array (or dict of 2d array)
