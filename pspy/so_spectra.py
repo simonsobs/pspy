@@ -160,10 +160,10 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, bin
     # the alm2cl return cl starting at l = 0, we use spectra from l = 2
     # this is due in particular to the fact that the mcm is computed only for l>=2
     
-    if spectra is None: cl = cl[2:lmax]
-    else: cl = {f: cl[f][2:lmax] for f in spectra}
-    
     l = np.arange(2, lmax)
+    if spectra is None: cl = cl[l]
+    else: cl = {f: cl[f][l] for f in spectra}
+    
     if type == "Dl": fac = (l * (l + 1) / (2 * np.pi))
     elif type == "Cl": fac = l * 0 + 1
 
