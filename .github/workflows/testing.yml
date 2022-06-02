@@ -48,7 +48,6 @@ jobs:
         git clone https://github.com/LSSTDESC/NaMaster.git
         cd NaMaster
         sed -i -e '11s/^//p; 11s/^.*/namaster_LDADD = libnmt.la/' Makefile.am
-        cat Makefile.am
         autoreconf -ivf
         python -m pip install --verbose .
       env:
@@ -70,8 +69,8 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v2
 
-    - name: Test notebooks (Only on Linux for saving time)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        pip install jupyter
-        jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
+    # - name: Test notebooks (Only on Linux for saving time)
+    #   if: matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     pip install jupyter
+    #     jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
