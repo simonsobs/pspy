@@ -48,8 +48,9 @@ jobs:
         git clone https://github.com/LSSTDESC/NaMaster.git
         cd NaMaster
         sed -i -e '11s/^//p; 11s/^.*/namaster_LDADD = libnmt.la/' Makefile.am
+        cat Makefile.am
         autoreconf -ivf
-        python -m pip install .
+        python -m pip install --verbose .
       env:
         CXX: g++-10
         CC: gcc-10
