@@ -75,7 +75,6 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None):
     cl_dict (for spin0 and spin2) a dictionnary of cl with entry spectra
     """
     
-    
     if spectra is None:
         if alm2 is None:
             cls = curvedsky.alm2cl(alm1)
@@ -95,9 +94,39 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None):
     return(l, cl_dict)
 
 
+def deconvolve_mode_coupling_matrix(l, cl, inv_mode_coupling_matrix, spectra=None):
+    """deconvolve the mode coupling matrix
+    Parameters
+    ----------
+    l: 1d array
+      the multipoles or the location of the center of the bins
+    cl: 1d array or dict of 1d array
+      the power spectra, can be a 1d array (spin0) or a dictionnary (spin0 and spin2)
+    inv_mode_coupling_matrix: 2d array
+      the inverse of the  mode coupling matrix can be binned or not
+    spectra: list of string
+        needed for spin0 and spin2 cross correlation, the arrangement of the spectra
 
-def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm_inv=None):
-    """Bin the power spectra according to a binning file and optionnaly deconvolve the mode coupling matrix
+    """
+    
+    n_element = len(l)
+    
+    if spectra is None:
+        ps = np.dot(inv_mode_coupling_matrix, cl)
+    else:
+        inv_mode_coupling_matrix = so_mcm.coupling_dict_to_array(inv_mode_coupling_matrix)
+        vec = []
+        for f in spectra:
+            vec = np.append(vec, cl[f])
+        vec = np.dot(inv_mode_coupling_matrix, vec)
+        ps = vec2spec_dict(n_element, vec, spectra)
+    
+    return l, ps
+
+
+def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, binned_mcm=True):
+
+    """Bin the power spectra according to a binning file and optionnaly deconvolve the (binned) mode coupling matrix
     
     Parameters
     ----------
@@ -114,11 +143,9 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     spectra: list of string
       needed for spin0 and spin2 cross correlation, the arrangement of the spectra
     mbb_inv: 2d array
-      the inverse of the binned mode coupling matrix to debiais the spectra
-    mcm_inv: 2d array
-      the inverse of the raw mode coupling matrix to debiais the spectra
-      note that you have to choose between debiasing with the binned or the
-      raw matrix
+      optionnaly apply the inverse of the  mode coupling matrix to debiais the spectra
+    binned_mcm: boolean
+      if mbb_inv is not None, specify if it's binned or not
       
     Return
     ----------
@@ -126,58 +153,44 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, mcm
     The function return the binned multipole array bin_c and a 1d power spectrum
     array (or dictionnary of 1d power spectra if spectra is not None).
     """
-    
-    #You don't want to deconvolve the binned mcm and the unbinned mcm
-    #You have to choose one of the other
-    #TODO: rework this function logic
-    
-    if mbb_inv is not None and mcm_inv is not None:
-        raise ValueError("You have to choose between binned or raw mcm")
 
-
-    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
+    bin_lo, bin_hi, lb, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
+
+    # the alm2cl return cl starting at l = 0, we use spectra from l = 2
+    # this is due in particular to the fact that the mcm is computed only for l>=2
     
-    if type == "Dl":
-        fac = (l * (l + 1) / (2 * np.pi))
-    if type == "Cl":
-        fac = l * 0 + 1
+    l = np.arange(2, lmax)
+    if spectra is None: cl = cl[l]
+    else: cl = {f: cl[f][l] for f in spectra}
+    
+    if type == "Dl": fac = (l * (l + 1) / (2 * np.pi))
+    elif type == "Cl": fac = l * 0 + 1
 
+    # we have the option to deconvolve the l-by-l mode coupling matrix
+    if (mbb_inv is not None) & (binned_mcm == False):
+        l, cl = deconvolve_mode_coupling_matrix(l, cl, mbb_inv, spectra)
+    
+    # Now the binning part
     if spectra is None:
-        if mcm_inv is not None:
-            cl = np.dot(mcm_inv, cl)
-        binnedPower = np.zeros(len(bin_c))
+        ps = np.zeros(n_bins)
         for ibin in range(n_bins):
             loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
-            binnedPower[ibin] = (cl[loc] * fac[loc]).mean()
-        if mbb_inv is None:
-            return bin_c, binnedPower
-        else:
-            return bin_c, np.dot(mbb_inv,binnedPower)
-
-    if mcm_inv is not None:
-        unbin_vec=[]
-        mcm_inv = so_mcm.coupling_dict_to_array(mcm_inv)
+            ps[ibin] = (cl[loc] * fac[loc]).mean()
+    else:
+        vec = []
         for f in spectra:
-            unbin_vec = np.append(unbin_vec, cl[f][2:lmax])
-        cl = vec2spec_dict(lmax - 2, np.dot(mcm_inv, unbin_vec), spectra)
-        l = np.arange(2, lmax)
+            binned_power = np.zeros(n_bins)
+            for ibin in range(n_bins):
+                loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
+                binned_power[ibin] = (cl[f][loc] * fac[loc]).mean()
+            vec = np.append(vec, binned_power)
+        ps = vec2spec_dict(n_bins, vec, spectra)
 
-    vec=[]
-    for f in spectra:
-        binnedPower=np.zeros(len(bin_c))
-        for ibin in range(n_bins):
-            loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))
-            binnedPower[ibin] = (cl[f][loc] * fac[loc]).mean()
-            
-        vec = np.append(vec, binnedPower)
-
-    if mbb_inv is None:
-        return bin_c, vec2spec_dict(n_bins, vec, spectra)
-
-    mbb_inv = so_mcm.coupling_dict_to_array(mbb_inv)
-    return bin_c, vec2spec_dict(n_bins, np.dot(mbb_inv, vec), spectra)
-
+    # we have the option to deconvolve the binned mode coupling matrix
+    if (mbb_inv is not None) & (binned_mcm == True):
+        lb, ps = deconvolve_mode_coupling_matrix(lb, ps, mbb_inv, spectra)
+    return lb, ps
 
 def vec2spec_dict(n_bins, vec, spectra):
     """Take a vector of power spectra and return a power spectra dictionnary.

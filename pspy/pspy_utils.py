@@ -43,7 +43,6 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
     return l, ps
 
 
-
 def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False):
 
     """Given a set of cosmological parameters compute the corresponding lensed power spectrum
@@ -69,31 +68,20 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False):
         lmin = 0
     else:
         lmin = 2
-        
+
     camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
     camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": lmax, "lens_potential_accuracy": 1})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
-    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK")
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=output_type == "Cl")
     l = np.arange(lmin, lmax)
     ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
-    ps["ET"] = ps["TE"]
+    ps["ET"] = ps["TE"].copy()
     for spec in ["TB", "BT", "EB", "BE" ]:
         ps[spec] = ps["TT"] * 0
-    
-    scale = l * (l + 1) / (2 * np.pi)
-    if output_type == "Cl":
-        fields = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-        for f in fields:
-
-            if start_at_zero:
-                ps[f][2:] /= scale[2:]
-            else:
-                ps[f][:] /= scale[:]
 
     return l, ps
-    
-    
+
 
 def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
     """Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
