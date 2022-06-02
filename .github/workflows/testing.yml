@@ -45,7 +45,11 @@ jobs:
     - name: Install namaster on Mac
       if: matrix.os == 'macos-latest'
       run: |
-        python -m pip install pymaster
+        git clone https://github.com/LSSTDESC/NaMaster.git
+        cd NaMaster
+        sed -i -e '11s/^//p; 11s/^.*/namaster_LDADD = libnmt.la/' Makefile.am
+        autoreconf -ivf
+        python -m pip install .
       env:
         CXX: g++-10
         CC: gcc-10
