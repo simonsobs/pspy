@@ -461,7 +461,7 @@ def read_coupling(prefix, spin_pairs=None):
 
     if spin_pairs is not None:
         Bbl = {}
-        mbb_inv = {}
+        mode_coupling_inv = {}
         for spin in spin_pairs:
             mode_coupling_inv[spin] = np.load(prefix + "_mode_coupling_inv_%s.npy" % spin)
             Bbl[spin] = np.load(prefix + "_Bbl_%s.npy" % spin)
