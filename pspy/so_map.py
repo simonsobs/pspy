@@ -55,6 +55,25 @@ class so_map:
         if self.pixel == "CAR":
             enmap.write_map(file_name, self.data)
 
+    def calibrate(self, cal=1.0, pol_eff=1.0):
+        """Calibrate the ``so_map``, also optionnaly apply a pol efficiency
+        Parameters
+        ----------
+        cal : float
+            the calibration factor to apply
+        pol_eff : float
+            the polarisation efficiency
+        """
+        
+        if self.ncomp == 1:
+            self.data *= cal
+        else:
+            self.data[0] *= cal
+            self.data[1] *= cal * pol_eff
+            self.data[2] *= cal * pol_eff
+
+        return self
+    
     def upgrade(self, factor):
         """Upgrade the ``so_map``.
 
@@ -425,8 +444,7 @@ def from_components(T, Q, U):
     new_map.coordinate = "equ"
 
     return new_map
-
-
+    
 def get_submap_car(map_car, box, mode="round"):
     """Cut a CAR submap (using pixell).
 
