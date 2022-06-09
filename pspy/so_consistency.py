@@ -194,8 +194,12 @@ def get_calibration_amplitudes(spectraVec, fullCov, projPattern, mode, lrange, c
     lrange: 1D array
     chainName: string
     """
-    from cobaya.run import run
-    from getdist.mcsamples import loadMCSamples
+    try:
+        from cobaya.run import run
+        from getdist.mcsamples import loadMCSamples
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("You need to install Cobaya to use this function")
+        
     calVec = {"TT": lambda c: np.array([c**2, c, 1]),
               "EE": lambda e: np.array([e**2, e, 1]),
               "TE": lambda e: np.array([e, 1, 1]),
