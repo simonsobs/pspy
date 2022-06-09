@@ -425,6 +425,23 @@ def from_components(T, Q, U):
     new_map.coordinate = "equ"
 
     return new_map
+    
+def calibrate(my_map, cal=1.0, pol_eff=1.0):
+    """Calibrate a so_map, also optionnaly apply a pol efficiency
+    Parameters
+    ----------
+    my_map :  ``so_map``
+        the map that will be calibrated
+    cal : float
+        the calibration factor to apply
+    pol_eff : float
+        the polarisation efficiency
+    """
+    my_map.data[0] *= cal
+    my_map.data[1] *= cal * pol_eff
+    my_map.data[2] *= cal * pol_eff
+
+    return my_map
 
 
 def get_submap_car(map_car, box, mode="round"):
