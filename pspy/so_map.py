@@ -64,9 +64,15 @@ class so_map:
         pol_eff : float
             the polarisation efficiency
         """
-        self.data[0] *= cal
-        self.data[1] *= cal * pol_eff
-        self.data[2] *= cal * pol_eff
+        
+        if self.ncomp == 1:
+            self.data *= cal
+        else:
+            self.data[0] *= cal
+            self.data[1] *= cal * pol_eff
+            self.data[2] *= cal * pol_eff
+
+        return self
     
     def upgrade(self, factor):
         """Upgrade the ``so_map``.
