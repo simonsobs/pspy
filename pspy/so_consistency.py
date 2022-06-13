@@ -3,73 +3,47 @@ from pspy import so_spectra, so_cov
 import matplotlib.pyplot as plt
 import numpy as np
 
-def get_spectraVec_and_fullCov(specFile, covFile, arA, arB, mode, nBins, tfA = 1, tfB = 1):
+
+def append_spectra_and_cov(spectra_list, cov_list):
     """
-    Get the power spectra vector containing auto
-    and cross for arA and arB with the associated
-    covariance matrix
+    Get the power spectra vector containing
+    the spectra in `spectra_list` with the
+    associated covariance matrix.
 
     Parameters
     ----------
-    specFile: string
-      name template for the power spectra (using %s as formatter)
-    covFile: string
-      name template for the covariance matrices
-    arA, arB: strings
-      name of the two array
-    mode: string
-      mode to consider (TT, TE, EE, ...)
-    nBins: int
-      number of bins
-    tfA, tfB: 1D arrays
-      map maker TF to deconvolve. Default is set to 1
+    spectra_list: list
+      list of the power spectra
+    cov_list: list
+      list of the covariance matrices
+
     """
+    n_bins = len(spectra_list[0])
+    n_spec = len(spectra_list)
 
-    spectraVec = np.zeros(3*nBins)
-    fullCov = np.zeros((3*nBins, 3*nBins))
+    spectra_vec = np.zeros(n_bins * n_spec)
+    full_cov = np.zeros((n_bins * n_spec,
+                         n_bins * n_spec))
 
-    spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-    modes = ["TT", "TE", "ET", "EE"]
-
-    tf = {"arA": tfA, "arB": tfB}
-    tfDict = {"TT": [tfA*tfA, tfA*tfB, tfB*tfB],
-              "TE": [tfA, tfA, tfB],
-              "ET": [tfA, tfB, tfB],
-              "EE": [1, 1, 1]}
-
-    for i, xar1 in enumerate(cwr([arA, arB], 2)):
-
-        specName = specFile % xar1
-        lb, ps = so_spectra.read_ps(specName, spectra = spectra)
-        ps[mode] /= tfDict[mode][i]
-
-        spectraVec[i*nBins:(i+1)*nBins] = ps[mode]
-
-        for j, xar2 in enumerate(cwr([arA, arB], 2)):
-
-            if i <= j: covName = covFile % (xar1 + xar2)
-            else: covName = covFile % (xar2 + xar1)
-
-            cov = np.load(covName)
-            cov = so_cov.selectblock(cov, modes, n_bins = nBins, block = mode + mode)
-
-            if i <= j:
-                fullCov[i*nBins:(i+1)*nBins,
-                        j*nBins:(j+1)*nBins] = cov
-            else:
-                fullCov[i*nBins:(i+1)*nBins,
-                        j*nBins:(j+1)*nBins] = cov.T
+    #index = lambda i,j,n: int(n + n * (i - 1) - i * (i - 1) / 2 + j - i)
+    index = lambda i,j,n: index(i-1,n-1,n)+j-i+1 if (i!=0) else j
+    for i in range(n_spec):
+        spectra_vec[i*n_bins:(i+1)*n_bins] = spectra_list[i]
+        for j in range(n_spec):
+            if j < i: continue
+            full_cov[i*n_bins:(i+1)*n_bins,
+                     j*n_bins:(j+1)*n_bins] = cov_list[index(i, j, n_spec)]
 
     # Symmetrize covmat
-    fullCov = np.block(fullCov)
-    fullCov = np.triu(fullCov)
-    transposeCov = fullCov.T
-    fullCov += transposeCov - np.diag(fullCov.diagonal())
+    full_cov = np.block(full_cov)
+    full_cov = np.triu(full_cov)
+    transpose_cov = full_cov.T
+    full_cov += transpose_cov - np.diag(full_cov.diagonal())
 
-    return lb, spectraVec, fullCov
+    return spectra_vec, full_cov
 
 
-def get_projector(nBins, projPattern):
+def get_projector(n_bins, proj_pattern):
     """
     Get the projection operator
     to apply to a spectra vector to
@@ -77,23 +51,24 @@ def get_projector(nBins, projPattern):
 
     Parameters
     ----------
-    nBins: int
+    n_bins: int
       number of bins
-    projPattern: 1D array (len = 3)
+    proj_pattern: 1D array
       If the spectra vector is a concatenation
-      of three spectra psA, psB, psC; applying the
-      projector will give : A * psA + B * psB + C * psC
+      of three spectra psA, psB, psC; and
+      proj_pattern is [A, B, C], applying the
+      projector to a spectra vector will give :
+        A * psA + B * psB + C * psC
     """
+    N = len(proj_pattern)
+    identity = np.identity(n_bins)
 
-    identity = np.identity(nBins)
-    projector = np.hstack((
-        identity * projPattern[0],
-        identity * projPattern[1],
-        identity * projPattern[2]
-                          ))
+    projector = (np.tile(identity, (1, N)) *
+                 np.tile(np.repeat(proj_pattern, n_bins), (n_bins, 1)))
     return projector
 
-def get_residual_spectra_and_cov(spectraVec, fullCov, projPattern, calibVec = np.array([1, 1, 1])):
+
+def project_spectra_vec_and_cov(spectra_vec, full_cov, proj_pattern, calib_vec = None):
     """
     Get the residual spectrum and the associated
     covariance matrix from the spectra vector and
@@ -101,30 +76,58 @@ def get_residual_spectra_and_cov(spectraVec, fullCov, projPattern, calibVec = np
 
     Parameters
     ----------
-    spectraVec: 1D array
-      spectra vector containing the auto and cross spectra
-    fullCov: 2D array
-      full covariance matrix associated with spectraVec
-    nBins: int
-      number of bins
-    projPattern: 1D array (len = 3)
+    spectra_vec: 1D array
+      spectra vector
+    full_cov: 2D array
+      full covariance matrix associated with spectra_vec
+    proj_pattern: 1D array
       If the spectra vector is a concatenation
-      of three spectra psA, psB, psC; applying the
-      projector will give : A * psA + B * psB + C * psC
-    calibVec: 1D array (len = 3)
+      of three spectra psA, psB, psC; and
+      proj_pattern is [A, B, C], applying the
+      projector to a spectra vector will give :
+        A * psA + B * psB + C * psC
+    calib_vec: 1D array
       calibration amplitudes to apply to the
       different power spectra
     """
-    nBins = len(spectraVec) // 3
-    projectorNoCal = get_projector(nBins, projPattern)
-    projectorCal = get_projector(nBins, projPattern * calibVec)
+    n_bins = len(spectra_vec) // len(proj_pattern)
+    projector_uncal = get_projector(n_bins, proj_pattern)
+    if calib_vec is None:
+        calib_vec = np.ones(len(proj_pattern))
+    projector_cal = get_projector(n_bins, proj_pattern * calib_vec)
 
-    resSpectrum = projectorCal @ spectraVec
-    resCov = projectorNoCal @ fullCov @ projectorNoCal.T
+    res_spectrum = projector_cal @ spectra_vec
+    res_cov = projector_uncal @ full_cov @ projector_uncal.T
 
-    return resSpectrum, resCov
+    return res_spectrum, res_cov
 
-def plot_residual(lb, resPs, resCov, mode, title, fileName):
+def get_chi2(spectra_vec, full_cov, proj_pattern, lrange, calib_vec = None):
+    """
+    Compute the chi2 of the residual
+    power spectrum
+
+    Parameters
+    ----------
+    spectra_vec: 1D array
+      spectra vector
+    full_cov: 2D array
+      full covariance matrix associated with spectra_vec
+    proj_pattern: 1D array (len = 3)
+      If the spectra vector is a concatenation
+      of three spectra psA, psB, psC; and
+      proj_pattern is [A, B, C], applying the
+      projector to a spectra vector will give :
+        A * psA + B * psB + C * psC
+    lrange: 1D array
+    calib_vec: 1D array
+      calibration amplitudes to apply to the
+      different power spectra
+    """
+    res_spec, res_cov = project_spectra_vec_and_cov(spectra_vec, full_cov,
+                                                    proj_pattern, calib_vec)
+    return res_spec[lrange] @ np.linalg.inv(res_cov[np.ix_(lrange[0], lrange[0])]) @ res_spec[lrange]
+
+def plot_residual(lb, res_spec, res_cov, mode, title, file_name):
     """
     Plot the residual power spectrum and
     save it at a png file
@@ -132,20 +135,20 @@ def plot_residual(lb, resPs, resCov, mode, title, fileName):
     Parameters
     ----------
     lb: 1D array
-    resPs: 1D array
+    res_spec: 1D array
       Residual power spectrum
-    resCov: 2D array
+    res_cov: 2D array
       Residual covariance matrix
     mode: string
     title: string
     fileName: string
     """
 
-    chi2 = resPs @ np.linalg.inv(resCov) @ resPs
+    chi2 = res_spec @ np.linalg.inv(res_cov) @ res_spec
 
     plt.figure(figsize = (8, 6))
     plt.axhline(0, color = "k", ls = "--")
-    plt.errorbar(lb, resPs, yerr = np.sqrt(resCov.diagonal()),
+    plt.errorbar(lb, res_spec, yerr = np.sqrt(res_cov.diagonal()),
                  ls = "None", marker = ".",
                  label = f"Chi2 : {chi2:.1f}/{len(lb)}")
     plt.title(title)
@@ -153,66 +156,48 @@ def plot_residual(lb, resPs, resCov, mode, title, fileName):
     plt.ylabel(r"$\Delta D_\ell^\mathrm{%s}$" % mode)
     plt.tight_layout()
     plt.legend()
-    plt.savefig(f"{fileName}.png", dpi = 300)
+    plt.savefig(f"{file_name}.png", dpi = 300)
 
-def get_chi2(spectraVec, fullCov, projPattern, lrange, calibVec):
-    """
-    Compute the chi2 of the residual
-    power spectrum
-
-    Parameters
-    ----------
-    spectraVec: 1D array
-    fullCov: 2D array
-    projPattern: 1D array (len = 3)
-      If the spectra vector is a concatenation
-      of three spectra psA, psB, psC; applying the
-      projector will give : A * psA + B * psB + C * psC
-    lrange: 1D array
-    calibVec: 1D array (len = 3)
-      calibration amplitudes to apply to the
-      different power spectra
-    """
-    resSpec, resCov = get_residual_spectra_and_cov(spectraVec, fullCov,
-                                                   projPattern, calibVec = calibVec)
-    return resSpec[lrange] @ np.linalg.inv(resCov[np.ix_(lrange[0], lrange[0])]) @ resSpec[lrange]
-
-def get_calibration_amplitudes(spectraVec, fullCov, projPattern, mode, lrange, chainName):
+def get_calibration_amplitudes(spectra_vec, full_cov, proj_pattern, mode, lrange, chain_name):
     """
     Get the calibration amplitude and the
     associated error
 
     Parameters
     ----------
-    spectraVec: 1D array
-    fullCov: 2D array
-    projPattern: 1D array (len = 3)
+    spectra_vec: 1D array
+    full_cov: 2D array
+    proj_pattern: 1D array (len = 3)
       If the spectra vector is a concatenation
-      of three spectra psA, psB, psC; applying the
-      projector will give : A * psA + B * psB + C * psC
+      of three spectra psA, psB, psC; and
+      proj_pattern is [A, B, C], applying the
+      projector to a spectra vector will give :
+        A * psA + B * psB + C * psC
     mode: string
     lrange: 1D array
-    chainName: string
+    chain_name: string
     """
     try:
         from cobaya.run import run
         from getdist.mcsamples import loadMCSamples
     except ModuleNotFoundError:
         raise ModuleNotFoundError("You need to install Cobaya to use this function")
-        
-    calVec = {"TT": lambda c: np.array([c**2, c, 1]),
+
+    cal_vec = {# Calib
+              "TT": lambda c: np.array([c**2, c, 1]),
+              # Pol. Eff.
               "EE": lambda e: np.array([e**2, e, 1]),
               "TE": lambda e: np.array([e, 1, 1]),
               "ET": lambda e: np.array([e, e, 1])}
 
     def logL(cal):
-        if (projPattern == np.array([1, -1, 0])).all():
+        if (proj_pattern == np.array([1, -1, 0])).all():
             if mode == "TT" or mode == "EE":
-                calibVec = np.array([cal, 1, 1])
+                calib_vec = np.array([cal, 1, 1])
         else:
-            calibVec = calVec[mode](cal)
+            calib_vec = cal_vec[mode](cal)
 
-        chi2 = get_chi2(spectraVec, fullCov, projPattern, lrange, calibVec)
+        chi2 = get_chi2(spectra_vec, full_cov, proj_pattern, lrange, calib_vec)
         return -0.5 * chi2
 
     info = {
@@ -233,13 +218,13 @@ def get_calibration_amplitudes(spectraVec, fullCov, projPattern, mode, lrange, c
                 "Rminus1_cl_stop": 0.03,
                     }
                    },
-        "output": chainName,
+        "output": chain_name,
         "force": True
            }
 
     updated_info, sampler = run(info)
-    samples = loadMCSamples(chainName, settings = {"ignore_rows": 0.5})
-    calMean = samples.mean("cal")
-    calStd = np.sqrt(samples.cov(["cal"])[0, 0])
+    samples = loadMCSamples(chain_name, settings = {"ignore_rows": 0.5})
+    cal_mean = samples.mean("cal")
+    cal_std = np.sqrt(samples.cov(["cal"])[0, 0])
 
-    return calMean, calStd
+    return cal_mean, cal_std
