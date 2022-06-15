@@ -29,7 +29,7 @@ from pixell import curvedsky
 ##########################################################################
 ncomp = 3
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-run = "HEALPIX"
+run = "CAR"
 niter = 0
 
 # We assume a common survey area for the  different survey and the different detectors wafers
@@ -66,8 +66,7 @@ elif run == "HEALPIX":
 
 # The type of power spectra we want to compute
 type = "Dl"
-# a binningfile with format, lmin,lmax,lmean
-# the maximum multipole to consider
+
 
 cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
 l, ps_theory = pspy_utils.ps_from_params(cosmo_params, "Cl", 3 * lmax, start_at_zero=True)
@@ -78,7 +77,6 @@ for i, f1 in enumerate("TEB"):
         ps_theory[f1+f2] *= l * (l + 1) / (2 * np.pi)
         ps_theory[f1+f2] = ps_theory[f1+f2][2:lmax]
 
-# for the CAR survey we will use an apodisation type designed for rectangle maps
 n_sims = 500
 
 test_dir = "result_generalized_cov_spin0and2"
@@ -100,7 +98,7 @@ n_splits, rms_uKarcmin_T, apo_radius_degree_survey, source_mask_nholes, bl = {},
 
 print("sim parameters:")
 for sv in surveys:
-    n_splits[sv] = 3#np.random.randint(2, high=8)
+    n_splits[sv] = np.random.randint(2, high=8)
     for ar in arrays[sv]:
         rms_uKarcmin_T[sv, ar] = np.random.randint(10, high=40)
         apo_radius_degree_survey[sv, ar] = np.random.uniform(0.5, high=3)
