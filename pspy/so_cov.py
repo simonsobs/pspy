@@ -483,7 +483,7 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
     We want to compute the covariance between two power spectra
     C1 = Wa * Xb, C2 =  Yc * Zd
     Here W, X, Y, Z can be either T or E and a,b,c,d will be an index
-    corresponding to the survey and array we consider so for example a = s17_pa5_150 or a = dr6_pa4_090
+    corresponding to the survey and array we consider so for example a = s17&pa5_150 or a = dr6&pa4_090
     The formula for the analytic covariance of C1, C2 is given by
     Cov( Wa * Xb,  Yc * Zd) = < Wa Yc> <Xb Zd>  + < Wa Zd> <Xb Yc> (this is just from the wick theorem)
     In practice we need to include the effect of the mask (so we have to introduce the coupling dict D)
@@ -549,7 +549,7 @@ def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lma
     We want to compute the beam covariance between the two spectra
     C1 = Wa * Xb, C2 =  Yc * Zd
     Here W, X, Y, Z can be either T or E and a,b,c,d will be an index
-    corresponding to the survey and array we consider so for example a = dr6_pa5_150 or a = dr6_pa4_090
+    corresponding to the survey and array we consider so for example a = dr6&pa5_150 or a = dr6&pa4_090
     The formula for the analytic covariance of C1, C2 is given by
     let's denote the normalised beam covariance <BB>_ac = < delta B_a delta B_c >/np.outer(B_a, B_c)
 
