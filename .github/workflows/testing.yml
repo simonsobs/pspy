@@ -26,51 +26,26 @@ jobs:
         sudo ln -s /usr/local/bin/gfortran-10 /usr/local/bin/gfortran
         gfortran --version
 
-    - name: Brew packages
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install automake cfitsio gsl fftw
-
-    - name: Apt packages
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get install libcfitsio-dev libfftw3-dev
-
     - name: Install via pip
       run: |
         python -m pip install --upgrade pip
         python -m pip install numpy pytest pytest-cov
         python -m pip install -e .
 
-    - name: Install namaster on Mac
-      if: matrix.os == 'macos-latest'
+    - name: Install extra dependencies (camb)
       run: |
-        git clone https://github.com/LSSTDESC/NaMaster.git
-        cd NaMaster
-        sed -i -e '11s/^//p; 11s/^.*/namaster_LDADD = libnmt.la/' Makefile.am
-        autoreconf -ivf
-        python -m pip install --verbose .
-      env:
-        CXX: g++-10
-        CC: gcc-10
-        LDFLAGS: -L/usr/local/lib
-        CPPFLAGS: -I/usr/local/include
-
-
-    - name: Install extra dependencies (camb, namaster)
-      run: |
-        python -m pip install camb pymaster
+        python -m pip install camb
 
     - name: Unit tests
       run: |
-        pytest -vv pspy --cov=pspy --cov-report=xml:coverage.xml
+        pytest -vv pspy --cov=pspy --cov-report=xml:coverage.xml -k "not test_pspy_namaster"
 
     - name: Report Coverage (codecov)
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v2
 
-    # - name: Test notebooks (Only on Linux for saving time)
-    #   if: matrix.os == 'ubuntu-latest'
-    #   run: |
-    #     pip install jupyter
-    #     jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
+    - name: Test notebooks (Only on Linux for saving time)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        pip install jupyter
+        jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
