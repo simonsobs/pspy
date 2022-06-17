@@ -38,7 +38,7 @@ jobs:
 
     - name: Unit tests
       run: |
-        pytest -vv pspy --cov=pspy --cov-report=xml:coverage.xml -k 'not test_pspy_namaster'
+        pytest -vv pspy --cov=pspy --cov-report=xml:coverage.xml --ignore=pspy/tests/test_pspy_namaster.py
 
     - name: Report Coverage (codecov)
       if: matrix.os == 'ubuntu-latest'
