@@ -25,7 +25,12 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
       the number of iteration performed while computing the alm
     save_file: string
       the name of the file in which the coupling kernel will be saved (npy format)
-
+    l_toep: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_band: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_exact: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
     """
 
     coupling_dict = {}
@@ -106,6 +111,14 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
       the number of iteration performed while computing the alm
     save_file: string
       the name of the file in which the coupling kernel will be saved (npy format)
+    l_toep: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_band: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_exact: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+
+
     """
 
 
@@ -199,7 +212,93 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         np.save("%s.npy"%save_file, coupling)
 
     return coupling_dict
+    
+    
+def fast_cov_coupling_spin0and2(sq_win_alms_dir,
+                                id_element,
+                                lmax,
+                                l_exact=None,
+                                l_band=None,
+                                l_toep=None):
+                                
+    """Compute the coupling kernels corresponding to the T and E covariance matrix
+    This routine assume that you have already precomputed the alms of the square of the windows
+    and that the window in temperature and polarisation are the same.
+    Both conditions lead to a very important speed up, that explains the name of the routine
 
+    Parameters
+    ----------
+
+    sq_win_alms_dir: string
+        the folder with precomputed alms corresponding to the sq of the window function
+        this is what enters the analytic computation
+    id_element : list
+        a list of the form [a,b,c,d] where a = dr6_pa4_090, etc, this identify which pair of power spectrum we want the covariance of
+    lmax: integer
+      the maximum multipole to consider
+    l_toep: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_band: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+    l_exact: int
+      parameter for the toeplitz approximation (see arXiv:2010.14344)
+
+    """
+
+    na, nb, nc, nd = id_element
+
+    if l_toep is None: l_toep = lmax
+    if l_band is None: l_band = lmax
+    if l_exact is None: l_exact = lmax
+    
+    def try_alm_order(dir, a, b):
+        try:
+            alm = np.load("%s/alms_%sx%s.npy"  % (dir, a, b))
+        except:
+            alm = np.load("%s/alms_%sx%s.npy"  % (dir, b, a))
+        return alm
+    
+    alm_TaTc = try_alm_order(sq_win_alms_dir, na, nc)
+    alm_TbTd = try_alm_order(sq_win_alms_dir, nb, nd)
+    alm_TaTd = try_alm_order(sq_win_alms_dir, na, nd)
+    alm_TbTc = try_alm_order(sq_win_alms_dir, nb, nc)
+
+    wcl = {}
+    wcl["TaTcTbTd"] = hp.alm2cl(alm_TaTc, alm_TbTd)
+    wcl["TaTdTbTc"] = hp.alm2cl(alm_TaTd, alm_TbTc)
+
+    l = np.arange(len(wcl["TaTcTbTd"]))
+    wcl["TaTcTbTd"] *= (2 * l + 1) / (4 * np.pi)
+    wcl["TaTdTbTc"] *= (2 * l + 1) / (4 * np.pi)
+
+    coupling = np.zeros((2, lmax, lmax))
+ 
+    cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], l_exact, l_band, l_toep,  coupling.T)
+ 
+    coupling_dict = {}
+
+    for id_cov, name in enumerate(["TaTcTbTd", "TaTdTbTc"]):
+        if l_toep < lmax:
+            coupling[id_cov] = so_mcm.format_toepliz_fortran(coupling[id_cov], l_toep, lmax)
+        mcm_fortran.fill_upper(coupling[id_cov].T)
+        coupling_dict[name] = coupling[id_cov]
+
+    list1 = ["TaTcTbTd", "PaPcPbPd", "TaTcPbPd", "PaPcTbTd",
+             "TaPcTbPd", "TaTcTbPd", "TaPcTbTd", "TaPcPbTd",
+             "TaPcPbPd", "PaPcTbPd", "TaTcPbTd", "PaTcTbTd",
+             "PaTcPbTd", "PaTcTbPd", "PaTcPbPd", "PaPcPbTd"]
+        
+    list2 = ["TaTdTbTc", "PaPdPbPc", "TaPdPbTc", "PaTdTbPc",
+             "TaPdTbPc", "TaPdTbTc", "TaTdTbPc", "TaTdPbPc",
+             "TaPdPbPc", "PaPdTbPc", "TaTdPbTc", "PaTdTbTc",
+             "PaTdPbTc", "PaPdTbTc", "PaPdPbTc", "PaTdPbPc"]
+ 
+    for id1 in list1:
+        coupling_dict[id1] = coupling_dict["TaTcTbTd"][:lmax - 2, :lmax - 2]
+    for id2 in list2:
+        coupling_dict[id2] = coupling_dict["TaTdTbTc"][:lmax - 2, :lmax - 2]
+        
+    return coupling_dict
 
 
 
@@ -276,7 +375,6 @@ def bin_mat(mat, binning_file, lmax, speclist=["TT"]):
 
     n_bins = len(bin_hi)
     n_spec = len(speclist)
-    print(mat.shape[0] / n_spec)
     n_ell = int(mat.shape[0] / n_spec)
    
 
@@ -325,7 +423,6 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
         
     return analytic_cov
 
-    
 def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
@@ -347,20 +444,18 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
     """
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
-    n_bins = len(bin_hi)
     n_ell = Clth_dict["TaTb"].shape[0]
         
     full_analytic_cov = np.zeros((4 * n_ell, 4 * n_ell))
     
     speclist = ["TT", "TE", "ET", "EE"]
-    for i, sp1 in enumerate(speclist):
-        for j, sp2 in enumerate(speclist):
+    for i, (W, X) in enumerate(speclist):
+        for j, (Y, Z) in enumerate(speclist):
             if i > j : continue
-                
-            id0 = sp1[0] + "a" + sp2[0] + "c"
-            id1 = sp1[1] + "b" + sp2[1] + "d"
-            id2 = sp1[0] + "a" + sp2[1] + "d"
-            id3 = sp1[1] + "b" + sp2[0] + "c"
+            id0 = W + "a" + Y + "c"
+            id1 = X + "b" + Z + "d"
+            id2 = W + "a" + Z + "d"
+            id3 = X + "b" + Y + "c"
 
             M = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1]) * coupling_dict[id0.replace("E","P") + id1.replace("E","P")]
             M += symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3]) * coupling_dict[id2.replace("E","P") + id3.replace("E","P")]
@@ -368,7 +463,6 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
             full_analytic_cov[i * n_ell:(i + 1) * n_ell, j * n_ell:(j + 1) * n_ell] = M
     
     full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
-    
     
     mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
     mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
@@ -382,6 +476,123 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     return analytic_cov
 
+def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
+
+    """
+    This routine deserves some explanation
+    We want to compute the covariance between two power spectra
+    C1 = Wa * Xb, C2 =  Yc * Zd
+    Here W, X, Y, Z can be either T or E and a,b,c,d will be an index
+    corresponding to the survey and array we consider so for example a = s17&pa5_150 or a = dr6&pa4_090
+    The formula for the analytic covariance of C1, C2 is given by
+    Cov( Wa * Xb,  Yc * Zd) = < Wa Yc> <Xb Zd>  + < Wa Zd> <Xb Yc> (this is just from the wick theorem)
+    In practice we need to include the effect of the mask (so we have to introduce the coupling dict D)
+    and we need to take into account that we use as spectra an average of cross power spectra, that is why we use the chi function
+    (and what make it different from cov_spin0and2)
+    Cov( Wa * Xb,  Yc * Zd) = D(Wa*Yc,Xb Zd) chi(Wa,Yc,Xb Zd) +  D(Wa*Zd,Xb*Yc) chi(Wa,Zd,Xb,Yc)
+
+    Parameters
+    ----------
+    coupling_dict : dictionnary
+        a dictionnary that countains the coupling terms arising from the window functions
+    id_element : list
+        a list of the form [a,b,c,d] where a = dr6_pa4_090, etc, this identify which pair of power spectrum we want the covariance of
+    ns: dict
+        this dictionnary contains the number of split we consider for each of the survey
+    ps_all: dict
+        this dict contains the theoretical best power spectra, convolve with the beam for example
+        ps["dr6&pa5_150", "dr6&pa4_150", "TT"] = bl_dr6_pa5_150 * bl_dr6_pa4_150 * (Dl^{CMB}_TT + fg_TT)
+    nl_all: dict
+        this dict contains the estimated noise power spectra, note that it correspond to the noise power spectrum per split
+        e.g nl["dr6&pa5_150", "dr6&pa4_150", "TT"]
+    binning_file:
+        a binning file with three columns bin low, bin high, bin mean
+    mbb_inv_ab and mbb_inv_cd:
+        the inverse mode coupling matrices corresponding to the C1 = Wa * Xb and C2 =  Yc * Zd power spectra
+    """
+
+    na, nb, nc, nd = id_element
+
+    n_ell = coupling_dict["TaTcTbTd"].shape[0]
+    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, n_ell)
+    full_analytic_cov = np.zeros((4 * n_ell, 4 * n_ell))
+
+    speclist = ["TT", "TE", "ET", "EE"]
+    for i, (W, X) in enumerate(speclist):
+        for j, (Y, Z) in enumerate(speclist):
+    
+            id0 = W + "a" + Y + "c"
+            id1 = X + "b" + Z + "d"
+            id2 = W + "a" + Z + "d"
+            id3 = X + "b" + Y + "c"
+        
+            M = coupling_dict[id0.replace("E","P") + id1.replace("E","P")] * chi(na, nc, nb, nd, ns, ps_all, nl_all, W + Y + X + Z)
+            M += coupling_dict[id2.replace("E","P") + id3.replace("E","P")] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
+            full_analytic_cov[i * n_ell: (i + 1) * n_ell, j * n_ell: (j + 1) * n_ell] = M
+
+    mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
+    mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
+
+    if binned_mcm == True:
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+    else:
+        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+
+    return analytic_cov
+
+
+def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lmax):
+    """
+    This routine compute the contribution from beam errors to the analytical covariance of the power spectra
+    We want to compute the beam covariance between the two spectra
+    C1 = Wa * Xb, C2 =  Yc * Zd
+    Here W, X, Y, Z can be either T or E and a,b,c,d will be an index
+    corresponding to the survey and array we consider so for example a = dr6&pa5_150 or a = dr6&pa4_090
+    The formula for the analytic covariance of C1, C2 is given by
+    let's denote the normalised beam covariance <BB>_ac = < delta B_a delta B_c >/np.outer(B_a, B_c)
+
+    Cov(Wa * Xb,  Yc * Zd) = Dl^{WaXb} Dl^{YcZd} ( <BB>_ac + <BB>_ad + <BB>_bc + <BB>_bd )
+   
+    Parameters
+    ----------
+    id_element : list
+        a list of the form [a,b,c,d] where a = dr6_pa4_090, etc, this identify which pair of power spectrum we want the covariance of
+    ps_all: dict
+        this dict contains the theoretical best power spectra, convolve with the beam for example
+        ps["dr6&pa5_150", "dr6&pa4_150", "TT"] =  (Dl^{CMB}_TT + fg_TT)
+    norm_beam_cov: dict
+        this dict contains the normalized beam covariance for each survey and array
+    binning_file: str
+        a binning file with three columns bin low, bin high, bin mean
+    lmax: int
+        the maximum multipole to consider
+    """
+    na, nb, nc, nd = id_element
+
+    sv_alpha, ar_alpha = na.split("&")
+    sv_beta, ar_beta = nb.split("&")
+    sv_gamma, ar_gamma = nc.split("&")
+    sv_eta, ar_eta = nd.split("&")
+
+    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
+    nbins = len(bin_hi)
+
+    speclist = ["TT", "TE", "ET", "EE"]
+
+    nspec = len(speclist)
+    analytic_cov_from_beam = np.zeros((nspec * nbins, nspec * nbins))
+    for i, spec1 in enumerate(speclist):
+        for j, spec2 in enumerate(speclist):
+
+            M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
+            M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
+            M *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
+        
+            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = so_cov.bin_mat(M, binning_file, lmax)
+
+    return analytic_cov_from_beam
 
 
 def extract_TTTEEE_mbb(mbb_inv):
@@ -533,61 +744,25 @@ def g(a, b, c, d, ns):
     result /= (ns[a] * ns[b] * (ns[c] - delta2(a, c)) * (ns[d] - delta2(b, d)))
     return result
 
-
+    
 def chi(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
     """doc not ready yet
     """
-    exp_alpha, f_alpha = alpha.split("_")
-    exp_beta, f_beta = beta.split("_")
-    exp_gamma, f_gamma = gamma.split("_")
-    exp_eta, f_eta = eta.split("_")
-    
-    RX = id[0] + id[1]
-    SY = id[2] + id[3]
-    chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
-    chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
-    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] * f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
-    chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
+
+    sv_alpha, ar_alpha = alpha.split("&")
+    sv_beta, ar_beta = beta.split("&")
+    sv_gamma, ar_gamma = gamma.split("&")
+    sv_eta, ar_eta = eta.split("&")
+
+    AB = id[0] + id[1]
+    CD = id[2] + id[3]
+    chi = Dl[alpha, gamma, AB] * Dl[beta, eta, CD]
+    chi += Dl[alpha, gamma, AB] * DNl[beta, eta, CD] * f(sv_beta, sv_eta, sv_alpha, sv_gamma, ns)
+    chi += Dl[beta, eta, CD] * DNl[alpha, gamma, AB] * f(sv_alpha, sv_gamma, sv_beta, sv_eta, ns)
+    chi += g(sv_alpha, sv_gamma, sv_beta, sv_eta, ns) * DNl[alpha, gamma, AB] * DNl[beta, eta, CD]
     
     chi= symmetrize(chi, mode="arithm")
-    
-    return chi
 
-
-def chi_planck(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
-    """doc not ready yet
-        """
-    exp_alpha, f_alpha = alpha.split("_")
-    exp_beta, f_beta = beta.split("_")
-    exp_gamma, f_gamma = gamma.split("_")
-    exp_eta, f_eta = eta.split("_")
-    
-    RX = id[0] + id[1]
-    SY = id[2] + id[3]
-    
-    if RX == "TE":
-        Dl[alpha, gamma, RX] = symmetrize(Dl[alpha, gamma, RX], mode="arithm")
-        DNl[alpha, gamma, RX] = symmetrize(DNl[alpha, gamma, RX], mode="arithm")
-
-    else:
-        Dl[alpha, gamma, RX] = symmetrize(Dl[alpha, gamma, RX], mode="geo")
-        DNl[alpha, gamma, RX] = symmetrize(DNl[alpha, gamma, RX], mode="geo")
-
-    if SY == "TE":
-        Dl[beta, eta, SY] = symmetrize(Dl[beta, eta, SY] , mode="arithm")
-        DNl[beta, eta, SY] = symmetrize(DNl[beta, eta, SY] , mode="arithm")
-    else:
-        Dl[beta, eta, SY] = symmetrize(Dl[beta, eta, SY] , mode="geo")
-        DNl[beta, eta, SY] = symmetrize(DNl[beta, eta, SY] , mode="geo")
-
-    
-    chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
-    chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
-    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] * f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
-    chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
-    
-    chi= symmetrize(chi, mode="arithm")
-    
     return chi
 
 
@@ -637,139 +812,47 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
             plot.img.show()
 
 
-def mc_cov_from_spectra_list(sim_spectra_list, spectra=None):
-    """Return the montecarlo covariance of spectra estimated from simulations
+def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
+    """Return the montecarlo covariance of two spectra list estimated from simulations
+    This routine is inefficient and need some more work
 
     Parameters
     ----------
-    sim_spectra_list: list of array (or list of dict if spectra is not None)
+    spec_list_a: first list of spectra (or list of dict if spectra is not None)
         a list of ps computed from simulation (each entry of the list is a ps)
+    spec_list_b: second list of spectra (or list of dict if spectra is not None)
+        a list of ps computed from simulation (each entry of the list is a ps)
+
     spectra: list of strings
         needed for spin0 and spin2 cross correlation, the arrangement of the spectra
     """
 
-    if spectra is None: n_sims = len(sim_spectra_list)
-    else: n_sims = len(sim_spectra_list[spectra[0]])
-    
-    vec_all = []
-    for iii in range(n_sims):
-        if spectra is None:  vec_all += [sim_spectra_list[iii]]
-        else:
-            vec = []
+    if spectra is None:
+        mc_cov = np.cov(spec_list_a, y=spec_list_b,  rowvar=False)
+        mean_a = np.mean(spec_list_a, axis=0)
+        mean_b = np.mean(spec_list_b, axis=0)
+
+    else:
+        vec_all_a, vec_all_b = [], []
+        for spec_a, spec_b in zip(spec_list_a, spec_list_b):
+            vec_a, vec_b = [], []
             for spec in spectra:
-                vec = np.append(vec, sim_spectra_list[spec][iii])
-            vec_all +=  [vec]
+                vec_a = np.append(vec_a, spec_a[spec])
+                vec_b = np.append(vec_b, spec_b[spec])
+            vec_all_a +=  [vec_a]
+            vec_all_b +=  [vec_b]
             
-    mc_cov = np.cov(vec_all, rowvar=False)
-    
-    return mc_cov
+        mc_cov = np.cov(vec_all_a, y=vec_all_b, rowvar=False)
+        
+        vec_mean_a = np.mean(vec_all_a, axis=0)
+        vec_mean_b = np.mean(vec_all_b, axis=0)
 
-                       
+        n_bins = int(len(vec_mean_a)/len(spectra))
+        mean_a = {}
+        mean_b = {}
+        for i, spec in enumerate(spectra):
+            mean_a[spec] = vec_mean_a[i * n_bins : (i + 1) * n_bins ]
+            mean_b[spec] = vec_mean_b[i * n_bins : (i + 1) * n_bins ]
 
-#def chi_old(alpha, gamma, beta, eta, ns, ls, Dl, DNl, id="TTTT"):
-#    """doc not ready yet
-#    """
-#    exp_alpha, f_alpha = alpha.split("_")
-#    exp_beta, f_beta = beta.split("_")
-#    exp_gamma, f_gamma = gamma.split("_")
-#    exp_eta, f_eta = eta.split("_")
-
-#    RX = id[0] + id[2]
-#    SY = id[1] + id[3]
-#    chi = Dl[alpha, gamma, RX] * Dl[beta, eta, SY]
-#    chi += Dl[alpha, gamma, RX] * DNl[beta, eta, SY] * f(exp_beta, exp_eta, exp_alpha, exp_gamma, ns)
-#    chi += Dl[beta, eta, SY] * DNl[alpha, gamma, RX] *f(exp_alpha, exp_gamma, exp_beta, exp_eta, ns)
-#    chi += g(exp_alpha, exp_gamma, exp_beta, exp_eta, ns) * DNl[alpha, gamma, RX] * DNl[beta, eta, SY]
-
-#    print ("RX",RX)
-#    print ("SY",SY)
-#    print ("ns",ns)
-#    print (r"f_{%s %s}^{%s %s}"%(exp_beta,exp_eta,exp_alpha,exp_gamma),f(exp_beta,exp_eta,exp_alpha,exp_gamma,ns))
-#    print (r"f_{%s %s}^{%s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),f(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
-#    print (r"g_{%s %s %s %s}"%(exp_alpha,exp_gamma,exp_beta,exp_eta),g(exp_alpha,exp_gamma,exp_beta,exp_eta,ns))
-
-#    chi= symmetrize(chi, mode="arithm")
-
-#    return chi
-
-
-# def calc_cov_lensed(noise_uK_arcmin,
-#                     fwhm_arcmin,
-#                     lmin,
-#                     lmax,
-#                     camb_lensed_theory_file,
-#                     camb_unlensed_theory_file,
-#                     output_dir,
-#                     overwrite=False):
-#     """ Wrapper around lenscov (https://github.com/JulienPeloton/lenscov). heavily borrowed
-#         from covariance.py compute lensing induced non-gaussian part of covariance matrix
-#     """
-
-#     try:
-#         import lib_covariances, lib_spectra, misc, util
-#     except:
-#         print(
-#             "[ERROR] failed to load lenscov modules. Make sure that lenscov is properly installed")
-#         print("[ERROR] Note: lenscov is not yet python3 compatible")
-#     print("[WARNING] calc_cov_lensed requires MPI to be abled")
-#     from pspy import so_mpi
-#     from mpi4py import MPI
-#     so_mpi.init(True)
-
-#     rank, size = so_mpi.rank, so_mpi.size
-#     ## The available blocks in the code
-#     blocks = ["TTTT", "EEEE", "BBBB", "EEBB", "TTEE", "TTBB", "TETE", "TTTE", "EETE", "TEBB"]
-
-#     ## Initialization of spectra
-#     cls_unlensed = lib_spectra.get_camb_cls(fname=os.path.abspath(camb_unlensed_theory_file),
-#                                             lmax=lmax)
-#     cls_lensed = lib_spectra.get_camb_cls(fname=os.path.abspath(camb_lensed_theory_file),
-#                                           lmax=lmax)
-
-#     file_manager = util.file_manager("covariances_CMBxCMB",
-#                                      "pspy",
-#                                      spec="v1",
-#                                      lmax=lmax,
-#                                      force_recomputation=overwrite,
-#                                      folder=output_dir,
-#                                      rank=rank)
-
-#     if file_manager.FileExist is True:
-#         if rank == 0:
-#             print("Already computed in %s/" % output_dir)
-#     else:
-#         cov_order0_tot, cov_order1_tot, cov_order2_tot, junk = lib_covariances.analytic_covariances_CMBxCMB(
-#             cls_unlensed,
-#             cls_lensed,
-#             lmin=lmin,
-#             blocks=blocks,
-#             noise_uK_arcmin=noise_uK_arcmin,
-#             TTcorr=False,
-#             fwhm_arcmin=fwhm_arcmin,
-#             MPI=MPI,
-#             use_corrfunc=True,
-#             exp="pspy",
-#             folder_cache=output_dir)
-#         array_to_save = [cov_order0_tot, cov_order1_tot, cov_order2_tot, blocks]
-
-#         if file_manager.FileExist is False and rank == 0:
-#             file_manager.save_data_on_disk(array_to_save)
-
-# def load_cov_lensed(cov_lensed_file, include_gaussian_part=False):
-#     """wrapper around lenscov (https://github.com/JulienPeloton/lenscov).
-#     include_gaussian_part: if False, it returns only lensing induced non-gaussin parts
-#     """
-#     covs = {}
-
-#     input_data = pickle.load(open(cov_lensed_file, "r"))["data"]
-#     cov_G = input_data[0]
-#     cov_NG1 = input_data[1]
-#     cov_NG2 = input_data[2]
-#     combs = input_data[3]
-
-#     for ctr, comb in enumerate(combs):
-#         covs[comb] = cov_NG1[ctr].data + cov_NG2[ctr].data
-#         if include_gaussian_part:
-#             covs[comb] = covs[comb] + cov_G[ctr].data
-
-#     return covs
+    n_el = int(mc_cov.shape[0] / 2)
+    return mean_a, mean_b, mc_cov[n_el:, :n_el]
