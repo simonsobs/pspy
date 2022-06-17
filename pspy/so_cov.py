@@ -409,6 +409,9 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
       the inverse mode coupling matrix for the 'TaTb' power spectrum
     mbb_inv_cd: 2d array
       the inverse mode coupling matrix for the 'TcTd' power spectrum
+    binned_mcm: boolean
+      specify if the mode coupling matrices are binned or not
+
     """
 
     cov = symmetrize(Clth_dict["TaTc"]) * symmetrize(Clth_dict["TbTd"]) * coupling_dict["TaTcTbTd"]
@@ -441,6 +444,9 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
         the inverse mode coupling matrix for the 'XaYb' power spectrum
     mbb_inv_cd: 2d array
         the inverse mode coupling matrix for the 'XcYd' power spectrum
+    binned_mcm: boolean
+      specify if the mode coupling matrices are binned or not
+
     """
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
@@ -476,7 +482,7 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     return analytic_cov
 
-def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
+def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True, also_return_full_cov=False):
 
     """
     This routine deserves some explanation
@@ -509,6 +515,12 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
         a binning file with three columns bin low, bin high, bin mean
     mbb_inv_ab and mbb_inv_cd:
         the inverse mode coupling matrices corresponding to the C1 = Wa * Xb and C2 =  Yc * Zd power spectra
+    binned_mcm: boolean
+        specify if the mode coupling matrices are binned or not
+    also_return_full_cov: boolean
+        an option to also return the lbyl cov (if binned_mcm=False)
+        mostly used for debugging
+
     """
 
     na, nb, nc, nd = id_element
@@ -539,6 +551,8 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
     else:
         full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+        if also_return_full_cov == True:
+            return full_analytic_cov, analytic_cov
 
     return analytic_cov
 
