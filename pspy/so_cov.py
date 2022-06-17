@@ -482,7 +482,7 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     return analytic_cov
 
-def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True, also_return_full_cov=False):
+def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True, return_full_cov=False):
 
     """
     This routine deserves some explanation
@@ -517,8 +517,8 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
         the inverse mode coupling matrices corresponding to the C1 = Wa * Xb and C2 =  Yc * Zd power spectra
     binned_mcm: boolean
         specify if the mode coupling matrices are binned or not
-    also_return_full_cov: boolean
-        an option to also return the lbyl cov (if binned_mcm=False)
+    return_full_cov: boolean
+        an option to return the lbyl cov (if binned_mcm=False)
         mostly used for debugging
 
     """
@@ -550,9 +550,10 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
         analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
     else:
         full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        if return_full_cov == True:
+            return full_analytic_cov
+
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        if also_return_full_cov == True:
-            return full_analytic_cov, analytic_cov
 
     return analytic_cov
 
