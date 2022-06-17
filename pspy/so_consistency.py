@@ -3,39 +3,36 @@ from pspy import so_spectra, so_cov
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-def append_spectra_and_cov(spectra_list, cov_list):
+def append_spectra_and_cov(ps_dict, cov_dict, spec_list):
     """
     Get the power spectra vector containing
-    the spectra in `spectra_list` with the
+    the spectra in `spec_list` with the
     associated covariance matrix.
 
     Parameters
     ----------
-    spectra_list: list
-      list of the power spectra
-    cov_list: list
-      list of the covariance matrices
+    ps_dict: dict
+      dict containing the different power spectra
+    cov_list: dict
+      dict containing the covariances
+    spec_list: list
+      list containing the name of the spectra
 
     """
-    n_bins = len(spectra_list[0])
-    n_spec = len(spectra_list)
+    n_bins = len(ps_dict[spec_list[0]])
+    n_spec = len(spec_list)
 
     spectra_vec = np.zeros(n_bins * n_spec)
     full_cov = np.zeros((n_bins * n_spec,
                          n_bins * n_spec))
 
-    #index = lambda i,j,n: int(n + n * (i - 1) - i * (i - 1) / 2 + j - i)
-    index = lambda i,j,n: index(i-1,n-1,n)+j-i+1 if (i!=0) else j
-    for i in range(n_spec):
-        spectra_vec[i*n_bins:(i+1)*n_bins] = spectra_list[i]
-        for j in range(n_spec):
+    for i, key1 in enumerate(spec_list):
+        spectra_vec[i*n_bins:(i+1)*n_bins] = ps_dict[key1]
+        for j, key2 in enumerate(spec_list):
             if j < i: continue
             full_cov[i*n_bins:(i+1)*n_bins,
-                     j*n_bins:(j+1)*n_bins] = cov_list[index(i, j, n_spec)]
+                     j*n_bins:(j+1)*n_bins] = cov_dict[key1, key2]
 
-    # Symmetrize covmat
-    full_cov = np.block(full_cov)
     full_cov = np.triu(full_cov)
     transpose_cov = full_cov.T
     full_cov += transpose_cov - np.diag(full_cov.diagonal())
@@ -101,7 +98,7 @@ def project_spectra_vec_and_cov(spectra_vec, full_cov, proj_pattern, calib_vec =
 
     return res_spectrum, res_cov
 
-def get_chi2(spectra_vec, full_cov, proj_pattern, lrange, calib_vec = None):
+def get_chi2(spectra_vec, full_cov, proj_pattern, calib_vec = None, lrange = None):
     """
     Compute the chi2 of the residual
     power spectrum
@@ -125,7 +122,10 @@ def get_chi2(spectra_vec, full_cov, proj_pattern, lrange, calib_vec = None):
     """
     res_spec, res_cov = project_spectra_vec_and_cov(spectra_vec, full_cov,
                                                     proj_pattern, calib_vec)
-    return res_spec[lrange] @ np.linalg.inv(res_cov[np.ix_(lrange[0], lrange[0])]) @ res_spec[lrange]
+    if lrange is not None:
+        return res_spec[lrange] @ np.linalg.inv(res_cov[np.ix_(lrange, lrange)]) @ res_spec[lrange]
+    else:
+        return res_spec @ np.linalg.inv(res_cov) @ res_spec
 
 def plot_residual(lb, res_spec, res_cov, mode, title, file_name):
     """
@@ -183,7 +183,13 @@ def get_calibration_amplitudes(spectra_vec, full_cov, proj_pattern, mode, lrange
     except ModuleNotFoundError:
         raise ModuleNotFoundError("You need to install Cobaya to use this function")
 
-    cal_vec = {# Calib
+    cal_vec = {# Global calibration :
+               #  multiplicative factor to apply to
+               # the different cross spectra to obtain
+               # a calibration amplitude. Here the cross
+               # spectra are [AxA, AxR, RxR] with A the
+               # array you want to calibrate, and R the
+               # reference array
               "TT": lambda c: np.array([c**2, c, 1]),
               # Pol. Eff.
               "EE": lambda e: np.array([e**2, e, 1]),
@@ -193,11 +199,16 @@ def get_calibration_amplitudes(spectra_vec, full_cov, proj_pattern, mode, lrange
     def logL(cal):
         if (proj_pattern == np.array([1, -1, 0])).all():
             if mode == "TT" or mode == "EE":
+                # If we want to fit for the calib (resp. pol.eff.)
+                # using the combination (c**2)AxA - c AxR,
+                # we set the multiplicative factor to be
+                # [c, 1, 1] such that we are minimizing
+                # the residual c AxA - AxR
                 calib_vec = np.array([cal, 1, 1])
         else:
             calib_vec = cal_vec[mode](cal)
 
-        chi2 = get_chi2(spectra_vec, full_cov, proj_pattern, lrange, calib_vec)
+        chi2 = get_chi2(spectra_vec, full_cov, proj_pattern, calib_vec, lrange)
         return -0.5 * chi2
 
     info = {
