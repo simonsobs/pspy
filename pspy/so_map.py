@@ -315,6 +315,28 @@ class so_map:
                         # enplot.show(plot,method="ipython")
                         plot.img.show()
 
+
+    def subtract_mean(self, mask=None):
+        """Subtract mean from a ``so_map`` object, optionnaly within a mask
+
+        Parameters
+        ----------
+        mask: either a single so_map (for ncomp=1) or a tuple of SO map e.g (mask_T, mask_P)
+        """
+        
+        if mask is None:
+            self.data -= np.mean(self.data)
+        else:
+            if self.ncomp == 1:
+                self.data -= np.mean(self.data * mask.data)
+            else:
+                self.data[0] -= np.mean(self.data * mask[0].data)
+                self.data[1] -= np.mean(self.data * mask[1].data)
+                self.data[2] -= np.mean(self.data * mask[1].data)
+        
+        return self
+    
+    
     def subtract_mono_dipole(self, mask=None, bunch=24):
         """Subtract monopole and dipole from a ``so_map`` object.
 
