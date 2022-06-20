@@ -346,8 +346,6 @@ class so_map:
         bunch: int
           the bunch size (default: 24)
         """
-        if mask is not None and not isinstance(mask, (list, tuple)):
-            raise ValueError("Mask must be a tuple of so_map mask!")
 
         if self.ncomp == 1:
             self.data = subtract_mono_dipole(
