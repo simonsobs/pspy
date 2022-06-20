@@ -321,7 +321,7 @@ class so_map:
 
         Parameters
         ----------
-        mask: either a single so_map (for ncomp=1) or a tuple of SO map e.g (mask_T, mask_P)
+        mask: either a single so_map (for ncomp = 1) or a tuple of SO map e.g (mask_T, mask_P)
         """
         
         if mask is None:
@@ -342,8 +342,7 @@ class so_map:
 
         Parameters
         ----------
-        mask: a tuple of ``so_map`` (temperature and polarization masks)
-          a mask to put on top of the map
+        mask: either a single so_map (for ncomp = 1) or a tuple of SO map e.g (mask_T, mask_P)
         bunch: int
           the bunch size (default: 24)
         """
@@ -353,7 +352,7 @@ class so_map:
         if self.ncomp == 1:
             self.data = subtract_mono_dipole(
                 emap=self.data,
-                mask=None if mask is None else mask[0].data,
+                mask=None if mask is None else mask.data,
                 healpix=self.pixel == "HEALPIX",
                 bunch=bunch,
             )
