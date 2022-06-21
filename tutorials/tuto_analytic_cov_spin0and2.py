@@ -92,7 +92,7 @@ mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
 )
 
 l_th, ps_theory = pspy_utils.ps_lensed_theory_to_dict(clfile, type, lmax=lmax)
-nl_th = pspy_utils.get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=spectra)
+l_th, nl_th = pspy_utils.get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=spectra)
 
 survey_id = ["a", "b", "c", "d"]
 survey_name = ["split_0", "split_1", "split_0", "split_1"]

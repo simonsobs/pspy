@@ -107,14 +107,14 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
     else:
         bl = np.ones(lmax + 2)
 
-    lth = np.arange(2, lmax + 2)
+    l_th = np.arange(2, lmax + 2)
     nl_th = {}
     if spectra is None:
         nl_th["TT"] = (
             np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[2 : lmax + 2] ** 2
         )
         if type == "Dl":
-            nl_th["TT"] *= lth * (lth + 1) / (2 * np.pi)
+            nl_th["TT"] *= l_th * (l_th + 1) / (2 * np.pi)
         return nl_th
     else:
         if rms_uKarcmin_pol is None:
@@ -126,8 +126,8 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
         nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
         if type == "Dl":
             for spec in spectra:
-                nl_th[spec] *= lth * (lth + 1) / (2 * np.pi)
-    return nl_th
+                nl_th[spec] *= l_th * (l_th + 1) / (2 * np.pi)
+    return l_th, nl_th
 
 
 def read_beam_file(beamfile, lmax=None):

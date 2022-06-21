@@ -80,7 +80,7 @@ window.plot(file_name="%s/window" % (test_dir))
 mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0(window, binning_file, lmax=lmax, type="Dl", niter=niter)
 
 l_th, ps_theory = pspy_utils.ps_lensed_theory_to_dict(clfile, type, lmax=lmax)
-nl_th = pspy_utils.get_nlth_dict(rms_uKarcmin_T, type, lmax)
+l_th, nl_th = pspy_utils.get_nlth_dict(rms_uKarcmin_T, type, lmax)
 
 survey_id = ["Ta", "Tb", "Tc", "Td"]
 survey_name = ["split_0", "split_1", "split_0", "split_1"]

@@ -195,7 +195,7 @@ for spec in spec_name_all:
     sv_b, ar_b = nb.split("&")
     
     if (sv_a == sv_b) & (ar_a == ar_b):
-        nlth = pspy_utils.get_nlth_dict(rms_uKarcmin_T[sv_a, ar_a],  "Dl", lmax, spectra=spectra)
+        l_th, nlth = pspy_utils.get_nlth_dict(rms_uKarcmin_T[sv_a, ar_a],  "Dl", lmax, spectra=spectra)
         
     for spec in my_spectra:
     
