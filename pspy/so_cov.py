@@ -605,7 +605,7 @@ def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lma
             M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
             M *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
         
-            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = so_cov.bin_mat(M, binning_file, lmax)
+            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(M, binning_file, lmax)
 
     return analytic_cov_from_beam
 
