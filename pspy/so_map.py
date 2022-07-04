@@ -8,12 +8,13 @@ from copy import deepcopy
 
 import astropy.io.fits as pyfits
 import healpy as hp
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
 
 from pspy.pspy_utils import ps_lensed_theory_to_dict
-from pspy.sph_tools import map2alm, alm2map
+from pspy.sph_tools import alm2map, map2alm
 
 
 class so_map:
@@ -65,7 +66,7 @@ class so_map:
         pol_eff : float
             the polarisation efficiency
         """
-        
+
         if self.ncomp == 1:
             self.data *= cal
         else:
@@ -74,7 +75,7 @@ class so_map:
             self.data[2] *= cal * pol_eff
 
         return self
-    
+
     def upgrade(self, factor):
         """Upgrade the ``so_map``.
 
@@ -154,7 +155,7 @@ class so_map:
             cdelt = self.data.wcs.wcs.cdelt[1]
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
-        
+
     def get_pixwin(self):
         """compute the pixel window function corresponding to the map pixellisation
         """
@@ -164,7 +165,7 @@ class so_map:
             wy, wx = enmap.calc_window(self.data.shape)
             pixwin = (wy[:,None] * wx[None,:])
         return pixwin
-            
+
     def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None):
         """Convolve a ``so_map`` object with a pixel window function
         The convolution is done in harmonics space, for CAR maps
@@ -172,7 +173,7 @@ class so_map:
         and the convolution is done in Fourier space.
         We optionaly apply a binary before doing the operation to remove pathological pixels, note
         that this operation is dangerous since we do harmonic transform of a masked map.
-        
+
         Parameters
         ----------
         niter: integer
@@ -186,7 +187,7 @@ class so_map:
         """
 
         lmax = self.get_lmax_limit()
-            
+
         if binary is not None: self.data *= binary.data
         if pixwin is None: pixwin = self.get_pixwin()
 
@@ -196,9 +197,9 @@ class so_map:
             self = alm2map(alms, self)
         if self.pixel == "CAR":
             self = fourier_convolution(self, pixwin)
-            
+
         return self
-            
+
     def subtract_mean(self, mask=None):
         """Subtract mean from a ``so_map`` object, optionnaly within a mask
 
@@ -206,7 +207,7 @@ class so_map:
         ----------
         mask: either a single so_map (for ncomp = 1) or a tuple of SO map e.g (mask_T, mask_P)
         """
-            
+
         if mask is None:
             self.data -= np.mean(self.data)
         else:
@@ -216,9 +217,9 @@ class so_map:
                 self.data[0] -= np.mean(self.data * mask[0].data)
                 self.data[1] -= np.mean(self.data * mask[1].data)
                 self.data[2] -= np.mean(self.data * mask[1].data)
-            
+
         return self
-            
+
     def subtract_mono_dipole(self, mask=None, bunch=24):
         """Subtract monopole and dipole from a ``so_map`` object.
 
@@ -277,7 +278,8 @@ class so_map:
 
         """
         try:
-            colorize.mpl_setdefault(color)
+            if color not in mpl.colormaps:
+                colorize.mpl_setdefault(color)
         except KeyError:
             if self.pixel == "CAR":
                 raise KeyError(
@@ -508,7 +510,7 @@ def from_components(T, Q, U):
     new_map.coordinate = "equ"
 
     return new_map
-    
+
 def get_submap_car(map_car, box, mode="round"):
     """Cut a CAR submap (using pixell).
 
@@ -969,7 +971,7 @@ def fourier_convolution(map_car, fourier_kernel, binary=None):
         the convolution kernel in Fourier space
     binary:  ``so_map``
         a binary mask removing pathological pixels
-        
+
     """
     if binary is not None:
         map_car.data *= binary.data
