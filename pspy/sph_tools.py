@@ -54,27 +54,28 @@ def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128, tweak=True)
     alm = alm.astype(dtype)
     return alm
 
-def alm2map(alms, so_map, tweak=True):
+def alm2map(alms, template, tweak=True):
     """alm2map transform (for healpix and CAR).
 
     Parameters
     ----------
     alms: array
       a set of alms, the shape of alms should correspond to so_map.ncomp
-    so_map: ``so_map``
-      the map template that will contain the results of the harmonic transform
+    template: ``so_map``
+      the map template
     """
-    if so_map.ncomp == 1:
+    map_from_alm = template.copy()
+    if map_from_alm.ncomp == 1:
         spin = 0
     else:
-        spin = [0,2]
-    if so_map.pixel == "HEALPIX":
-        so_map.data = curvedsky.alm2map_healpix(alms, so_map.data, spin = spin)
-    elif so_map.pixel == "CAR":
-        so_map.data = curvedsky.alm2map(alms, so_map.data, spin = spin, tweak=tweak)
+        spin = [0, 2]
+    if map_from_alm.pixel == "HEALPIX":
+        map_from_alm.data = curvedsky.alm2map_healpix(alms, map_from_alm.data, spin=spin)
+    elif map_from_alm.pixel == "CAR":
+        map_from_alm.data = curvedsky.alm2map(alms, map_from_alm.data, spin=spin, tweak=tweak)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
-    return so_map
+    return map_from_alm
 
 def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128):
     """Get a map, multiply by a window and return alms
