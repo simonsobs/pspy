@@ -152,7 +152,7 @@ class so_map:
         if self.pixel == "HEALPIX":
             l_max_limit = 3 * self.nside - 1
         elif self.pixel == "CAR":
-            cdelt = self.data.wcs.wcs.cdelt[1]
+            cdelt = abs(self.data.wcs.wcs.cdelt[1])
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
 
