@@ -115,7 +115,7 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
         )
         if type == "Dl":
             nl_th["TT"] *= l_th * (l_th + 1) / (2 * np.pi)
-        return nl_th
+        return l_th, nl_th
     else:
         if rms_uKarcmin_pol is None:
             rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
@@ -236,6 +236,7 @@ def naive_binning(l, fl, binning_file, lmax):
     for ibin in range(n_bins):
         loc = np.where((l >= bin_low[ibin]) & (l <= bin_hi[ibin]))
         fl_bin[ibin] = (fl[loc]).mean()
+
     return bin_cent, fl_bin
 
 
