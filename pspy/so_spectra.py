@@ -94,33 +94,39 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None):
     return(l, cl_dict)
 
 
-def deconvolve_mode_coupling_matrix(l, cl, inv_mode_coupling_matrix, spectra=None):
+def deconvolve_mode_coupling_matrix(l, ps, inv_mode_coupling_matrix, spectra=None):
     """deconvolve the mode coupling matrix
     Parameters
     ----------
     l: 1d array
-      the multipoles or the location of the center of the bins
+        the multipoles or the location of the center of the bins
     cl: 1d array or dict of 1d array
-      the power spectra, can be a 1d array (spin0) or a dictionnary (spin0 and spin2)
-    inv_mode_coupling_matrix: 2d array
-      the inverse of the  mode coupling matrix can be binned or not
+        the power spectra, can be a 1d array (spin0) or a dictionnary (spin0 and spin2)
+    inv_mode_coupling_matrix: 2d array (or dict of 2d arrays)
+        the inverse of the  mode coupling matrix can be binned or not
     spectra: list of string
         needed for spin0 and spin2 cross correlation, the arrangement of the spectra
 
     """
-    
+
     n_element = len(l)
-    
+
     if spectra is None:
-        ps = np.dot(inv_mode_coupling_matrix, cl)
+        ps = np.dot(inv_mode_coupling_matrix, ps)
     else:
-        inv_mode_coupling_matrix = so_mcm.coupling_dict_to_array(inv_mode_coupling_matrix)
+        ps["TT"] = inv_mode_coupling_matrix["spin0xspin0"] @ ps["TT"]
+        for spec in ["TE", "TB"]:
+            ps[spec] = inv_mode_coupling_matrix["spin0xspin2"] @ ps[spec]
+        for spec in ["ET", "BT"]:
+            ps[spec] = inv_mode_coupling_matrix["spin2xspin0"] @ ps[spec]
+
         vec = []
-        for f in spectra:
-            vec = np.append(vec, cl[f])
-        vec = np.dot(inv_mode_coupling_matrix, vec)
-        ps = vec2spec_dict(n_element, vec, spectra)
-    
+        for spec in ["EE", "EB", "BE", "BB"]:
+            vec = np.append(vec, ps[spec])
+        vec = inv_mode_coupling_matrix["spin2xspin2"] @ vec
+        for i, spec in enumerate(["EE", "EB", "BE", "BB"]):
+            ps[spec] = vec[i * n_element:(i + 1) * n_element]
+
     return l, ps
 
 
