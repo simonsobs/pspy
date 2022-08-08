@@ -646,8 +646,20 @@ def extract_EEEBBB_mbb(mbb_inv):
 
     return mbb_inv["spin2xspin2"]
 
+def corr2cov(corr, var):
+    """Go from correlation and variance to covariance matrix
 
-def cov2corr(cov, remove_diag=True):
+    Parameters
+    ----------
+    corr: 2d array
+      the correlation matrix
+    var: 1d array
+      vector of variance of the random variables
+    """
+    return corr * np.sqrt(var[:, None] * var[None, :])
+
+
+def cov2corr(cov, remove_diag=False):
     """Go from covariance to correlation matrix, also setting the diagonal to zero
 
     Parameters
