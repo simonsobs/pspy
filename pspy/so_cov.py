@@ -620,22 +620,17 @@ def extract_TTTEEE_mbb(mbb_inv):
     mbb_inv: 2d array
       the inverse spin0 and 2 mode coupling matrix
     """
-
-    mbb_inv_array = so_mcm.coupling_dict_to_array(mbb_inv)
-    mbb_array = np.linalg.inv(mbb_inv_array)
-    nbins = int(mbb_array.shape[0] / 9)
-    
-    mbb_array_select = np.zeros((4*nbins, 4*nbins))
+    nbins = mbb_inv["spin0xspin0"].shape[0]
+    mbb_inv_array = np.zeros((4*nbins, 4*nbins))
     # TT
-    mbb_array_select[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_array[0*nbins:1*nbins, 0*nbins:1*nbins]
+    mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
     # TE
-    mbb_array_select[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_array[1*nbins:2*nbins, 1*nbins:2*nbins]
+    mbb_inv_array[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_inv["spin0xspin2"]
     # ET
-    mbb_array_select[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_array[3*nbins:4*nbins, 3*nbins:4*nbins]
+    mbb_inv_array[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_inv["spin2xspin0"]
     # EE
-    mbb_array_select[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_array[5*nbins:6*nbins, 5*nbins:6*nbins]
+    mbb_inv_array[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_inv["spin2xspin2"][0:nbins, 0:nbins]
 
-    mbb_inv_array = np.linalg.inv(mbb_array_select)
     
     return mbb_inv_array
 
@@ -649,27 +644,7 @@ def extract_EEEBBB_mbb(mbb_inv):
         the inverse spin0 and 2 mode coupling matrix
     """
 
-    mbb_inv_array = so_mcm.coupling_dict_to_array(mbb_inv)
-    mbb_array = np.linalg.inv(mbb_inv_array)
-    nbins = int(mbb_array.shape[0] / 9)
-
-    mbb_array_select = np.zeros((4*nbins, 4*nbins))
-    # EE
-    mbb_array_select[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_array[5*nbins:6*nbins, 5*nbins:6*nbins]
-    # EB
-    mbb_array_select[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_array[6*nbins:7*nbins, 6*nbins:7*nbins]
-    # BE
-    mbb_array_select[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_array[7*nbins:8*nbins, 7*nbins:8*nbins]
-    # BB
-    mbb_array_select[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_array[8*nbins:9*nbins, 8*nbins:9*nbins]
-    # EE-BB
-    mbb_array_select[0*nbins:1*nbins, 3*nbins:4*nbins] = mbb_array[5*nbins:6*nbins, 8*nbins:9*nbins]
-    # BB-EE
-    mbb_array_select[3*nbins:4*nbins, 0*nbins:1*nbins] = mbb_array[8*nbins:9*nbins, 5*nbins:6*nbins]
-
-    mbb_inv_array = np.linalg.inv(mbb_array_select)
-
-    return mbb_inv_array
+    return mbb_inv["spin2xspin2"]
 
 
 def cov2corr(cov, remove_diag=True):
