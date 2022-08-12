@@ -674,7 +674,7 @@ def cov2corr(cov, remove_diag=False):
         corr -= np.identity(cov.shape[0])
     return corr
 
-def selectblock(cov, spectra, n_bins, block="TTTT"):
+def selectblock(cov, spectra_order, n_bins, block="TTTT"):
     """Select a block in a spin0 and 2 covariance matrix
 
     Parameters
@@ -682,7 +682,7 @@ def selectblock(cov, spectra, n_bins, block="TTTT"):
 
     cov: 2d array
       the covariance matrix
-    spectra: list of strings
+    spectra_order: list of strings
       the arangement of the different block
     n_bins: int
       the number of bins for each block
@@ -690,18 +690,39 @@ def selectblock(cov, spectra, n_bins, block="TTTT"):
       the block you want to look at
     """
 
-    if spectra == None:
+    if spectra_order == None:
         print ("cov mat of spin 0, no block selection needed")
         return
     else:
         blockindex = {}
-        for c1,s1 in enumerate(spectra):
-            for c2,s2 in enumerate(spectra):
+        for c1,s1 in enumerate(spectra_order):
+            for c2,s2 in enumerate(spectra_order):
                 blockindex[s1 + s2] = [c1 * n_bins, c2 * n_bins]
     id1 = blockindex[block][0]
     id2 = blockindex[block][1]
     cov_select = cov[id1:id1 + n_bins, id2:id2 + n_bins]
     return cov_select
+
+def get_sigma(cov, spectra_order, n_bins, spectrum):
+    """get the error of the spectrum for the given cov mat
+
+    Parameters
+    ----------
+
+    cov: 2d array
+      the covariance matrix
+    spectra_order: list of strings
+      the arangement of the different block
+    n_bins: int
+      the number of bins for each block
+    spectrum: string
+      the spectrum we consider
+    """
+    cov_sub = selectblock(cov, spectra_order, n_bins, block=spectrum+spectrum)
+    err = np.sqrt(cov_sub.diagonal())
+    return err
+
+
 
 def delta2(a, b):
     """Simple delta function
