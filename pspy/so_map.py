@@ -71,8 +71,8 @@ class so_map:
             self.data *= cal
         else:
             self.data[0] *= cal
-            self.data[1] *= cal * pol_eff
-            self.data[2] *= cal * pol_eff
+            self.data[1] *= cal / pol_eff
+            self.data[2] *= cal / pol_eff
 
         return self
 
