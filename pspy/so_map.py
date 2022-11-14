@@ -580,10 +580,9 @@ def from_enmap(emap):
     hdulist = emap.wcs.to_fits()
     header = hdulist[0].header
     new_map.pixel = header["CTYPE1"][-3:]
-    try:
-        new_map.ncomp = header["NAXIS3"]
-    except:
-        new_map.ncomp = 1
+    shape, wcs = emap.geometry
+    new_map.geometry = shape[1:]
+    new_map.ncomp = shape[0]
     new_map.data = emap.copy()
     new_map.nside = None
     new_map.geometry = new_map.data.geometry[1:]
