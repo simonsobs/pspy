@@ -23,7 +23,7 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         set -x
-        sudo ln -s /usr/local/bin/gfortran-10 /usr/local/bin/gfortran
+        sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
         gfortran --version
 
     - name: Install via pip
