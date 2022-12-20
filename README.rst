@@ -10,7 +10,7 @@ python example notebooks for an introductory set of examples on how to use the p
    :target: https://pypi.python.org/pypi/pspy/
 .. image:: https://img.shields.io/badge/license-BSD-yellow
    :target: https://github.com/simonsobs/pspy/blob/master/LICENSE
-.. image:: https://img.shields.io/github/workflow/status/simonsobs/pspy/Testing
+.. image:: https://img.shields.io/github/actions/workflow/status/simonsobs/pspy/testing.yml?branch=master
    :target: https://github.com/simonsobs/pspy/actions?query=workflow%3ATesting
 .. image:: https://readthedocs.org/projects/pspy/badge/?version=latest
    :target: https://pspy.readthedocs.io/en/latest/?badge=latest
