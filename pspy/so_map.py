@@ -156,17 +156,19 @@ class so_map:
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
 
-    def get_pixwin(self):
+    def get_pixwin(self, order=0):
         """compute the pixel window function corresponding to the map pixellisation
+           order stands for the map making pointing matrix
+           order=0 is Neareast Neighbour while order=1 is bilinear interpolation
         """
         if self.pixel == "HEALPIX":
             pixwin = hp.pixwin(self.nside)
         if self.pixel == "CAR":
-            wy, wx = enmap.calc_window(self.data.shape)
+            wy, wx = enmap.calc_window(self.data.shape, order=order)
             pixwin = (wy[:,None] * wx[None,:])
         return pixwin
 
-    def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None):
+    def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None, order=0):
         """Convolve a ``so_map`` object with a pixel window function
         The convolution is done in harmonics space, for CAR maps
         the pixwin is anisotropic (the pixel varies in size across the maps)
@@ -189,7 +191,7 @@ class so_map:
         lmax = self.get_lmax_limit()
 
         if binary is not None: self.data *= binary.data
-        if pixwin is None: pixwin = self.get_pixwin()
+        if pixwin is None: pixwin = self.get_pixwin(order=order)
 
         if self.pixel == "HEALPIX":
             alms = map2alm(self, niter, lmax)
