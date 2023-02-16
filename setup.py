@@ -1,5 +1,5 @@
 import setuptools
-from numpy.distutils.core import setup
+from numpy.distutils.core import numpy_cmdclass, setup
 from numpy.distutils.extension import Extension
 from setuptools import find_packages
 
@@ -33,7 +33,7 @@ cov = Extension(
 setup(
     name="pspy",
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=versioneer.get_cmdclass(numpy_cmdclass),
     author="Simons Observatory Collaboration Power Spectrum Task Force",
     url="https://github.com/simonsobs/pspy",
     description="Python power spectrum code",
