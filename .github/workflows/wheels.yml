@@ -5,7 +5,8 @@ on:
   push:
     branches:
       - master
-      - 'releases/**'
+    tags:
+      - '*'
 
 jobs:
   build_wheels:
