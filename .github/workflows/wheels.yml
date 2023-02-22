@@ -48,7 +48,6 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BUILD: "${{ matrix.cp }}-*x86_64"
           CIBW_SKIP: "*-musllinux_*"
-          CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
 
       - uses: actions/upload-artifact@v3
         with:
