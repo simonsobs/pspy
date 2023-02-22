@@ -1,14 +1,29 @@
 name: Build wheels and upload to PyPI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [master]
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.cp }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        cp: [cp37, cp38, cp39, cp310, cp311]
+        include:
+          - cp: cp37
+            numpyver: "1.20"
+          - cp: cp38
+            numpyver: "1.22"
+          - cp: cp39
+            numpyver: "1.22"
+          - cp: cp310
+            numpyver: "1.22"
+          - cp: cp311
+            numpyver: "1.22"
 
     steps:
       - uses: actions/checkout@v3
@@ -29,12 +44,12 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.0
         env:
-          CIBW_BEFORE_BUILD: "python -m pip install numpy==1.22.4"
+          CIBW_BEFORE_BUILD: "python -m pip install numpy==${{ matrix.numpyver }}"
           CIBW_BUILD_VERBOSITY: 3
-          CIBW_BUILD: "cp3*-*x86_64"
-          CIBW_SKIP: "cp3{5,6,7}-*"
+          CIBW_BUILD: "${{ matrix.cp }}-*x86_64"
+          CIBW_SKIP: "*-musllinux_*"
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
           retention-days: 1
@@ -68,7 +83,7 @@ jobs:
           python -m pip install numpy
           python setup.py sdist
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
           retention-days: 1
