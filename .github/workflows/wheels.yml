@@ -1,6 +1,9 @@
 name: Build wheels and upload to PyPI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [master]
 
 jobs:
   build_wheels:
