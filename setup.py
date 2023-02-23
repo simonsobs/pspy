@@ -1,5 +1,5 @@
 import setuptools
-from numpy.distutils.core import numpy_cmdclass, setup
+from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
 from setuptools import find_packages
 
@@ -30,10 +30,17 @@ cov = Extension(
     **compile_opts
 )
 
+# The 'build_ext' command from latest versioneer is breaking the data installation from MANIFEST.in
+# Overloading this command with numpy_cmdclass do not solve the issue. So far the only way to
+# install properly the pspy/tests/data is to remove the 'build_ext' command and leave
+# numpy.distutils doing its job
+cmdclass = versioneer.get_cmdclass().copy()
+cmdclass.pop("build_ext")
+
 setup(
     name="pspy",
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(numpy_cmdclass),
+    cmdclass=cmdclass,
     author="Simons Observatory Collaboration Power Spectrum Task Force",
     url="https://github.com/simonsobs/pspy",
     description="Python power spectrum code",
@@ -60,7 +67,6 @@ setup(
         "pixell>=0.7.0",
     ],
     packages=find_packages(),
-    package_data={"pspy": ["pspy/tests/data/*.pkl"]},
     include_package_data=True,
     scripts=["scripts/test-pspy"],
 )
