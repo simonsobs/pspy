@@ -365,3 +365,42 @@ def is_pos_def(mat):
         print("the tested matrix is not positive definite")
         print(np.linalg.eigvals(mat))
     return
+
+
+def calibrate_alms(alms, cal = 1.0, pol_eff = 1.0):
+    """
+    Apply a calibration amplitude
+    and a polarization efficiency
+    to a set of alms.
+
+    Parameters
+    ----------
+    alms: array
+    cal: float
+        calibration amplitude (default to 1)
+    pol_eff: float
+        polarization efficiency (default to 1)
+    """
+    alms[0] /= cal
+    alms[1] /= cal * pol_eff
+    alms[2] /= cal * pol_eff
+
+    return alms
+
+
+def rotate_pol_alms(alms, pol_rot_angle):
+    """
+    Apply a rotation on the alms due to
+    polangle miscalibration.
+
+    Parameters
+    ----------
+    alms: array
+    pol_rot_angle: float
+        must be in degree
+    """
+    cos_alpha = np.cos(np.deg2rad(2 * pol_rot_angle))
+    sin_alpha = np.sin(np.deg2rad(2 * pol_rot_angle))
+    alms[1], alms[2] = (alms[1] * cos_alpha + alms[2] * sin_alpha,
+                       -alms[1] * sin_alpha + alms[2] * cos_alpha)
+    return alms
