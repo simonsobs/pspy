@@ -381,9 +381,9 @@ def calibrate_alms(alms, cal = 1.0, pol_eff = 1.0):
     pol_eff: float
         polarization efficiency (default to 1)
     """
-    alms[0] /= cal
-    alms[1] /= cal * pol_eff
-    alms[2] /= cal * pol_eff
+    alms[0] *= cal
+    alms[1] *= cal / pol_eff
+    alms[2] *= cal / pol_eff
 
     return alms
 
