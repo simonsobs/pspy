@@ -111,51 +111,6 @@ def apod_C1(binary, radius, rmax=None):
     return win
 
 
-def apod_rectangle(binary, radius):
-    """Create an apodisation for rectangle window (in CAR) (smoother at the corner)
-
-    Parameters
-    ----------
-    binary: ``so_map``
-      a so_map with binary data (1 is observed, 0 is masked)
-    apo_radius: float
-      the apodisation radius in degrees
-
-    """
-
-    # TODO: clean this one
-
-    if radius == 0:
-        return binary
-    else:
-        shape = binary.data.shape
-        wcs = binary.data.wcs
-        Ny, Nx = shape
-        pix_scale_y, pix_scale_x = enmap.pixshape(shape, wcs)
-        win = binary.copy()
-        win.data = win.data * 0 + 1
-        win_x = win.copy()
-        win_y = win.copy()
-        ones = np.ones((Ny, Nx))
-        deg_to_pix_x = np.pi / 180 / pix_scale_x
-        deg_to_pix_y = np.pi / 180 / pix_scale_y
-        lenApod_x = int(radius * deg_to_pix_x)
-        lenApod_y = int(radius * deg_to_pix_y)
-
-        for i in range(lenApod_x):
-            r = float(i)
-            win_x.data[:, i] = 1.0 / 2 * (ones[:, i] - np.cos(-np.pi * r / lenApod_x))
-            win_x.data[:, Nx - i - 1] = win_x.data[:, i]
-        for j in range(lenApod_y):
-            r = float(j)
-            win_y.data[j, :] = 1.0 / 2 * (ones[j, :] - np.cos(-np.pi * r / lenApod_y))
-            win_y.data[Ny - j - 1, :] = win_y.data[j, :]
-
-        win.data = win_x.data * win_y.data
-
-        return win
-
-
 def get_spinned_windows(w, lmax, niter):
     """Compute the spinned window functions (for pure B modes method)
 
