@@ -243,7 +243,7 @@ for sid1, spec1 in enumerate(spec_name_all):
        except: mbb_inv_cd, Bbl_cd =  mbb_inv_dict[sv_d, ar_d, sv_c, ar_c], Bbl_dict[sv_d, ar_d, sv_c, ar_c]
 
 
-       analytic_cov[spec1, spec2] = so_cov_2.generalized_cov_spin0and2(coupling,
+       analytic_cov[spec1, spec2] = so_cov.generalized_cov_spin0and2(coupling,
                                                                       [na, nb, nc, nd],
                                                                       n_splits,
                                                                       ps_all_th,
@@ -252,7 +252,8 @@ for sid1, spec1 in enumerate(spec_name_all):
                                                                       binning_file,
                                                                       mbb_inv_ab,
                                                                       mbb_inv_cd,
-                                                                      binned_mcm=binned_mcm)
+                                                                      binned_mcm=binned_mcm,
+                                                                      cov_T_E_only=False))
 
        np.save("%s/analytic_cov_%s_%s.npy" % (test_dir, spec1, spec2), analytic_cov[spec1, spec2])
 

@@ -113,7 +113,7 @@ for name1, id1 in zip(name_list, id_list):
         Clth_dict[id1 + id2] = Clth_dict[id1 + id2][:-2]
 
 coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter, planck=planck)
-analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
+analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv, cov_T_E_only=False)
 
 np.save("%s/analytic_cov.npy" % test_dir, analytic_cov)
 

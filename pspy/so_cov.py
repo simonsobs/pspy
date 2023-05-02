@@ -433,7 +433,7 @@ def cov_spin0and2(Clth_dict,
                   mbb_inv_ab,
                   mbb_inv_cd,
                   binned_mcm=True,
-                  cov_T_E_only=False):
+                  cov_T_E_only=True):
                   
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
@@ -518,7 +518,7 @@ def generalized_cov_spin0and2(coupling_dict,
                               mbb_inv_cd,
                               binned_mcm=True,
                               return_full_cov=False,
-                              cov_T_E_only=False):
+                              cov_T_E_only=True):
 
     """
     This routine deserves some explanation
@@ -613,7 +613,7 @@ def covariance_element_beam(id_element,
                             norm_beam_cov,
                             binning_file,
                             lmax,
-                            cov_T_E_only=False):
+                            cov_T_E_only=True):
     """
     This routine compute the contribution from beam errors to the analytical covariance of the power spectra
     We want to compute the beam covariance between the two spectra
