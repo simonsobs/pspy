@@ -36,7 +36,7 @@ niter = 0
 if run == "CAR":
     ra0, ra1, dec0, dec1 = -15, 15, -8, 8
     res = 5
-    apo_type_survey = "Rectangle"
+    apo_type_survey = "C1"
     template = so_map.car_template(ncomp, ra0, ra1, dec0, dec1, res)
     binary = so_map.car_template(1, ra0, ra1, dec0, dec1, res)
     binary.data[:] = 0
@@ -77,7 +77,7 @@ for i, f1 in enumerate("TEB"):
         ps_theory[f1+f2] *= l * (l + 1) / (2 * np.pi)
         ps_theory[f1+f2] = ps_theory[f1+f2][2:lmax]
 
-n_sims = 500
+n_sims = 200
 
 test_dir = "result_generalized_cov_spin0and2"
 pspy_utils.create_directory(test_dir)
@@ -184,7 +184,6 @@ for id_sv_a, sv_a in enumerate(surveys):
 # Let's prepare the model and precompute the alms fot the covariance matrix analytic computation
 #################################################################################################
 
-my_spectra = ["TT", "TE", "ET", "EE"]
 
 ps_all_th = {}
 nl_all_th = {}
@@ -197,7 +196,7 @@ for spec in spec_name_all:
     if (sv_a == sv_b) & (ar_a == ar_b):
         l_th, nlth = pspy_utils.get_nlth_dict(rms_uKarcmin_T[sv_a, ar_a],  "Dl", lmax, spectra=spectra)
         
-    for spec in my_spectra:
+    for spec in spectra:
     
         ps_all_th["%s&%s" % (sv_a, ar_a), "%s&%s" % (sv_b, ar_b), spec] = bl[sv_a, ar_a][2:lmax] * bl[sv_b, ar_b][2:lmax] * ps_theory[spec]
         if (sv_a == sv_b) & (ar_a == ar_b):
@@ -244,16 +243,16 @@ for sid1, spec1 in enumerate(spec_name_all):
        except: mbb_inv_cd, Bbl_cd =  mbb_inv_dict[sv_d, ar_d, sv_c, ar_c], Bbl_dict[sv_d, ar_d, sv_c, ar_c]
 
 
-       analytic_cov[spec1, spec2] = so_cov.generalized_cov_spin0and2(coupling,
-                                                                     [na, nb, nc, nd],
-                                                                     n_splits,
-                                                                     ps_all_th,
-                                                                     nl_all_th,
-                                                                     lmax,
-                                                                     binning_file,
-                                                                     mbb_inv_ab,
-                                                                     mbb_inv_cd,
-                                                                     binned_mcm=binned_mcm)
+       analytic_cov[spec1, spec2] = so_cov_2.generalized_cov_spin0and2(coupling,
+                                                                      [na, nb, nc, nd],
+                                                                      n_splits,
+                                                                      ps_all_th,
+                                                                      nl_all_th,
+                                                                      lmax,
+                                                                      binning_file,
+                                                                      mbb_inv_ab,
+                                                                      mbb_inv_cd,
+                                                                      binned_mcm=binned_mcm)
 
        np.save("%s/analytic_cov_%s_%s.npy" % (test_dir, spec1, spec2), analytic_cov[spec1, spec2])
 
@@ -336,7 +335,7 @@ for sid1, spec1 in enumerate(spec_name_all):
     for sid2, spec2 in enumerate(spec_name_all):
         if sid1 > sid2: continue
         
-        mean_a, mean_b, mc_cov = so_cov.mc_cov_from_spectra_list(ps_all[spec1], ps_all[spec2], spectra=my_spectra)
+        mean_a, mean_b, mc_cov = so_cov.mc_cov_from_spectra_list(ps_all[spec1], ps_all[spec2], spectra=spectra)
         
         np.save("%s/mc_cov_%s_%s.npy" % (test_dir, spec1, spec2), mc_cov)
 

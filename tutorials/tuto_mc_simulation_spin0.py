@@ -40,7 +40,7 @@ source_mask_radius = 10
 # the apodisation lengh for the point source mask (in degree)
 apo_radius_degree_mask = 0.3
 # for the CAR survey we will use an apodisation type designed for rectangle maps
-apo_type = "Rectangle"
+apo_type = "C1"
 # parameter for the monte-carlo simulation
 mpi = True
 iStart = 0

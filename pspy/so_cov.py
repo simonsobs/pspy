@@ -426,7 +426,15 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
         
     return analytic_cov
 
-def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
+def cov_spin0and2(Clth_dict,
+                  coupling_dict,
+                  binning_file,
+                  lmax,
+                  mbb_inv_ab,
+                  mbb_inv_cd,
+                  binned_mcm=True,
+                  cov_T_E_only=False):
+                  
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
     Parameters
@@ -446,15 +454,23 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
         the inverse mode coupling matrix for the 'XcYd' power spectrum
     binned_mcm: boolean
       specify if the mode coupling matrices are binned or not
-
+    binned_mcm: boolean
+      specify if the mode coupling matrices are binned or not
+    cov_T_E_only: boolean
+        if true don't do B
     """
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_ell = Clth_dict["TaTb"].shape[0]
-        
-    full_analytic_cov = np.zeros((4 * n_ell, 4 * n_ell))
     
-    speclist = ["TT", "TE", "ET", "EE"]
+    if cov_T_E_only:
+        speclist = ["TT", "TE", "ET", "EE"]
+    else:
+        speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
+    
+    nspec = len(speclist)
+    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell))
+
     for i, (W, X) in enumerate(speclist):
         for j, (Y, Z) in enumerate(speclist):
             if i > j : continue
@@ -462,16 +478,25 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
             id1 = X + "b" + Z + "d"
             id2 = W + "a" + Z + "d"
             id3 = X + "b" + Y + "c"
-
-            M = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1]) * coupling_dict[id0.replace("E","P") + id1.replace("E","P")]
-            M += symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3]) * coupling_dict[id2.replace("E","P") + id3.replace("E","P")]
             
+            Cl0Cl1 = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1])
+            Cl2Cl3 = symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3])
+            
+            for field in ["E", "B"]:
+                id0 = id0.replace(field, "P")
+                id1 = id1.replace(field, "P")
+                id2 = id2.replace(field, "P")
+                id3 = id3.replace(field, "P")
+                
+            M = Cl0Cl1 * coupling_dict[id0 + id1]
+            M += Cl2Cl3 * coupling_dict[id2 + id3]
+
             full_analytic_cov[i * n_ell:(i + 1) * n_ell, j * n_ell:(j + 1) * n_ell] = M
     
     full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
     
-    mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
-    mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
+    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only)
+    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only)
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
@@ -482,7 +507,18 @@ def cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_
 
     return analytic_cov
 
-def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lmax, binning_file, mbb_inv_ab, mbb_inv_cd, binned_mcm=True, return_full_cov=False):
+def generalized_cov_spin0and2(coupling_dict,
+                              id_element,
+                              ns,
+                              ps_all,
+                              nl_all,
+                              lmax,
+                              binning_file,
+                              mbb_inv_ab,
+                              mbb_inv_cd,
+                              binned_mcm=True,
+                              return_full_cov=False,
+                              cov_T_E_only=False):
 
     """
     This routine deserves some explanation
@@ -520,16 +556,23 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
     return_full_cov: boolean
         an option to return the lbyl cov (if binned_mcm=False)
         mostly used for debugging
-
+    cov_T_E_only: boolean
+        if true don't do B
     """
 
     na, nb, nc, nd = id_element
 
     n_ell = coupling_dict["TaTcTbTd"].shape[0]
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, n_ell)
-    full_analytic_cov = np.zeros((4 * n_ell, 4 * n_ell))
 
-    speclist = ["TT", "TE", "ET", "EE"]
+    if cov_T_E_only:
+        speclist = ["TT", "TE", "ET", "EE"]
+    else:
+        speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
+    
+    nspec = len(speclist)
+    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell))
+
     for i, (W, X) in enumerate(speclist):
         for j, (Y, Z) in enumerate(speclist):
     
@@ -537,13 +580,20 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
             id1 = X + "b" + Z + "d"
             id2 = W + "a" + Z + "d"
             id3 = X + "b" + Y + "c"
+            
+            for field in ["E", "B"]:
+                id0 = id0.replace(field, "P")
+                id1 = id1.replace(field, "P")
+                id2 = id2.replace(field, "P")
+                id3 = id3.replace(field, "P")
+
         
-            M = coupling_dict[id0.replace("E","P") + id1.replace("E","P")] * chi(na, nc, nb, nd, ns, ps_all, nl_all, W + Y + X + Z)
-            M += coupling_dict[id2.replace("E","P") + id3.replace("E","P")] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
+            M = coupling_dict[id0 + id1] * chi(na, nc, nb, nd, ns, ps_all, nl_all, W + Y + X + Z)
+            M += coupling_dict[id2 + id3] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
             full_analytic_cov[i * n_ell: (i + 1) * n_ell, j * n_ell: (j + 1) * n_ell] = M
 
-    mbb_inv_ab = extract_TTTEEE_mbb(mbb_inv_ab)
-    mbb_inv_cd = extract_TTTEEE_mbb(mbb_inv_cd)
+    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only)
+    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only)
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
@@ -558,7 +608,12 @@ def generalized_cov_spin0and2(coupling_dict, id_element, ns, ps_all, nl_all, lma
     return analytic_cov
 
 
-def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lmax):
+def covariance_element_beam(id_element,
+                            ps_all,
+                            norm_beam_cov,
+                            binning_file,
+                            lmax,
+                            cov_T_E_only=cov_T_E_only):
     """
     This routine compute the contribution from beam errors to the analytical covariance of the power spectra
     We want to compute the beam covariance between the two spectra
@@ -583,6 +638,9 @@ def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lma
         a binning file with three columns bin low, bin high, bin mean
     lmax: int
         the maximum multipole to consider
+    cov_T_E_only: boolean
+        if true don't do B
+
     """
     na, nb, nc, nd = id_element
 
@@ -594,10 +652,14 @@ def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lma
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     nbins = len(bin_hi)
 
-    speclist = ["TT", "TE", "ET", "EE"]
+    if cov_T_E_only:
+        speclist = ["TT", "TE", "ET", "EE"]
+    else:
+        speclist = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
 
     nspec = len(speclist)
     analytic_cov_from_beam = np.zeros((nspec * nbins, nspec * nbins))
+    
     for i, spec1 in enumerate(speclist):
         for j, spec2 in enumerate(speclist):
 
@@ -610,7 +672,7 @@ def covariance_element_beam(id_element, ps_all, norm_beam_cov, binning_file, lma
     return analytic_cov_from_beam
 
 
-def extract_TTTEEE_mbb(mbb_inv):
+def extract_mbb(mbb_inv, cov_T_E_only=False)):
     """The mode coupling marix is computed for T,E,B but for now we only construct analytical covariance matrix for T and E
     The B modes is complex with important E->B leakage, this routine extract the T and E part of the mode coupling matrix
 
@@ -619,19 +681,35 @@ def extract_TTTEEE_mbb(mbb_inv):
 
     mbb_inv: 2d array
       the inverse spin0 and 2 mode coupling matrix
+    cov_T_E_only: boolean
+        if true don't do B
     """
     nbins = mbb_inv["spin0xspin0"].shape[0]
-    mbb_inv_array = np.zeros((4*nbins, 4*nbins))
-    # TT
-    mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
-    # TE
-    mbb_inv_array[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_inv["spin0xspin2"]
-    # ET
-    mbb_inv_array[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_inv["spin2xspin0"]
-    # EE
-    mbb_inv_array[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_inv["spin2xspin2"][0:nbins, 0:nbins]
+    if cov_T_E_only:
+        mbb_inv_array = np.zeros((4*nbins, 4*nbins))
+        # TT
+        mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
+        # TE
+        mbb_inv_array[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_inv["spin0xspin2"]
+        # ET
+        mbb_inv_array[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_inv["spin2xspin0"]
+        # EE
+        mbb_inv_array[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_inv["spin2xspin2"][0:nbins, 0:nbins]
+    else:
+        mbb_inv_array = np.zeros((9*nbins, 9*nbins))
+        # TT
+        mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
+        # TE
+        mbb_inv_array[1*nbins:2*nbins, 1*nbins:2*nbins] = mbb_inv["spin0xspin2"]
+        # TB
+        mbb_inv_array[2*nbins:3*nbins, 2*nbins:3*nbins] = mbb_inv["spin0xspin2"]
+        # ET
+        mbb_inv_array[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_inv["spin2xspin0"]
+        # BT
+        mbb_inv_array[4*nbins:5*nbins, 4*nbins:5*nbins] = mbb_inv["spin2xspin0"]
+        # EE-EB-BE-BB
+        mbb_inv_array[5*nbins:9*nbins, 5*nbins:9*nbins] = mbb_inv["spin2xspin2"]
 
-    
     return mbb_inv_array
 
 def extract_EEEBBB_mbb(mbb_inv):

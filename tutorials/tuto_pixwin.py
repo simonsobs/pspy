@@ -101,7 +101,7 @@ diff.plot(file_name=f"{test_dir}/approximation_cutsky", color_range=[2, 0.2, 0.2
 binary_car = so_map.car_template(1, ra0, ra1, dec0, dec1, res)
 binary_car.data[:] = 0
 binary_car.data[1:-1, 1:-1] = 1
-window = so_window.create_apodization(binary_car, apo_type="Rectangle", apo_radius_degree=1)
+window = so_window.create_apodization(binary_car, apo_type="C1", apo_radius_degree=1)
 window = (window, window)
 
 lmax = template.get_lmax_limit()
