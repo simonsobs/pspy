@@ -253,7 +253,7 @@ for sid1, spec1 in enumerate(spec_name_all):
                                                                       mbb_inv_ab,
                                                                       mbb_inv_cd,
                                                                       binned_mcm=binned_mcm,
-                                                                      cov_T_E_only=False))
+                                                                      cov_T_E_only=False)
 
        np.save("%s/analytic_cov_%s_%s.npy" % (test_dir, spec1, spec2), analytic_cov[spec1, spec2])
 
