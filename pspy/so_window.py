@@ -55,10 +55,7 @@ def create_apodization(binary, apo_type, apo_radius_degree, use_rmax=False):
     if apo_type == "C2":
         window = apod_C2(binary, apo_radius_degree, rmax)
     if apo_type == "Rectangle":
-        if binary.pixel == "HEALPIX":
-            raise ValueError("No rectangle apodization for HEALPIX map")
-        if binary.pixel == "CAR":
-            window = apod_rectangle(binary, apo_radius_degree)
+        raise ValueError("Not supported anymore")
 
     return window
 

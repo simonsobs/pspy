@@ -36,7 +36,7 @@ lmax = 2000
 # the number of iteration in map2alm
 niter = 0
 # the noise on the spin0 component
-rms_uKarcmin_T = 1
+rms_uKarcmin_T = 15
 # the apodisation lengh for the survey mask (in degree)
 apo_radius_degree_survey = 1
 # the number of holes in the point source mask
@@ -46,13 +46,13 @@ source_mask_radius = 10
 # the apodisation lengh for the point source mask (in degree)
 apo_radius_degree_mask = 0.3
 # for the CAR survey we will use an apodisation type designed for rectangle maps
-apo_type = "Rectangle"
+apo_type = "C1"
 # should the cov mat take into account the specificity of polar
 planck = False
 # parameter for the monte-carlo simulation
 do_MonteCarlo = True
 read_MonteCarlo = False
-n_sims = 150
+n_sims = 100
 
 test_dir = "result_cov_spin0and2"
 pspy_utils.create_directory(test_dir)
@@ -99,7 +99,7 @@ survey_name = ["split_0", "split_1", "split_0", "split_1"]
 
 name_list = []
 id_list = []
-for field in ["T", "E"]:
+for field in ["T", "E", "B"]:
     for s, id in zip(survey_name, survey_id):
         name_list += ["%s%s" % (field, s)]
         id_list += ["%s%s" % (field, id)]
@@ -113,7 +113,7 @@ for name1, id1 in zip(name_list, id_list):
         Clth_dict[id1 + id2] = Clth_dict[id1 + id2][:-2]
 
 coupling_dict = so_cov.cov_coupling_spin0and2_simple(window, lmax, niter=niter, planck=planck)
-analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv)
+analytic_cov = so_cov.cov_spin0and2(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv, mbb_inv, cov_T_E_only=False)
 
 np.save("%s/analytic_cov.npy" % test_dir, analytic_cov)
 
@@ -157,7 +157,7 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
                         ls, ps, binning_file, lmax, type=type, mbb_inv=mbb_inv, spectra=spectra
                     )
                     vec = []
-                    for spec in ["TT", "TE", "ET", "EE"]:
+                    for spec in spectra:
                         vec = np.append(vec, Db[spec])
                     Db_list[spec_name] += [vec]
 
@@ -174,7 +174,7 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
                         "%s/sim_spectra_%s_%04d.dat" % (mc_dir, spec_name, iii), spectra=spectra
                     )
                     vec = []
-                    for spec in ["TT", "TE", "ET", "EE"]:
+                    for spec in spectra:
                         vec = np.append(vec, Db[spec])
                     Db_list[spec_name] += [vec]
 
@@ -213,13 +213,12 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
 
     plt.figure(figsize=(15, 15))
     count = 1
-    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE"]:
+    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE",
+               "TBTB", "BTBT", "BBBB", "TTTB", "TTBT", "TTBB", "TBBT", "TBBB", "BTBB", "EBEB"]:
 
-        plt.subplot(2, 5, count)
-        cov_select = so_cov.selectblock(cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl)
-        analytic_cov_select = so_cov.selectblock(
-            analytic_cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl
-        )
+        plt.subplot(4, 5, count)
+        cov_select = so_cov.selectblock(cov, spectra, n_bins, block=bl)
+        analytic_cov_select = so_cov.selectblock(analytic_cov, spectra, n_bins, block=bl)
         var = cov_select.diagonal()
         analytic_var = analytic_cov_select.diagonal()
 
@@ -237,13 +236,12 @@ if (do_MonteCarlo == True) or (read_MonteCarlo == True):
 
     plt.figure(figsize=(15, 15))
     count = 1
-    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE"]:
+    for bl in ["TTTT", "TETE", "ETET", "EEEE", "TTTE", "TTET", "TTEE", "TEET", "TEEE", "ETEE",
+               "TBTB", "BTBT", "BBBB", "TTTB", "TTBT", "TTBB", "TBBT", "TBBB", "BTBB", "EBEB"]:
 
-        plt.subplot(2, 5, count)
-        cov_select = so_cov.selectblock(cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl)
-        analytic_cov_select = so_cov.selectblock(
-            analytic_cov, ["TT", "TE", "ET", "EE"], n_bins, block=bl
-        )
+        plt.subplot(4, 5, count)
+        cov_select = so_cov.selectblock(cov, spectra, n_bins, block=bl)
+        analytic_cov_select = so_cov.selectblock(analytic_cov, spectra, n_bins, block=bl)
         var = cov_select.diagonal()
         analytic_var = analytic_cov_select.diagonal()
         # plt.semilogy()

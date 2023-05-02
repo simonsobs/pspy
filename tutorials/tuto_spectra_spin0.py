@@ -76,7 +76,7 @@ disc = hp.query_disc(nside, vec, radius=radius * np.pi / 180)
 binary_healpix.data[disc] = 1
 
 # for the CAR survey we will use an apodisation type designed for rectangle maps, and a C1 apodisation for the healpix maps
-apo_type_list = ["Rectangle", "C1"]
+apo_type_list = ["C1", "C1"]
 binary_list = [binary_car, binary_healpix]
 template_list = [template_car, template_healpix]
 run_name = ["run_CAR", "run_HEALPIX"]
