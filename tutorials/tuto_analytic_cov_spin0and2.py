@@ -36,7 +36,7 @@ lmax = 2000
 # the number of iteration in map2alm
 niter = 0
 # the noise on the spin0 component
-rms_uKarcmin_T = 1
+rms_uKarcmin_T = 15
 # the apodisation lengh for the survey mask (in degree)
 apo_radius_degree_survey = 1
 # the number of holes in the point source mask
