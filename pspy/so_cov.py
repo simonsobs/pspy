@@ -613,7 +613,7 @@ def covariance_element_beam(id_element,
                             norm_beam_cov,
                             binning_file,
                             lmax,
-                            cov_T_E_only=cov_T_E_only):
+                            cov_T_E_only=False):
     """
     This routine compute the contribution from beam errors to the analytical covariance of the power spectra
     We want to compute the beam covariance between the two spectra
