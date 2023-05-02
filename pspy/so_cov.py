@@ -672,7 +672,7 @@ def covariance_element_beam(id_element,
     return analytic_cov_from_beam
 
 
-def extract_mbb(mbb_inv, cov_T_E_only=False)):
+def extract_mbb(mbb_inv, cov_T_E_only=False):
     """The mode coupling marix is computed for T,E,B but for now we only construct analytical covariance matrix for T and E
     The B modes is complex with important E->B leakage, this routine extract the T and E part of the mode coupling matrix
 
