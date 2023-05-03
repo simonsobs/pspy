@@ -120,31 +120,6 @@ class so_map:
             downgrade.geometry = downgrade.data.geometry[1:]
         return downgrade
 
-    def set_ncomp(self, ncomp_out):
-        """
-        Change the number of components (I, Q, U) of the
-        ``so_map`` object.
-
-        Parameters
-        ----------
-        ncomp_out: int
-          number of components needed (e.g. 3 to create a
-          template from a window (1 component map))
-        """
-        if self.ncomp == ncomp_out:
-            return
-        if self.ncomp == 1:
-            data = np.stack([self.data] * ncomp_out)
-        elif ncomp_out == 1:
-            data = self.data[0]
-
-        if self.pixel == "HEALPIX":
-            self.data = data
-        if self.pixel == "CAR":
-            self.data = enmap.ndmap(data, wcs = self.data.wcs)
-
-        self.ncomp = ncomp_out
-
     def synfast(self, clfile):
         """Fill a ``so_map`` with a cmb gaussian simulation.
 
@@ -773,6 +748,40 @@ def full_sky_car_template(ncomp, res):
     temp.geometry = temp.data.geometry[1:]
     temp.coordinate = "equ"
     return temp
+
+def car_template_from_shape_wcs(shape, wcs, ncomp_out):
+    """
+    Create a template from shape and wcs args with
+    a number of components `ncomp_out`
+
+    Parameters
+    ----------
+    shape: tuple
+    wcs: wcs object
+    ncomp_out: int
+      number of components needed (e.g. 3 to create a
+      template for (I, Q, U))
+    """
+    ncomp_in = 1 if len(shape) == 2 else shape[0]
+
+    if ncomp_in == ncomp_out:
+        shape_out = shape
+    elif ncomp_in == 1:
+        shape_out = (ncomp_out,) + shape
+    elif ncomp_out == 1:
+        shape_out = shape[1:]
+    else:
+        shape_out = (ncomp_out,) + shape[1:]
+
+    template = so_map()
+    template.data = enmap.zeros(shape_out, wcs=wcs, dtype=None)
+    template.pixel = "CAR"
+    template.nside = None
+    template.ncomp = ncomp_out
+    template.geometry = template.data.geometry[1:]
+    template.coordinate = "equ"
+
+    return template
 
 
 def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
