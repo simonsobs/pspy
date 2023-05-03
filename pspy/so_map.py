@@ -762,16 +762,9 @@ def car_template_from_shape_wcs(shape, wcs, ncomp_out):
       number of components needed (e.g. 3 to create a
       template for (I, Q, U))
     """
-    ncomp_in = 1 if len(shape) == 2 else shape[0]
-
-    if ncomp_in == ncomp_out:
-        shape_out = shape
-    elif ncomp_in == 1:
-        shape_out = (ncomp_out,) + shape
-    elif ncomp_out == 1:
-        shape_out = shape[1:]
-    else:
-        shape_out = (ncomp_out,) + shape[1:]
+    shape_out = shape[-2:]
+    if ncomp_out > 1:
+        shape_out = (ncomp_out,) + shape_out
 
     template = so_map()
     template.data = enmap.zeros(shape_out, wcs=wcs, dtype=None)
