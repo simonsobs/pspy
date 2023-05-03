@@ -433,7 +433,8 @@ def cov_spin0and2(Clth_dict,
                   mbb_inv_ab,
                   mbb_inv_cd,
                   binned_mcm=True,
-                  cov_T_E_only=True):
+                  cov_T_E_only=True,
+                  dtype=np.float64):
                   
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
@@ -469,7 +470,7 @@ def cov_spin0and2(Clth_dict,
         speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
     
     nspec = len(speclist)
-    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell))
+    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell), dtype=dtype)
 
     for i, (W, X) in enumerate(speclist):
         for j, (Y, Z) in enumerate(speclist):
@@ -495,8 +496,8 @@ def cov_spin0and2(Clth_dict,
     
     full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
     
-    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only)
-    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only)
+    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
+    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
@@ -518,7 +519,8 @@ def generalized_cov_spin0and2(coupling_dict,
                               mbb_inv_cd,
                               binned_mcm=True,
                               return_full_cov=False,
-                              cov_T_E_only=True):
+                              cov_T_E_only=True,
+                              dtype=np.float64):
 
     """
     This routine deserves some explanation
@@ -571,7 +573,7 @@ def generalized_cov_spin0and2(coupling_dict,
         speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
     
     nspec = len(speclist)
-    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell))
+    full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell), dtype=dtype)
 
     for i, (W, X) in enumerate(speclist):
         for j, (Y, Z) in enumerate(speclist):
@@ -592,8 +594,8 @@ def generalized_cov_spin0and2(coupling_dict,
             M += coupling_dict[id2 + id3] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
             full_analytic_cov[i * n_ell: (i + 1) * n_ell, j * n_ell: (j + 1) * n_ell] = M
 
-    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only)
-    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only)
+    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
+    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
@@ -672,7 +674,7 @@ def covariance_element_beam(id_element,
     return analytic_cov_from_beam
 
 
-def extract_mbb(mbb_inv, cov_T_E_only=True):
+def extract_mbb(mbb_inv, cov_T_E_only=True, dtype=np.float64):
     """The mode coupling marix is computed for T,E,B but for now we only construct analytical covariance matrix for T and E
     The B modes is complex with important E->B leakage, this routine extract the T and E part of the mode coupling matrix
 
@@ -686,7 +688,7 @@ def extract_mbb(mbb_inv, cov_T_E_only=True):
     """
     nbins = mbb_inv["spin0xspin0"].shape[0]
     if cov_T_E_only:
-        mbb_inv_array = np.zeros((4*nbins, 4*nbins))
+        mbb_inv_array = np.zeros((4*nbins, 4*nbins), dtype=dtype)
         # TT
         mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
         # TE
@@ -696,7 +698,7 @@ def extract_mbb(mbb_inv, cov_T_E_only=True):
         # EE
         mbb_inv_array[3*nbins:4*nbins, 3*nbins:4*nbins] = mbb_inv["spin2xspin2"][0:nbins, 0:nbins]
     else:
-        mbb_inv_array = np.zeros((9*nbins, 9*nbins))
+        mbb_inv_array = np.zeros((9*nbins, 9*nbins), dtype=dtype)
         # TT
         mbb_inv_array[0*nbins:1*nbins, 0*nbins:1*nbins] = mbb_inv["spin0xspin0"]
         # TE
