@@ -712,7 +712,7 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     box = get_box(ra0, ra1, dec0, dec1)
     res = res * np.pi / (180 * 60)
     shape, wcs = enmap.geometry(box, res=res, pre=pre)
-    return car_template_from_shape_wcs(shape, wcs, ncomp)
+    return car_template_from_shape_wcs(ncomp, shape, wcs)
 
 
 def full_sky_car_template(ncomp, res):
@@ -733,20 +733,20 @@ def full_sky_car_template(ncomp, res):
 
     res = res * np.pi / (180 * 60)
     shape, wcs = enmap.fullsky_geometry(res=res, dims=pre)
-    return car_template_from_shape_wcs(shape, wcs, ncomp)
+    return car_template_from_shape_wcs(ncomp, shape, wcs)
 
-def car_template_from_shape_wcs(shape, wcs, ncomp_out):
+def car_template_from_shape_wcs(ncomp_out, shape, wcs):
     """
     Create a template from shape and wcs args with
     a number of components `ncomp_out`
 
     Parameters
     ----------
-    shape: tuple
-    wcs: wcs object
     ncomp_out: int
       number of components needed (e.g. 3 to create a
       template for (I, Q, U))
+    shape: tuple
+    wcs: wcs object
     """
     shape_out = shape[-2:]
     if ncomp_out > 1:
