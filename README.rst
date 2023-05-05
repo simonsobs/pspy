@@ -80,7 +80,8 @@ Authors
 * `Thibaut Louis <https://thibautlouis.github.io>`_
 * Steve Choi
 * DW Han
-* Xavier Garrido
+* `Xavier Garrido <https://xgarrido.github.io>`_
 * Sigurd Naess
+* `Adrien La Posta <https://adrien-laposta.github.io>`_
 
 The code is part of `PSpipe <https://github.com/simonsobs/PSpipe>`_ the Simons Observatory power spectrum pipeline.
