@@ -501,9 +501,9 @@ def cov_spin0and2(Clth_dict,
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
 
     return analytic_cov
@@ -599,9 +599,9 @@ def generalized_cov_spin0and2(coupling_dict,
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
         if return_full_cov == True:
             return full_analytic_cov
 
