@@ -461,7 +461,6 @@ def cov_spin0and2(Clth_dict,
         if true don't do B
     """
 
-    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_ell = Clth_dict["TaTb"].shape[0]
     
     if cov_T_E_only:
@@ -565,7 +564,6 @@ def generalized_cov_spin0and2(coupling_dict,
     na, nb, nc, nd = id_element
 
     n_ell = coupling_dict["TaTcTbTd"].shape[0]
-    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, n_ell)
 
     if cov_T_E_only:
         speclist = ["TT", "TE", "ET", "EE"]
