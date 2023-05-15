@@ -959,3 +959,143 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
 
     n_el = int(mc_cov.shape[0] / 2)
     return mean_a, mean_b, mc_cov[n_el:, :n_el]
+
+
+# only works for TTTT for now
+def generate_aniso_couplings(survey_name, win, var, lmax, niter=0):
+    """
+    survey_name : list of names of the four splits
+    win : dict with windows with keys 'Ta', "Tb', ...
+    var : dict with variance maps, with keys 'Ta', 'Tb'
+    """
+    survey_id = ["Ta", "Tb", "Tc", "Td"]
+    # set up some tools to work with the survey names
+    id2name = dict(zip(survey_id, survey_name))
+
+    var_a, var_b, var_c, var_d = (
+        win['Ta'].copy(), win['Tb'].copy(), win['Tc'].copy(), win['Td'].copy())
+    
+    pixsizes = win['Ta'].data.pixsizemap()  # assuming they're the same footprint
+    var_a.data *= np.sqrt(pixsizes * var['Ta'].data)
+    var_b.data *= np.sqrt(pixsizes * var['Tb'].data)
+    var_c.data *= np.sqrt(pixsizes * var['Tc'].data)
+    var_d.data *= np.sqrt(pixsizes * var['Td'].data)
+
+    zero_var = win['Ta'].copy()
+    zero_var.data *= 0
+
+    # allows indexing with the delta function
+    v_a = (zero_var, var_a)
+    v_b = (zero_var, var_b)
+    v_c = (zero_var, var_c)
+    v_d = (zero_var, var_d)
+
+    coupling_1 = cov_coupling_spin0(
+        {'Ta': win['Ta'], 
+        'Tb': win['Tb'], 
+        'Tc': win['Tc'], 
+        'Td': win['Td']}, 
+        lmax, niter)['TaTcTbTd']
+
+    coupling_2 = cov_coupling_spin0(
+        {'Ta': win['Ta'], 
+        'Tb': win['Tb'], 
+        'Tc': win['Tc'], 
+        'Td': win['Td']}, 
+        lmax, niter)['TaTdTbTc']
+
+    coupling_3 = cov_coupling_spin0(
+        {'Ta': win['Ta'], 
+        'Tb': v_b[delta2(id2name['Tb'], id2name['Td'])], 
+        'Tc': win['Tc'], 
+        'Td': v_d[delta2(id2name['Tb'], id2name['Td'])]}, 
+        lmax, niter)['TaTcTbTd']
+
+    coupling_4 = cov_coupling_spin0(
+        {'Ta': v_a[delta2(id2name['Ta'], id2name['Tc'])], 
+        'Tb': win['Tb'], 
+        'Tc': v_c[delta2(id2name['Ta'], id2name['Tc'])], 
+        'Td': win['Td']}, 
+        lmax, niter)['TaTcTbTd']
+
+    coupling_5 = cov_coupling_spin0(
+        {'Ta': win['Ta'], 
+        'Tb': v_a[delta2(id2name['Tb'], id2name['Tc'])], 
+        'Tc': v_c[delta2(id2name['Tb'], id2name['Tc'])], 
+        'Td': win['Td']}, 
+        lmax, niter)['TaTdTbTc']
+
+    coupling_6 = cov_coupling_spin0(
+        {'Ta': v_a[delta2(id2name['Ta'], id2name['Td'])], 
+        'Tb': win['Tb'], 
+        'Tc': win['Tc'],
+        'Td': v_d[delta2(id2name['Ta'], id2name['Td'])]}, 
+        lmax, niter)['TaTdTbTc']
+
+    coupling_7 = cov_coupling_spin0(
+        {'Ta': v_a[delta2(id2name['Ta'], id2name['Tc'])], 
+        'Tb': v_b[delta2(id2name['Tb'], id2name['Td'])], 
+        'Tc': v_c[delta2(id2name['Ta'], id2name['Tc'])],
+        'Td': v_d[delta2(id2name['Tb'], id2name['Td'])]}, 
+        lmax, niter)['TaTcTbTd']
+
+    coupling_8 = cov_coupling_spin0(
+        {'Ta': v_a[delta2(id2name['Ta'], id2name['Td'])], 
+        'Tb': v_b[delta2(id2name['Tb'], id2name['Tc'])], 
+        'Tc': v_c[delta2(id2name['Tb'], id2name['Tc'])],
+        'Td': v_d[delta2(id2name['Ta'], id2name['Td'])]}, 
+        lmax, niter)['TaTcTbTd']
+
+    return [coupling_1, coupling_2, coupling_3, coupling_4, 
+            coupling_5, coupling_6, coupling_7, coupling_8]
+
+
+def cov_spin0_aniso1(Clth, Rl, couplings, binning_file, lmax, 
+                     mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
+    """Estimate the analytic covariance in the case of anisotropic noise pixel variance, 
+       using the theoretical Cls, the ratios of noise to white noise power spectra, the
+       coupling matrices estimated from the masks and variance maps, and the mode-coupling
+       matrices.
+
+    Parameters
+    ----------
+
+    Clth: dictionary
+      A dictionary of theoretical power spectrum (auto and cross) for the different split 
+      combinations ('TaTb' etc)
+    Rl: dictionary
+      a dictionary containing the ratios of noise power spectra to white noise
+    couplings: list of arrays
+      a list containing the eight coupling matrices involved in this covariance
+    binning_file: data file
+      a binning file with format bin low, bin high, bin mean
+    lmax: int
+      the maximum multipole to consider
+    mbb_inv_ab: 2d array
+      the inverse mode coupling matrix for the 'TaTb' power spectrum
+    mbb_inv_cd: 2d array
+      the inverse mode coupling matrix for the 'TcTd' power spectrum
+    binned_mcm: boolean
+      specify if the mode coupling matrices are binned or not
+
+    """
+
+    geom = lambda cl : symmetrize(cl, mode="geo")
+
+    cov =  geom(Clth["TaTc"]) * geom(Clth["TbTd"]) * couplings[0],
+    cov += geom(Clth["TaTd"]) * geom(Clth["TbTc"]) * couplings[1]
+    cov += geom(Rl['Tb']) * geom(Rl['Td']) * geom(Clth["TaTc"]) * couplings[2]
+    cov += geom(Rl['Ta']) * geom(Rl['Tc']) * geom(Clth["TbTd"]) * couplings[3]
+    cov += geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Clth["TaTd"]) * couplings[4]
+    cov += geom(Rl['Ta']) * geom(Rl['Td']) * geom(Clth["TbTc"]) * couplings[5]
+    cov += geom(Rl['Ta']) * geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Rl['Td']) * couplings[6]
+    cov += geom(Rl['Ta']) * geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Rl['Td']) * couplings[7]
+
+    if binned_mcm == True:
+        analytic_cov = bin_mat(cov, binning_file, lmax)
+        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+    else:
+        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, cov), mbb_inv_cd.T)
+        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
+        
+    return cov
