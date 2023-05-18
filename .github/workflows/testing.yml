@@ -50,12 +50,12 @@ jobs:
     - name: Test notebooks (Only on Linux for saving time)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        pip install jupyter
+        python -m pip install jupyter
         jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
 
     - name: Comparing pspy to NaMaster
       if: matrix.os == 'ubuntu-latest'
       run: |
-        sudo apt-get install -y libcfitsio-dev
+        sudo apt-get install -y libcfitsio-dev libfftw3-dev
         python -m pip install pymaster
         python -m unittest pspy/tests/test_pspy_namaster.py
