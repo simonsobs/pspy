@@ -1,10 +1,12 @@
 """Tests pspy versus namaster."""
 import os
 import tempfile
+import time
 import unittest
 
 import healpy as hp
 import numpy as np
+import pspy
 from pspy import pspy_utils, so_map, so_mcm, so_spectra, so_window, sph_tools
 
 
@@ -115,11 +117,19 @@ def run_namaster():
 
 class SOPspyNamasterTests(unittest.TestCase):
     def setUp(self):
+        print(f"pspy current version : {pspy.__version__}")
+        # This sould be fixed see https://github.com/LSSTDESC/NaMaster/issues/172
+        # print(f"namaster current version : {nmt.__version__}")
         pass
 
     def test_pspy_namaster(self):
+        t0 = time.time()
         lb_pspy, Clb_pspy = run_pspy()
+        print(f"pspy runs in {time.time() - t0:.2f} seconds")
+
+        t0 = time.time()
         lb_nmt, Clb_nmt = run_namaster()
+        print(f"namaster runs in {time.time() - t0:.2f} seconds")
 
         decimal = 12
         for spec in spectra:
