@@ -57,5 +57,5 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get install -y libcfitsio-dev
-        pip install pymaster
+        python -m pip install pymaster
         python -m unittest pspy/tests/test_pspy_namaster.py
