@@ -52,3 +52,10 @@ jobs:
       run: |
         pip install jupyter
         jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
+
+    - name: Comparing pspy to NaMaster
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install -y libcfitsio-dev
+        pip install pymaster
+        python -m unittest pspy/tests/test_pspy_namaster.py
