@@ -419,9 +419,9 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
 
     if binned_mcm == True:
         analytic_cov = bin_mat(cov, binning_file, lmax)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ cov @ mbb_inv_cd.T
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
         
     return analytic_cov
@@ -461,7 +461,6 @@ def cov_spin0and2(Clth_dict,
         if true don't do B
     """
 
-    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_ell = Clth_dict["TaTb"].shape[0]
     
     if cov_T_E_only:
@@ -501,9 +500,9 @@ def cov_spin0and2(Clth_dict,
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
 
     return analytic_cov
@@ -565,7 +564,6 @@ def generalized_cov_spin0and2(coupling_dict,
     na, nb, nc, nd = id_element
 
     n_ell = coupling_dict["TaTcTbTd"].shape[0]
-    bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, n_ell)
 
     if cov_T_E_only:
         speclist = ["TT", "TE", "ET", "EE"]
@@ -599,9 +597,9 @@ def generalized_cov_spin0and2(coupling_dict,
 
     if binned_mcm == True:
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, full_analytic_cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
         if return_full_cov == True:
             return full_analytic_cov
 
