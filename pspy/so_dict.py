@@ -74,7 +74,6 @@ class so_dict(dict):
     def write_to_file(self, filename, mode="w"):
         f = open(filename, mode)
         keys = self.keys()
-        keys.sort()
         for key in keys:
             f.write("%s = %s\n" % (key, repr(self[key])))
         f.close()
