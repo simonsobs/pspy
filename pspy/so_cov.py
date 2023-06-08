@@ -693,12 +693,12 @@ def covariance_element_beam(id_element,
 
 def block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
 
-    """Suggestion for adrien to do an operation of the type A M B, where A and B are block diagonal matrix
+    """Suggestion by adrien to do an operation of the type A M B, where A and B are block diagonal matrix
     Parameters
     ----------
     nblocks: integer
         the number of block of the block diagonal matrix
-    slces: dict of tuple of integer
+    slices: dict of tuple of integer
         give the min and max indices of each block
     mbb_inv_ab_list: list of 2d array
         list of the inverse of the mode coupling matrix
