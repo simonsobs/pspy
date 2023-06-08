@@ -506,13 +506,13 @@ def cov_spin0and2(Clth_dict,
             full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
     else:
-        nblocks, slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
-        nblocks, slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
+        slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
+        slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
         if binned_mcm == True:
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-            analytic_cov = block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
+            analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
         else:
-            full_analytic_cov = block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
+            full_analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
 
     return analytic_cov
@@ -614,13 +614,13 @@ def generalized_cov_spin0and2(coupling_dict,
             full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
     else:
-        nblocks, slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
-        nblocks, slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
+        slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
+        slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
         if binned_mcm == True:
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-            analytic_cov = block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
+            analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
         else:
-            full_analytic_cov = block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
+            full_analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
             
             
@@ -691,14 +691,12 @@ def covariance_element_beam(id_element,
     return analytic_cov_from_beam
 
 
-def block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
+def block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
 
     """Suggestion by adrien to do an operation of the type A M B, where A and B are block diagonal matrix
     Parameters
     ----------
-    nblocks: integer
-        the number of block of the block diagonal matrix
-    slices: dict of tuple of integer
+    slices: list of tuple of integer
         give the min and max indices of each block
     mbb_inv_ab_list: list of 2d array
         list of the inverse of the mode coupling matrix
@@ -708,7 +706,8 @@ def block_diagonal_mult(nblocks, slices, mbb_inv_ab_list, mbb_inv_cd_list, analy
         analytic covariance matrix
     
     """
-
+    nblocks = len(slices)
+    
     for i in range(nblocks):
         for j in range(nblocks):
         
@@ -742,14 +741,14 @@ def extract_mbb_list(mbb_inv,
 
 
     nbins = mbb_inv["spin0xspin0"].shape[0]
-    slices = {}
+    slices = []
     
     if cov_T_E_only == False:
 
         nblocks = 6
         for i in range(nblocks - 1):
-            slices[i] = (i * nbins, (i + 1) * nbins)
-        slices[5] = (5*nbins, 9*nbins) # the EE-EB-BE-BB block
+            slices += [(i * nbins, (i + 1) * nbins)]
+        slices += [(5*nbins, 9*nbins)] # the EE-EB-BE-BB block
 
         mbb_list = [mbb_inv["spin0xspin0"],
                     mbb_inv["spin0xspin2"],
@@ -761,7 +760,7 @@ def extract_mbb_list(mbb_inv,
     
         nblocks = 4
         for i in range(nblocks):
-            slices[i] = (i * nbins, (i + 1) * nbins)
+            slices += [(i * nbins, (i + 1) * nbins)]
 
         mbb_list = [mbb_inv["spin0xspin0"],
                     mbb_inv["spin0xspin2"],
@@ -769,11 +768,12 @@ def extract_mbb_list(mbb_inv,
                     mbb_inv["spin2xspin2"][0:nbins, 0:nbins]]
 
     for i in range(nblocks):
-        mbb_list[i] = mbb_list[i].astype(dtype)
+        if mbb_list[i].dtype != dtype:
+            mbb_list[i] = mbb_list[i].astype(dtype)
         if transpose == True:
             mbb_list[i] = mbb_list[i].T
     
-    return nblocks, slices, mbb_list
+    return slices, mbb_list
 
 
 
