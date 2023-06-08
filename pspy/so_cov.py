@@ -748,7 +748,7 @@ def extract_mbb_list(mbb_inv,
         nblocks = 6
         for i in range(nblocks - 1):
             slices += [(i * nbins, (i + 1) * nbins)]
-        slices += [(5*nbins, 9*nbins)] # the EE-EB-BE-BB block
+        slices += [(5 * nbins, 9 * nbins)] # the EE-EB-BE-BB block
 
         mbb_list = [mbb_inv["spin0xspin0"],
                     mbb_inv["spin0xspin2"],
