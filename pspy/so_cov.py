@@ -679,14 +679,16 @@ def covariance_element_beam(id_element,
     nspec = len(speclist)
     analytic_cov_from_beam = np.zeros((nspec * nbins, nspec * nbins))
     
+    M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
+    M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
+
     for i, spec1 in enumerate(speclist):
         for j, spec2 in enumerate(speclist):
-
-            M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
-            M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
-            M *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
+            
+            cov = M.copy()
+            cov *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
         
-            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(M, binning_file, lmax)
+            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(cov, binning_file, lmax)
 
     return analytic_cov_from_beam
 
