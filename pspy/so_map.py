@@ -724,7 +724,7 @@ def full_sky_car_template(ncomp, res):
     shape, wcs = enmap.fullsky_geometry(res=res, dims=pre)
     return car_template_from_shape_wcs(ncomp, shape, wcs)
 
-def car_template_from_shape_wcs(ncomp_out, shape, wcs):
+def car_template_from_shape_wcs(ncomp_out, shape, wcs, dtype=np.float64):
     """
     Create a template from shape and wcs args with
     a number of components `ncomp_out`
@@ -742,7 +742,7 @@ def car_template_from_shape_wcs(ncomp_out, shape, wcs):
         shape_out = (ncomp_out,) + shape_out
 
     template = so_map()
-    template.data = enmap.zeros(shape_out, wcs=wcs, dtype=None)
+    template.data = enmap.zeros(shape_out, wcs=wcs, dtype=dtype)
     template.pixel = "CAR"
     template.nside = None
     template.ncomp = ncomp_out
