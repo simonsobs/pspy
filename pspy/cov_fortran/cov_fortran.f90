@@ -20,6 +20,26 @@ subroutine calc_cov_elem_spin0(ac_bd, ad_bc, l1, l2, nlmax, elems)
     end do
 end subroutine
 
+subroutine simple_kahan(arr, num_elems, result)
+    implicit none
+    integer, intent(in)    :: num_elems
+    real(8), intent(in)    :: arr(:)
+    real(8), intent(inout) :: result(:)
+    real(8)                :: summ = 0.
+    real(8)                :: y = 0.
+    real(8)                :: t = 0.
+    real(8)                :: c = 0.
+    integer                :: i
+    summ = 0.
+    do i = 1, num_elems
+        y = arr(i) - c
+        t = summ + y
+        c = (t - summ) - y
+        summ = t
+    end do
+    result(1) = summ
+end subroutine
+
 subroutine calc_cov_elem_spin0and2_simple(TaTcTbTd, TaTdTbTc, PaPcPbPd, PaPdPbPc, &
                                         & TaTcPbPd, TaPdPbTc, PaPcTbTd, PaTdTbPc, &
                                         & TaPcTbPd, TaPdTbPc, TaTcTbPd, TaPdTbTc, &

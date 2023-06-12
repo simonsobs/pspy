@@ -156,7 +156,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         
         if l_toep < lmax:
             # For toepliz fill the matrix
-            coupling[0] = so_mcm.format_toepliz_fortran(coupling[0], l_toep, maxl)
+            coupling[0] = so_mcm.format_toepliz_fortran(coupling[0], l_toep, lmax)
 
         indexlist=np.zeros(32, dtype=np.int8)
 
@@ -960,6 +960,13 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
     n_el = int(mc_cov.shape[0] / 2)
     return mean_a, mean_b, mc_cov[n_el:, :n_el]
 
+
+
+def simple_kahan(a):
+    """call a simple fortran implemenntation of kahan summation, takes 1D array"""
+    res = np.zeros(1)
+    cov_fortran.simple_kahan(a, len(a), res)
+    return res[0]
 
 # only works for TTTT for now
 def generate_aniso_couplings(survey_name, win, var, lmax, niter=0):
