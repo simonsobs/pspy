@@ -25,7 +25,6 @@ class so_map:
         self.nside = None
         self.ncomp = None
         self.data = None
-        self.geometry = None
         self.coordinate = None
 
     def copy(self):
@@ -40,7 +39,6 @@ class so_map:
         print("number of components:", self.ncomp)
         print("number of pixels:", self.data.shape[:] if self.ncomp == 1 else self.data.shape[1:])
         print("nside:", self.nside)
-        print("geometry:", self.geometry)
         print("coordinates:", self.coordinate)
 
     def write_map(self, file_name):
@@ -95,7 +93,6 @@ class so_map:
             upgrade.nside = nside_out
         if self.pixel == "CAR":
             upgrade.data = enmap.upgrade(self.data, factor)
-            upgrade.geometry = upgrade.data.geometry[1:]
         return upgrade
 
     def downgrade(self, factor):
@@ -117,7 +114,6 @@ class so_map:
             downgrade.nside = nside_out
         if self.pixel == "CAR":
             downgrade.data = enmap.downgrade(self.data, factor)
-            downgrade.geometry = downgrade.data.geometry[1:]
         return downgrade
 
     def synfast(self, clfile):
@@ -445,7 +441,6 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
             new_map.data = hp.fitsfunc.read_map(file, field=fields_healpix)
 
         new_map.nside = hp.pixelfunc.get_nside(new_map.data)
-        new_map.geometry = "healpix geometry"
         try:
             new_map.coordinate = header["SKYCOORD"]
         except:
@@ -468,7 +463,6 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
             new_map.data = enmap.read_map(file)
 
         new_map.nside = None
-        new_map.geometry = new_map.data.geometry[1:]
         new_map.coordinate = header["RADESYS"]
         if new_map.coordinate == "ICRS":
             new_map.coordinate = "equ"
@@ -508,7 +502,6 @@ def from_components(T, Q, U):
     new_map.pixel = "CAR"
     new_map.nside = None
     new_map.ncomp = ncomp
-    new_map.geometry = T.geometry[1:]
     new_map.coordinate = "equ"
 
     return new_map
@@ -536,7 +529,6 @@ def get_submap_car(map_car, box, mode="round"):
 
     submap = map_car.copy()
     submap.data = map_car.data.submap(box, mode=mode)
-    submap.geometry = map_car.data.submap(box, mode=mode).geometry[1:]
 
     return submap
 
@@ -583,11 +575,9 @@ def from_enmap(emap):
     header = hdulist[0].header
     new_map.pixel = header["CTYPE1"][-3:]
     shape, wcs = emap.geometry
-    new_map.geometry = shape[1:]
     new_map.ncomp = shape[0]
     new_map.data = emap.copy()
     new_map.nside = None
-    new_map.geometry = new_map.data.geometry[1:]
     new_map.coordinate = header["RADESYS"]
     if new_map.coordinate == "ICRS":
         new_map.coordinate = "equ"
@@ -686,7 +676,6 @@ def healpix_template(ncomp, nside, coordinate=None):
     temp.pixel = "HEALPIX"
     temp.ncomp = ncomp
     temp.nside = nside
-    temp.geometry = "healpix geometry"
     temp.coordinate = coordinate
     return temp
 
@@ -757,7 +746,6 @@ def car_template_from_shape_wcs(ncomp_out, shape, wcs):
     template.pixel = "CAR"
     template.nside = None
     template.ncomp = ncomp_out
-    template.geometry = template.data.geometry[1:]
     template.coordinate = "equ"
 
     return template
