@@ -968,6 +968,25 @@ def simple_kahan(a):
     cov_fortran.simple_kahan(a, len(a), res)
     return res[0]
 
+
+def measure_white_noise_level(var, mask, summation_func=so_cov.simple_kahan):
+    """take enmaps of map variance and mask, outputs white noise power spectrum amplitude
+    Parameters
+    ----------
+
+    var: enmap
+      variance map
+    mask: enmap
+      window map
+    """
+    buffer = mask.flatten()  # save some memory by reusing one buffer
+    buffer *= buffer        # ZL: np.sum not accurate enough, math.fsum used instead
+    mask_tot = summation_func(buffer)  # sum(mask^2)
+    buffer *= var.ravel()
+    buffer *= var.pixsizemap().flatten()
+    noise_tot = summation_func(buffer)
+    return noise_tot / mask_tot
+
 # only works for TTTT for now
 def generate_aniso_couplings(survey_name, win, var, lmax, niter=0):
     """
