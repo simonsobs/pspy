@@ -967,7 +967,7 @@ def simple_kahan(a):
     return res[0]
 
 
-def measure_white_noise_level(var, mask, summation_func=so_cov.simple_kahan):
+def measure_white_noise_level(var, mask, summation_func=cov_fortran.simple_kahan):
     """take enmaps of map variance and mask, outputs white noise power spectrum amplitude
     Parameters
     ----------
