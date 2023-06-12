@@ -959,15 +959,7 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
     return mean_a, mean_b, mc_cov[n_el:, :n_el]
 
 
-
-def simple_kahan(a):
-    """call a simple fortran implemenntation of kahan summation, takes 1D array"""
-    res = np.zeros(1)
-    cov_fortran.simple_kahan(a, len(a), res)
-    return res[0]
-
-
-def measure_white_noise_level(var, mask, summation_func=simple_kahan):
+def measure_white_noise_level(var, mask, dtype=np.float64):
     """take enmaps of map variance and mask, outputs white noise power spectrum amplitude
     Parameters
     ----------
@@ -977,12 +969,12 @@ def measure_white_noise_level(var, mask, summation_func=simple_kahan):
     mask: enmap
       window map
     """
-    buffer = mask.flatten()  # save some memory by reusing one buffer
+    buffer = mask.flatten().astype(dtype)  # save some memory by reusing one buffer
     buffer *= buffer        # ZL: np.sum not accurate enough, math.fsum used instead
-    mask_tot = summation_func(buffer)  # sum(mask^2)
+    mask_tot = np.sum(buffer)  # sum(mask^2)
     buffer *= var.ravel()
     buffer *= var.pixsizemap().flatten()
-    noise_tot = summation_func(buffer)
+    noise_tot = np.sum(buffer)
     return noise_tot / mask_tot
 
 # only works for TTTT for now
