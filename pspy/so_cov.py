@@ -434,7 +434,8 @@ def cov_spin0and2(Clth_dict,
                   mbb_inv_cd,
                   binned_mcm=True,
                   cov_T_E_only=True,
-                  dtype=np.float64):
+                  dtype=np.float64,
+                  old_way=False):
                   
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
@@ -495,17 +496,27 @@ def cov_spin0and2(Clth_dict,
     
     full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
     
-    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
-    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
-
-    if binned_mcm == True:
-        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
+    if old_way == True:
+        mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
+        mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
+        if binned_mcm == True:
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+            analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
+        else:
+            full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
     else:
-        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
-        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+        slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
+        slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
+        if binned_mcm == True:
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+            analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
+        else:
+            full_analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
 
     return analytic_cov
+
 
 def generalized_cov_spin0and2(coupling_dict,
                               id_element,
@@ -519,7 +530,8 @@ def generalized_cov_spin0and2(coupling_dict,
                               binned_mcm=True,
                               return_full_cov=False,
                               cov_T_E_only=True,
-                              dtype=np.float64):
+                              dtype=np.float64,
+                              old_way=False):
 
     """
     This routine deserves some explanation
@@ -592,19 +604,26 @@ def generalized_cov_spin0and2(coupling_dict,
             M += coupling_dict[id2 + id3] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
             full_analytic_cov[i * n_ell: (i + 1) * n_ell, j * n_ell: (j + 1) * n_ell] = M
 
-    mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
-    mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
-
-    if binned_mcm == True:
-        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
+    if old_way == True:
+        mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
+        mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
+        if binned_mcm == True:
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+            analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
+        else:
+            full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
     else:
-        full_analytic_cov = mbb_inv_ab @ full_analytic_cov @ mbb_inv_cd.T
-        if return_full_cov == True:
-            return full_analytic_cov
-
-        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-
+        slices, mbb_inv_ab_list = extract_mbb_list(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=False)
+        slices, mbb_inv_cd_list = extract_mbb_list(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype, transpose=True)
+        if binned_mcm == True:
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+            analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov)
+        else:
+            full_analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
+            analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
+            
+            
     return analytic_cov
 
 
@@ -660,26 +679,113 @@ def covariance_element_beam(id_element,
     nspec = len(speclist)
     analytic_cov_from_beam = np.zeros((nspec * nbins, nspec * nbins))
     
+    M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
+    M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
+
     for i, spec1 in enumerate(speclist):
         for j, spec2 in enumerate(speclist):
-
-            M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
-            M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
-            M *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
+            
+            cov = M.copy()
+            cov *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
         
-            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(M, binning_file, lmax)
+            analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(cov, binning_file, lmax)
 
     return analytic_cov_from_beam
 
 
-def extract_mbb(mbb_inv, cov_T_E_only=True, dtype=np.float64):
-    """The mode coupling marix is computed for T,E,B but for now we only construct analytical covariance matrix for T and E
-    The B modes is complex with important E->B leakage, this routine extract the T and E part of the mode coupling matrix
+def block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
+
+    """Suggestion by adrien to do an operation of the type A M B, where A and B are block diagonal matrix
+    Parameters
+    ----------
+    slices: list of tuple of integer
+        give the min and max indices of each block
+    mbb_inv_ab_list: list of 2d array
+        list of the inverse of the mode coupling matrix
+    mbb_inv_cd_list: list of 2d array
+        list of the transpose of the inverse of the mode coupling matrix
+    analytic_cov: 2d array
+        analytic covariance matrix
+    
+    """
+    nblocks = len(slices)
+    
+    for i in range(nblocks):
+        for j in range(nblocks):
+        
+            min_i, max_i = slices[i]
+            min_j, max_j = slices[j]
+
+            analytic_cov[min_i: max_i, min_j: max_j] = mbb_inv_ab_list[i] @ analytic_cov[min_i: max_i, min_j: max_j] @ mbb_inv_cd_list[j]
+            
+    return analytic_cov
+
+def extract_mbb_list(mbb_inv,
+                     cov_T_E_only=True,
+                     dtype=np.float64,
+                     transpose=False):
+                     
+    """extract a list of inverse mode coupling matrix, you can optionnaly choose the dtype, if you want only the TT-TE-ET-EE part,
+    and if you want to transpose it
 
     Parameters
     ----------
 
-    mbb_inv: 2d array
+    mbb_inv: dict of 2d arrays
+      the inverse spin0 and 2 mode coupling matrix
+    cov_T_E_only: boolean
+        if true don't do B
+    dtype: np dtype
+        choose the type to save memory
+    transpose: boolean
+        wether to transpose it or not
+    """
+
+
+    nbins = mbb_inv["spin0xspin0"].shape[0]
+    slices = []
+    
+    if cov_T_E_only == False:
+
+        nblocks = 6
+        for i in range(nblocks - 1):
+            slices += [(i * nbins, (i + 1) * nbins)]
+        slices += [(5 * nbins, 9 * nbins)] # the EE-EB-BE-BB block
+
+        mbb_list = [mbb_inv["spin0xspin0"],
+                    mbb_inv["spin0xspin2"],
+                    mbb_inv["spin0xspin2"],
+                    mbb_inv["spin2xspin0"],
+                    mbb_inv["spin2xspin0"],
+                    mbb_inv["spin2xspin2"]]
+    else:
+    
+        nblocks = 4
+        for i in range(nblocks):
+            slices += [(i * nbins, (i + 1) * nbins)]
+
+        mbb_list = [mbb_inv["spin0xspin0"],
+                    mbb_inv["spin0xspin2"],
+                    mbb_inv["spin2xspin0"],
+                    mbb_inv["spin2xspin2"][0:nbins, 0:nbins]]
+
+    for i in range(nblocks):
+        if mbb_list[i].dtype != dtype:
+            mbb_list[i] = mbb_list[i].astype(dtype)
+        if transpose == True:
+            mbb_list[i] = mbb_list[i].T
+    
+    return slices, mbb_list
+
+
+
+def extract_mbb(mbb_inv, cov_T_E_only=True, dtype=np.float64):
+    """The mode coupling marix is computed for T,E,B but for if cov_T_E_only=True we only construct analytical covariance matrix for T and E
+
+    Parameters
+    ----------
+
+    mbb_inv: dict of 2d arrays
       the inverse spin0 and 2 mode coupling matrix
     cov_T_E_only: boolean
         if true don't do B

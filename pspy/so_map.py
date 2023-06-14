@@ -495,7 +495,7 @@ def from_components(T, Q, U):
     shape, wcs = T.geometry
     shape = (ncomp,) + shape
     new_map = so_map()
-    new_map.data = enmap.zeros(shape, wcs=wcs, dtype=None)
+    new_map.data = enmap.zeros(shape, wcs=wcs, dtype=T.dtype)
     new_map.data[0] = T
     new_map.data[1] = Q
     new_map.data[2] = U
@@ -680,7 +680,7 @@ def healpix_template(ncomp, nside, coordinate=None):
     return temp
 
 
-def car_template(ncomp, ra0, ra1, dec0, dec1, res):
+def car_template(ncomp, ra0, ra1, dec0, dec1, res, dtype=np.float64):
     """Create a ``so_map`` template with CAR pixellisation in equ coordinates.
 
     Parameters
@@ -701,10 +701,10 @@ def car_template(ncomp, ra0, ra1, dec0, dec1, res):
     box = get_box(ra0, ra1, dec0, dec1)
     res = res * np.pi / (180 * 60)
     shape, wcs = enmap.geometry(box, res=res, pre=pre)
-    return car_template_from_shape_wcs(ncomp, shape, wcs)
+    return car_template_from_shape_wcs(ncomp, shape, wcs, dtype=dtype)
 
 
-def full_sky_car_template(ncomp, res):
+def full_sky_car_template(ncomp, res, dtype=np.float64):
     """Create a ``so_map`` full sky template with CAR pixellisation in equ coordinates.
 
     Parameters
@@ -722,9 +722,9 @@ def full_sky_car_template(ncomp, res):
 
     res = res * np.pi / (180 * 60)
     shape, wcs = enmap.fullsky_geometry(res=res, dims=pre)
-    return car_template_from_shape_wcs(ncomp, shape, wcs)
+    return car_template_from_shape_wcs(ncomp, shape, wcs, dtype=dtype)
 
-def car_template_from_shape_wcs(ncomp_out, shape, wcs):
+def car_template_from_shape_wcs(ncomp_out, shape, wcs, dtype=np.float64):
     """
     Create a template from shape and wcs args with
     a number of components `ncomp_out`
@@ -742,7 +742,7 @@ def car_template_from_shape_wcs(ncomp_out, shape, wcs):
         shape_out = (ncomp_out,) + shape_out
 
     template = so_map()
-    template.data = enmap.zeros(shape_out, wcs=wcs, dtype=None)
+    template.data = enmap.zeros(shape_out, wcs=wcs, dtype=dtype)
     template.pixel = "CAR"
     template.nside = None
     template.ncomp = ncomp_out
