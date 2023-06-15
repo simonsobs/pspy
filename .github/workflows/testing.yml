@@ -39,6 +39,12 @@ jobs:
       run: |
         python -m pip install camb
 
+    - name: Download test data
+      run: |
+        wget https://github.com/xzackli/pspy/releases/download/v.test/example_newcov.zip
+        unzip example_newcov.zip
+        mv example_newcov pspy/tests/data/
+
     - name: Unit tests
       run: |
         pytest -vv pspy --cov=pspy --cov-report=xml:coverage.xml --ignore=pspy/tests/test_pspy_namaster.py
