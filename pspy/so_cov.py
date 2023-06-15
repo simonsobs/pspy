@@ -1109,9 +1109,9 @@ def cov_spin0_aniso1(Clth, Rl, couplings, binning_file, lmax,
 
     if binned_mcm == True:
         analytic_cov = bin_mat(cov, binning_file, lmax)
-        analytic_cov = np.dot(np.dot(mbb_inv_ab, analytic_cov), mbb_inv_cd.T)
+        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
     else:
-        full_analytic_cov = np.dot(np.dot(mbb_inv_ab, cov), mbb_inv_cd.T)
+        full_analytic_cov = mbb_inv_ab @ cov @ mbb_inv_cd.T
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
         
     return cov
