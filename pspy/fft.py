@@ -1,6 +1,5 @@
 """ stolen from Zach atkins mnms, this implement ducc real fft and ifft for enmap object  """
 import numpy as np
-import ducc0
 from pixell import enmap
 
 
@@ -32,6 +31,8 @@ def rfft(emap, kmap=None, nthread=0, normalize='ortho', adjoint_ifft=False):
         Half of the full FFT, sufficient to recover a real-valued
         function.
     """
+    import ducc0
+    
     if adjoint_ifft:
         raise NotImplementedError()
 
@@ -99,6 +100,9 @@ def irfft(emap, omap=None, n=None, nthread=0, normalize='ortho', adjoint_fft=Fal
     (..., ny, nx) ndmap
         A real-valued real-space map.
     """
+    
+    import ducc0
+
     if adjoint_fft:
         raise NotImplementedError()
 
