@@ -15,7 +15,7 @@ from pixell import colorize, curvedsky, enmap, enplot, powspec, reproject
 
 from pspy.pspy_utils import ps_lensed_theory_to_dict
 from pspy.sph_tools import alm2map, map2alm
-
+from pspy.fft import rfft, irfft
 
 class so_map:
     """Class defining a ``so_map`` object."""
@@ -164,7 +164,7 @@ class so_map:
             pixwin = (wy[:,None] * wx[None,:])
         return pixwin
 
-    def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None, order=0):
+    def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None, order=0, use_ducc_rfft=False):
         """Convolve a ``so_map`` object with a pixel window function
         The convolution is done in harmonics space, for CAR maps
         the pixwin is anisotropic (the pixel varies in size across the maps)
@@ -194,7 +194,7 @@ class so_map:
             alms = curvedsky.almxfl(alms, pixwin)
             self = alm2map(alms, self)
         if self.pixel == "CAR":
-            self = fourier_convolution(self, pixwin)
+            self = fourier_convolution(self, pixwin, use_ducc_rfft=use_ducc_rfft)
 
         return self
 
@@ -960,7 +960,7 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
         return map_cleaned, mono, dipole
     return map_cleaned
 
-def fourier_convolution(map_car, fourier_kernel, binary=None):
+def fourier_convolution(map_car, fourier_kernel, binary=None, use_ducc_rfft=False):
 
     """do a convolution in fourier space with a fourier_kernel,
     you can optionnaly use a binary to remove pathological pixels
@@ -973,12 +973,20 @@ def fourier_convolution(map_car, fourier_kernel, binary=None):
         the convolution kernel in Fourier space
     binary:  ``so_map``
         a binary mask removing pathological pixels
+    use_ducc_rfft: boolean
+        wether to use ducc real fft instead of enmap complex fft
 
     """
     if binary is not None:
         map_car.data *= binary.data
-    ft = enmap.fft(map_car.data, normalize=True)
-    ft  *= fourier_kernel
-    map_car.data = enmap.ifft(ft, normalize=True).real
+        
+    if use_ducc_rfft == True:
+        ft = rfft(map_car.data[:])
+        ft  *= fourier_kernel[: ft.shape[-2], : ft.shape[-1]]
+        map_car.data[:] = irfft(ft)
+    else:
+        ft = enmap.fft(map_car.data[:], normalize=True)
+        ft  *= fourier_kernel
+        map_car.data[:] = enmap.ifft(ft, normalize=True).real
 
     return map_car
