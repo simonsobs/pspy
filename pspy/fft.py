@@ -31,8 +31,12 @@ def rfft(emap, kmap=None, nthread=0, normalize='ortho', adjoint_ifft=False):
         Half of the full FFT, sufficient to recover a real-valued
         function.
     """
-    import ducc0
     
+    try:
+        import ducc0
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install ducc to use this function")
+
     if adjoint_ifft:
         raise NotImplementedError()
 
@@ -101,7 +105,10 @@ def irfft(emap, omap=None, n=None, nthread=0, normalize='ortho', adjoint_fft=Fal
         A real-valued real-space map.
     """
     
-    import ducc0
+    try:
+        import ducc0
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install ducc to use this function")
 
     if adjoint_fft:
         raise NotImplementedError()
