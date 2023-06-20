@@ -8,7 +8,7 @@ from pixell import colorize, enmap, enplot
 from pspy import pspy_utils, so_mcm, sph_tools
 from pspy.cov_fortran.cov_fortran import cov_compute as cov_fortran
 from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
-
+import matplotlib as mpl
 
 def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=None, l_toep=None):
     """compute the coupling kernels corresponding to the T only covariance matrix
@@ -991,11 +991,13 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
     """
 
     mat_plot = mat.copy()
+    
     try:
-        colorize.mpl_setdefault(color)
+        if color not in mpl.colormaps:
+            colorize.mpl_setdefault(color)
     except KeyError:
         raise KeyError("Color name must be a pixell color map name {}!".format(
-                list(colorize.schemes.keys())))
+                        list(colorize.schemes.keys())))
 
     if color_range is None:
         max_range = np.maximum(np.max(mat_plot),np.abs(np.min(mat_plot)))
