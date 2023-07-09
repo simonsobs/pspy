@@ -1119,18 +1119,17 @@ def make_weighted_variance_map(window, variance):
     return var
 
 
-def organize_covmat_products(field_names, survey_names, weighted_variances, windows):
-    i, j, p, q = field_names
-    survey = dict(zip(field_names, survey_names))
-    zero_map = get_zero_map(weighted_variances[i])
+def organize_covmat_products(survey_id, survey_names, weighted_variances, windows):
+    survey = dict(zip(survey_id, survey_names))
+    zero_map = get_zero_map(weighted_variances[survey_id[0]])
     win = lambda a, b : _product_of_so_map(windows[a], windows[b])
     var = lambda a, b : weighted_variances[a] if (
         _same_pol(a, b) and survey[a] == survey[b]) else zero_map
     return win, var
 
-def generate_aniso_couplings_TTTT(fields, surveys, windows, weighted_var, lmax, niter=0):
-    i, j, p, q = fields
-    win, var = organize_covmat_products(fields, surveys, weighted_var, windows)
+def generate_aniso_couplings_TTTT(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
     coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
         prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
     return [
@@ -1144,11 +1143,12 @@ def generate_aniso_couplings_TTTT(fields, surveys, windows, weighted_var, lmax, 
         coupling(var(i, q), var(j, p))]
 
 
-def generate_aniso_couplings_EEEE(fields, surveys, windows, weighted_var, lmax, niter=0):
-    i, j, p, q = fields
-    win, var = organize_covmat_products(fields, surveys, weighted_var, windows)
+def generate_aniso_couplings_EEEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
     coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[3,:,:] / (4 * np.pi)
+        (prod1, prod1), "", lmax, niter, "Cl", (prod2, prod2),   # EXTREMELY INEFFICIENT
+        return_coupling_only=True)[3,:,:] / (4 * np.pi)
     return [
         coupling(win(i, p), win(j, q)),
         coupling(win(i, q), win(j, p)),
@@ -1160,40 +1160,10 @@ def generate_aniso_couplings_EEEE(fields, surveys, windows, weighted_var, lmax, 
         coupling(var(i, q), var(j, p))]
 
 
-# for TTTT and EEEE
-def cov_spin0_aniso_same_pol(fields, Clth, Rl, couplings, binning_file, lmax, 
-                     mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
-    """Estimate the analytic covariance in the case of anisotropic noise pixel variance, 
-       using the theoretical Cls, the ratios of noise to white noise power spectra, the
-       coupling matrices estimated from the masks and variance maps, and the mode-coupling
-       matrices.
-
-    Parameters
-    ----------
-    fields: list
-        List of fields / survey IDs, i.e. ['Ta', 'Tb', 'Tc', 'Td']
-    Clth: dictionary
-      A dictionary of theoretical power spectrum (auto and cross) for the different split 
-      combinations ('TaTb' etc)
-    Rl: dictionary
-      a dictionary containing the ratios of noise power spectra to white noise
-    couplings: list of arrays
-      a list containing the eight coupling matrices involved in this covariance
-    binning_file: data file
-      a binning file with format bin low, bin high, bin mean
-    lmax: int
-      the maximum multipole to consider
-    mbb_inv_ab: 2d array
-      the inverse mode coupling matrix for the 'TaTb' power spectrum
-    mbb_inv_cd: 2d array
-      the inverse mode coupling matrix for the 'TcTd' power spectrum
-    binned_mcm: boolean
-      specify if the mode coupling matrices are binned or not
-
-    """
-    i, j, p, q = fields
+# for TTTT, EEEE
+def coupled_cov_aniso_same_pol(survey_id, Clth, Rl, couplings):
+    i, j, p, q = survey_id
     geom = lambda cl : symmetrize(cl, mode="geo")
-
     cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0],
     cov += geom(Clth[i+q]) * geom(Clth[j+p]) * couplings[1]
     cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i +p]) * couplings[2]
@@ -1202,12 +1172,43 @@ def cov_spin0_aniso_same_pol(fields, Clth, Rl, couplings, binning_file, lmax,
     cov += geom(Rl[i]) * geom(Rl[q]) * geom(Clth[j+p]) * couplings[5]
     cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[6]
     cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[7]
-
-    if binned_mcm == True:
-        analytic_cov = bin_mat(cov, binning_file, lmax)
-        analytic_cov = mbb_inv_ab @ analytic_cov @ mbb_inv_cd.T
-    else:
-        full_analytic_cov = mbb_inv_ab @ cov @ mbb_inv_cd.T
-        analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
-        
     return cov
+
+
+def generate_aniso_couplings_TETE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    coupling_TE = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[1,:,:] / (4 * np.pi)
+    return [
+        coupling_TE(win(i, p), win(j, q)),
+        coupling_TT(win(i, q), win(j, p)),
+        coupling_TE(win(i, p), var(j, q)),
+        coupling_TE(win(j, q), var(i, p)),
+        coupling_TE(var(i, p), var(j, q))]
+
+# todo: need to check arithmetic mean routine
+
+
+# def generate_aniso_couplings_TTTE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+#     i, j, p, q = survey_id
+#     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+#     coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
+#         prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[3,:,:] / (4 * np.pi)
+#     return [
+#         coupling(win(i, p), win(j, q)),
+#         coupling(win(i, q), win(j, p)),
+#         coupling(win(j, q), var(i, p)),
+#         coupling(win(i, q), var(j, p))]
+
+# def generate_aniso_couplings_TTEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+#     i, j, p, q = survey_id
+#     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+#     coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
+#         prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[3,:,:] / (4 * np.pi)
+#     return [
+#         coupling(win(i, p), win(j, q)),
+#         coupling(win(i, q), win(j, p))]
+
