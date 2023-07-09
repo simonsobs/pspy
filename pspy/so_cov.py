@@ -1083,96 +1083,83 @@ def measure_white_noise_level(var, mask, dtype=np.float64):
     noise_tot = np.sum(buffer)
     return noise_tot / mask_tot
 
-# only works for TTTT for now
-def generate_aniso_couplings(survey_name, win, var, lmax, niter=0):
-    """
-    survey_name : list of names of the four splits
-    win : dict with windows with keys 'Ta', "Tb', ...
-    var : dict with variance maps, with keys 'Ta', 'Tb'
-    """
-    survey_id = ["Ta", "Tb", "Tc", "Td"]
-    # set up some tools to work with the survey names
-    id2name = dict(zip(survey_id, survey_name))
 
+def masked_variances(survey_name, win, var):
     var_a, var_b, var_c, var_d = (
         win['Ta'].copy(), win['Tb'].copy(), win['Tc'].copy(), win['Td'].copy())
-    
     pixsizes = win['Ta'].data.pixsizemap()  # assuming they're the same footprint
     var_a.data *= np.sqrt(pixsizes * var['Ta'].data)
     var_b.data *= np.sqrt(pixsizes * var['Tb'].data)
     var_c.data *= np.sqrt(pixsizes * var['Tc'].data)
     var_d.data *= np.sqrt(pixsizes * var['Td'].data)
-
-    zero_var = win['Ta'].copy()
-    zero_var.data *= 0
-
-    # allows indexing with the delta function
-    v_a = (zero_var, var_a)
-    v_b = (zero_var, var_b)
-    v_c = (zero_var, var_c)
-    v_d = (zero_var, var_d)
-
-    coupling_1 = cov_coupling_spin0(
-        {'Ta': win['Ta'], 
-        'Tb': win['Tb'], 
-        'Tc': win['Tc'], 
-        'Td': win['Td']}, 
-        lmax, niter)['TaTcTbTd']
-
-    coupling_2 = cov_coupling_spin0(
-        {'Ta': win['Ta'], 
-        'Tb': win['Tb'], 
-        'Tc': win['Tc'], 
-        'Td': win['Td']}, 
-        lmax, niter)['TaTdTbTc']
-
-    coupling_3 = cov_coupling_spin0(
-        {'Ta': win['Ta'], 
-        'Tb': v_b[delta2(id2name['Tb'], id2name['Td'])], 
-        'Tc': win['Tc'], 
-        'Td': v_d[delta2(id2name['Tb'], id2name['Td'])]}, 
-        lmax, niter)['TaTcTbTd']
-
-    coupling_4 = cov_coupling_spin0(
-        {'Ta': v_a[delta2(id2name['Ta'], id2name['Tc'])], 
-        'Tb': win['Tb'], 
-        'Tc': v_c[delta2(id2name['Ta'], id2name['Tc'])], 
-        'Td': win['Td']}, 
-        lmax, niter)['TaTcTbTd']
-
-    coupling_5 = cov_coupling_spin0(
-        {'Ta': win['Ta'], 
-        'Tb': v_a[delta2(id2name['Tb'], id2name['Tc'])], 
-        'Tc': v_c[delta2(id2name['Tb'], id2name['Tc'])], 
-        'Td': win['Td']}, 
-        lmax, niter)['TaTdTbTc']
-
-    coupling_6 = cov_coupling_spin0(
-        {'Ta': v_a[delta2(id2name['Ta'], id2name['Td'])], 
-        'Tb': win['Tb'], 
-        'Tc': win['Tc'],
-        'Td': v_d[delta2(id2name['Ta'], id2name['Td'])]}, 
-        lmax, niter)['TaTdTbTc']
-
-    coupling_7 = cov_coupling_spin0(
-        {'Ta': v_a[delta2(id2name['Ta'], id2name['Tc'])], 
-        'Tb': v_b[delta2(id2name['Tb'], id2name['Td'])], 
-        'Tc': v_c[delta2(id2name['Ta'], id2name['Tc'])],
-        'Td': v_d[delta2(id2name['Tb'], id2name['Td'])]}, 
-        lmax, niter)['TaTcTbTd']
-
-    coupling_8 = cov_coupling_spin0(
-        {'Ta': v_a[delta2(id2name['Ta'], id2name['Td'])], 
-        'Tb': v_b[delta2(id2name['Tb'], id2name['Tc'])], 
-        'Tc': v_c[delta2(id2name['Tb'], id2name['Tc'])],
-        'Td': v_d[delta2(id2name['Ta'], id2name['Td'])]}, 
-        lmax, niter)['TaTcTbTd']
-
-    return [coupling_1, coupling_2, coupling_3, coupling_4, 
-            coupling_5, coupling_6, coupling_7, coupling_8]
+    return dict(zip(survey_name, (var_a, var_b, var_c, var_d)))
 
 
-def cov_spin0_aniso1(Clth, Rl, couplings, binning_file, lmax, 
+
+def _same_pol(a, b):  # i.e. 'Ta' and 'Tb'
+    return a[0] == b[0]
+
+
+def get_zero_map(template):
+    c = template.copy()
+    c.data *= 0
+    return c
+
+def _product_of_so_map(a, b):
+    c = a.copy()
+    c.data *= b.data
+    return c
+
+def make_weighted_variance_map(window, variance):
+    var = window.copy()  # window^2 * variance * pixsize
+    var.data *= window.data
+    var.data *= window.data.pixsizemap() * variance.data
+    return var
+
+
+def organize_covmat_products(field_names, survey_names, weighted_variances, windows):
+    i, j, p, q = field_names
+    survey = dict(zip(field_names, survey_names))
+    zero_map = get_zero_map(weighted_variances[i])
+    win = lambda a, b : _product_of_so_map(windows[a], windows[b])
+    var = lambda a, b : weighted_variances[a] if (
+        _same_pol(a, b) and survey[a] == survey[b]) else zero_map
+    return win, var
+
+def generate_aniso_couplings_TTTT(fields, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = fields
+    win, var = organize_covmat_products(fields, surveys, weighted_var, windows)
+    coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    return [
+        coupling(win(i, p), win(j, q)),
+        coupling(win(i, q), win(j, p)),
+        coupling(win(i, p), var(j, q)),
+        coupling(win(j, q), var(i, p)),
+        coupling(win(i, q), var(j, p)),
+        coupling(win(j, p), var(i, q)),
+        coupling(var(i, p), var(j, q)),
+        coupling(var(i, q), var(j, p))]
+
+
+def generate_aniso_couplings_EEEE(fields, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = fields
+    win, var = organize_covmat_products(fields, surveys, weighted_var, windows)
+    coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[3,:,:] / (4 * np.pi)
+    return [
+        coupling(win(i, p), win(j, q)),
+        coupling(win(i, q), win(j, p)),
+        coupling(win(i, p), var(j, q)),
+        coupling(win(j, q), var(i, p)),
+        coupling(win(i, q), var(j, p)),
+        coupling(win(j, p), var(i, q)),
+        coupling(var(i, p), var(j, q)),
+        coupling(var(i, q), var(j, p))]
+
+
+# for TTTT and EEEE
+def cov_spin0_aniso_same_pol(fields, Clth, Rl, couplings, binning_file, lmax, 
                      mbb_inv_ab, mbb_inv_cd, binned_mcm=True):
     """Estimate the analytic covariance in the case of anisotropic noise pixel variance, 
        using the theoretical Cls, the ratios of noise to white noise power spectra, the
@@ -1181,7 +1168,8 @@ def cov_spin0_aniso1(Clth, Rl, couplings, binning_file, lmax,
 
     Parameters
     ----------
-
+    fields: list
+        List of fields / survey IDs, i.e. ['Ta', 'Tb', 'Tc', 'Td']
     Clth: dictionary
       A dictionary of theoretical power spectrum (auto and cross) for the different split 
       combinations ('TaTb' etc)
@@ -1201,17 +1189,17 @@ def cov_spin0_aniso1(Clth, Rl, couplings, binning_file, lmax,
       specify if the mode coupling matrices are binned or not
 
     """
-
+    i, j, p, q = fields
     geom = lambda cl : symmetrize(cl, mode="geo")
 
-    cov =  geom(Clth["TaTc"]) * geom(Clth["TbTd"]) * couplings[0],
-    cov += geom(Clth["TaTd"]) * geom(Clth["TbTc"]) * couplings[1]
-    cov += geom(Rl['Tb']) * geom(Rl['Td']) * geom(Clth["TaTc"]) * couplings[2]
-    cov += geom(Rl['Ta']) * geom(Rl['Tc']) * geom(Clth["TbTd"]) * couplings[3]
-    cov += geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Clth["TaTd"]) * couplings[4]
-    cov += geom(Rl['Ta']) * geom(Rl['Td']) * geom(Clth["TbTc"]) * couplings[5]
-    cov += geom(Rl['Ta']) * geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Rl['Td']) * couplings[6]
-    cov += geom(Rl['Ta']) * geom(Rl['Tb']) * geom(Rl['Tc']) * geom(Rl['Td']) * couplings[7]
+    cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0],
+    cov += geom(Clth[i+q]) * geom(Clth[j+p]) * couplings[1]
+    cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i +p]) * couplings[2]
+    cov += geom(Rl[i]) * geom(Rl[p]) * geom(Clth[j+q]) * couplings[3]
+    cov += geom(Rl[j]) * geom(Rl[p]) * geom(Clth[i+q]) * couplings[4]
+    cov += geom(Rl[i]) * geom(Rl[q]) * geom(Clth[j+p]) * couplings[5]
+    cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[6]
+    cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[7]
 
     if binned_mcm == True:
         analytic_cov = bin_mat(cov, binning_file, lmax)

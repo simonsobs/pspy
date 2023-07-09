@@ -38,13 +38,19 @@ class SOCovmatTests(unittest.TestCase):
         survey_id = ["Ta", "Tb", "Tc", "Td"]
         survey_name = ["split_0", "split_1", "split_0", "split_1"]
         win = {'Ta': window, 'Tb': window, 'Tc': window, 'Td': window}
-        var = {'Ta': var0, 'Tb': var1, 'Tc': var0, 'Td': var1}
+        var = {
+            'Ta': so_cov.make_weighted_variance_map(window, var0),
+            'Tb': so_cov.make_weighted_variance_map(window, var1),
+            'Tc': so_cov.make_weighted_variance_map(window, var0),
+            'Td': so_cov.make_weighted_variance_map(window, var1)
+        }
 
         # generate mcm
         mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0(window, binning_file, lmax=lmax, 
                                                 type="Dl", niter=0, binned_mcm = False)
 
-        couplings = so_cov.generate_aniso_couplings(survey_name, win, var, lmax)
+        couplings = so_cov.generate_aniso_couplings_TTTT(
+            survey_id, survey_name, win, var, lmax)
 
         id2spec = {'Ta': 'dr6&pa6_f150_s1', 'Tb': 'dr6&pa6_f150_s4', 
                 'Tc': 'dr6&pa6_f150_s1', 'Td': 'dr6&pa6_f150_s4'}
@@ -71,8 +77,8 @@ class SOCovmatTests(unittest.TestCase):
                     Clth_dict[id1 + id2] = cl_dict[key12][:lmax]
                 Clth_dict[id1 + id2] = Clth_dict[id1 + id2][2:]
 
-        cov_e = so_cov.cov_spin0_aniso1(
-            Clth_dict, Rl_dict, couplings,
+        cov_e = so_cov.cov_spin0_aniso_same_pol(
+            survey_id, Clth_dict, Rl_dict, couplings,
             binning_file, lmax, mbb_inv, mbb_inv, binned_mcm=False)
 
         num_diag = 30 # check first 30 off-diagonals
