@@ -1189,6 +1189,24 @@ def generate_aniso_couplings_TETE(survey_id, surveys, windows, weighted_var, lma
         coupling_TE(win(j, q), var(i, p)),
         coupling_TE(var(i, p), var(j, q))]
 
+
+
+def symmetrized_arithmetic_mean(cl_a, cl_b):
+    A = (np.repeat(cl_a[:,np.newaxis], len(cl_a), 1) * 
+        np.repeat(cl_b[np.newaxis,:], len(cl_b), 0))
+    return (A + A.T) / 2 
+
+# for TETE
+def coupled_cov_aniso_TETE(survey_id, Clth, Rl, couplings):
+    i, j, p, q = survey_id
+    geom = lambda cl : symmetrize(cl, mode="geo")
+    cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0]
+    cov += symmetrized_arithmetic_mean(Clth[i+q], Clth[j+p]) * couplings[1]
+    cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i+p]) * couplings[2]
+    cov += geom(Rl[i]) * geom(Rl[p]) * geom(Clth[j+q]) * couplings[3]
+    cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[4]
+    return cov
+
 # todo: need to check arithmetic mean routine
 
 
