@@ -1164,9 +1164,9 @@ def generate_aniso_couplings_EEEE(survey_id, surveys, windows, weighted_var, lma
 def coupled_cov_aniso_same_pol(survey_id, Clth, Rl, couplings):
     i, j, p, q = survey_id
     geom = lambda cl : symmetrize(cl, mode="geo")
-    cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0],
+    cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0]
     cov += geom(Clth[i+q]) * geom(Clth[j+p]) * couplings[1]
-    cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i +p]) * couplings[2]
+    cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i+p]) * couplings[2]
     cov += geom(Rl[i]) * geom(Rl[p]) * geom(Clth[j+q]) * couplings[3]
     cov += geom(Rl[j]) * geom(Rl[p]) * geom(Clth[i+q]) * couplings[4]
     cov += geom(Rl[i]) * geom(Rl[q]) * geom(Clth[j+p]) * couplings[5]
@@ -1190,22 +1190,89 @@ def generate_aniso_couplings_TETE(survey_id, surveys, windows, weighted_var, lma
         coupling_TE(var(i, p), var(j, q))]
 
 
-
-def symmetrized_arithmetic_mean(cl_a, cl_b):
+def arith(cl_a, cl_b): 
     A = (np.repeat(cl_a[:,np.newaxis], len(cl_a), 1) * 
         np.repeat(cl_b[np.newaxis,:], len(cl_b), 0))
-    return (A + A.T) / 2 
+    return A
 
 # for TETE
 def coupled_cov_aniso_TETE(survey_id, Clth, Rl, couplings):
     i, j, p, q = survey_id
     geom = lambda cl : symmetrize(cl, mode="geo")
     cov =  geom(Clth[i+p]) * geom(Clth[j+q]) * couplings[0]
-    cov += symmetrized_arithmetic_mean(Clth[i+q], Clth[j+p]) * couplings[1]
+    cov += 0.5 * (np.outer(Clth[i+q], Clth[j+p]) + np.outer(Clth[j+p], Clth[i+q])) * couplings[1]
     cov += geom(Rl[j]) * geom(Rl[q]) * geom(Clth[i+p]) * couplings[2]
     cov += geom(Rl[i]) * geom(Rl[p]) * geom(Clth[j+q]) * couplings[3]
     cov += geom(Rl[i]) * geom(Rl[j]) * geom(Rl[p]) * geom(Rl[q]) * couplings[4]
     return cov
+
+
+def coupled_cov_aniso_TTTE(survey_id, Clth, Rl, couplings):
+    i, j, p, q = survey_id
+    geom = lambda cl : symmetrize(cl, mode="geo")
+    arit = lambda cl : symmetrize(cl, mode="arithm")
+    cov =  geom(Clth[i+p]) * arit(Clth[j+q]) * couplings[0]
+    cov += geom(Clth[j+p]) * arit(Clth[i+q]) * couplings[1]
+    cov += geom(Rl[i]) * geom(Rl[p]) * arit(Clth[j+q]) * couplings[2]
+    cov += geom(Rl[j]) * geom(Rl[p]) * arit(Clth[i+q]) * couplings[3]
+    return cov
+
+
+def generate_aniso_couplings_TTTE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    return [
+        coupling_TT(win(i, p), win(j, q)),
+        coupling_TT(win(i, q), win(j, p)),
+        coupling_TT(win(j, q), var(i, p)),
+        coupling_TT(win(i, q), var(j, p))
+    ]
+
+
+def coupled_cov_aniso_TTEE(survey_id, Clth, Rl, couplings):
+    i, j, p, q = survey_id
+    cov =  0.5 * (np.outer(Clth[i+p], Clth[j+q]) + np.outer(Clth[j+q], Clth[i+p])) * couplings[0]
+    cov += 0.5 * (np.outer(Clth[i+q], Clth[j+p]) + np.outer(Clth[j+p], Clth[i+q])) * couplings[1]
+    return cov
+
+
+def generate_aniso_couplings_TTEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
+        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    return [
+        coupling_TT(win(i, p), win(j, q)),
+        coupling_TT(win(i, q), win(j, p))
+    ]
+
+
+def coupled_cov_aniso_TEEE(survey_id, Clth, Rl, couplings):
+    i, j, p, q = survey_id
+    geom = lambda cl : symmetrize(cl, mode="geo")
+    arit = lambda cl : symmetrize(cl, mode="arithm")
+    cov =  geom(Clth[j+q]) * arit(Clth[i+p]) * couplings[0]
+    cov += geom(Clth[j+p]) * arit(Clth[i+q]) * couplings[1]
+    cov += geom(Rl[j]) * geom(Rl[q]) * arit(Clth[i+p]) * couplings[2]
+    cov += geom(Rl[j]) * geom(Rl[p]) * arit(Clth[i+q]) * couplings[3]
+    return cov
+
+
+def generate_aniso_couplings_TEEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
+    i, j, p, q = survey_id
+    win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
+    coupling_EE = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
+        (prod1, prod1), "", lmax, niter, "Cl", (prod2, prod2),   # EXTREMELY INEFFICIENT
+        return_coupling_only=True)[3,:,:] / (4 * np.pi)
+    return [
+        coupling_EE(win(i, p), win(j, q)),
+        coupling_EE(win(i, q), win(j, p)),
+        coupling_EE(win(i, p), var(j, q)),
+        coupling_EE(win(i, q), var(j, p))
+    ]
+
 
 # todo: need to check arithmetic mean routine
 
