@@ -189,16 +189,16 @@ def read_binning_file(file_name, lmax):
 
     Parameters
     ----------
-    binningfile: string
+    file_name: string
       the name of the binning file
     lmax: integer
       the maximum multipole to consider
     """
     bin_low, bin_hi, bin_cent = np.loadtxt(file_name, unpack=True)
-    id = np.where(bin_hi < lmax)
+    if np.any(bin_low < 2):
+        raise ValueError("Lower multipole bin must be equal to 2 and can't be lower !")
+    id = np.where((2 < bin_low) & (bin_hi < lmax))
     bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
-    if bin_low[0] < 2:
-        bin_low[0] = 2
     bin_hi = bin_hi.astype(int)
     bin_low = bin_low.astype(int)
     bin_size = bin_hi - bin_low + 1
