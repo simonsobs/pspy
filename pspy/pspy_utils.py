@@ -197,7 +197,7 @@ def read_binning_file(file_name, lmax):
     bin_low, bin_hi, bin_cent = np.loadtxt(file_name, unpack=True)
     if np.any(bin_low < 2):
         raise ValueError("Lower multipole bin must be equal to 2 and can't be lower !")
-    id = np.where((2 < bin_low) & (bin_hi < lmax))
+    id = np.where((2 <= bin_low) & (bin_hi < lmax))
     bin_low, bin_hi, bin_cent = bin_low[id], bin_hi[id], bin_cent[id]
     bin_hi = bin_hi.astype(int)
     bin_low = bin_low.astype(int)
