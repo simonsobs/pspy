@@ -78,7 +78,7 @@ class SOCovmatTests(unittest.TestCase):
 
         num_diag = 30 # check first 30 off-diagonals
         diag_max_errors = [
-            np.max(np.abs(np.diag(self.cov_ref_TTTT[2:,2:] / cov_e[0], k) - 1))
+            np.max(np.abs(np.diag(self.cov_ref_TTTT[2:,2:] / cov_e, k) - 1))
             for k in range(0,num_diag)
         ]
         np.testing.assert_almost_equal(np.zeros(num_diag), 
@@ -133,7 +133,7 @@ class SOCovmatTests(unittest.TestCase):
 
         num_diag = 30 # check first 30 off-diagonals
         diag_max_errors = [
-            np.max(np.abs(np.diag(self.cov_ref_EEEE[2:,2:] / cov_e[0], k) - 1))
+            np.max(np.abs(np.diag(self.cov_ref_EEEE[2:,2:] / cov_e, k) - 1))
             for k in range(0,num_diag)
         ]
         np.testing.assert_almost_equal(np.zeros(num_diag), 
