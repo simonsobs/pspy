@@ -164,12 +164,12 @@ class so_map:
             pixwin = (wy[:,None] * wx[None,:])
         return pixwin
 
-    def convolve_with_pixwin(self, niter=3, binary=None, pixwin=None, order=0, use_ducc_rfft=False):
+    def convolve_with_pixwin(self, niter=3, window=None, pixwin=None, order=0, use_ducc_rfft=False):
         """Convolve a ``so_map`` object with a pixel window function
         The convolution is done in harmonics space, for CAR maps
         the pixwin is anisotropic (the pixel varies in size across the maps)
         and the convolution is done in Fourier space.
-        We optionaly apply a binary before doing the operation to remove pathological pixels, note
+        We optionaly apply a window before doing the operation to remove pathological pixels, note
         that this operation is dangerous since we do harmonic transform of a masked map.
 
         Parameters
@@ -177,8 +177,8 @@ class so_map:
         niter: integer
           the number of iteration performed while computing the alm
           not that for CAR niter=0 should be enough
-        binary: so_map
-            a binary mask that remove pathological pixel before doing the harmonic
+        window: so_map
+            a window that remove pathological pixel before doing the harmonic
             space operation
         pixwin: 1d array for healpix, 2d array for CAR
             this allow you to pass a precomputed pixel window function
@@ -186,7 +186,7 @@ class so_map:
 
         lmax = self.get_lmax_limit()
 
-        if binary is not None: self.data *= binary.data
+        if window is not None: self.data *= window.data
         if pixwin is None: pixwin = self.get_pixwin(order=order)
 
         if self.pixel == "HEALPIX":
@@ -960,10 +960,10 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
         return map_cleaned, mono, dipole
     return map_cleaned
 
-def fourier_convolution(map_car, fourier_kernel, binary=None, use_ducc_rfft=False):
+def fourier_convolution(map_car, fourier_kernel, window=None, use_ducc_rfft=False):
 
     """do a convolution in fourier space with a fourier_kernel,
-    you can optionnaly use a binary to remove pathological pixels
+    you can optionnaly use a window to remove pathological pixels
 
     Parameters
     ---------
@@ -971,14 +971,14 @@ def fourier_convolution(map_car, fourier_kernel, binary=None, use_ducc_rfft=Fals
         the map to be convolved
     fourier_kernel: 2d array
         the convolution kernel in Fourier space
-    binary:  ``so_map``
-        a binary mask removing pathological pixels
+    window:  ``so_map``
+        a window removing pathological pixels
     use_ducc_rfft: boolean
         wether to use ducc real fft instead of enmap complex fft
 
     """
-    if binary is not None:
-        map_car.data *= binary.data
+    if window is not None:
+        map_car.data *= window.data
         
     if use_ducc_rfft == True:
         ft = rfft(map_car.data[:])
