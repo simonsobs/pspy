@@ -40,10 +40,10 @@ class SOCovmatTests(unittest.TestCase):
         survey_name = ["s1", "s4", "s1", "s4"]
         win = {'Ta': window, 'Tb': window, 'Tc': window, 'Td': window}
         var = {
-            'Ta': so_cov.make_weighted_variance_map(window, var0),
-            'Tb': so_cov.make_weighted_variance_map(window, var1),
-            'Tc': so_cov.make_weighted_variance_map(window, var0),
-            'Td': so_cov.make_weighted_variance_map(window, var1)
+            'Ta': so_cov.make_weighted_variance_map(var0, window),
+            'Tb': so_cov.make_weighted_variance_map(var1, window),
+            'Tc': so_cov.make_weighted_variance_map(var0, window),
+            'Td': so_cov.make_weighted_variance_map(var1, window)
         }
 
         couplings = so_cov.generate_aniso_couplings_TTTT(
@@ -95,10 +95,10 @@ class SOCovmatTests(unittest.TestCase):
         survey_name = ["s1", "s4", "s1", "s4"]
         win = {'Ea': window, 'Eb': window, 'Ec': window, 'Ed': window}
         var = {
-            'Ea': so_cov.make_weighted_variance_map(window, var0),
-            'Eb': so_cov.make_weighted_variance_map(window, var1),
-            'Ec': so_cov.make_weighted_variance_map(window, var0),
-            'Ed': so_cov.make_weighted_variance_map(window, var1)
+            'Ea': so_cov.make_weighted_variance_map(var0, window),
+            'Eb': so_cov.make_weighted_variance_map(var1, window),
+            'Ec': so_cov.make_weighted_variance_map(var0, window),
+            'Ed': so_cov.make_weighted_variance_map(var1, window)
         }
 
         couplings = so_cov.generate_aniso_couplings_EEEE(

@@ -1112,7 +1112,7 @@ def _product_of_so_map(a, b):
     c.data *= b.data
     return c
 
-def make_weighted_variance_map(window, variance):
+def make_weighted_variance_map(variance, window):
     var = window.copy()  # window^2 * variance * pixsize
     var.data *= window.data
     var.data *= window.data.pixsizemap() * variance.data
