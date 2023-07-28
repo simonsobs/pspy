@@ -37,7 +37,7 @@ class SOCovmatTests(unittest.TestCase):
 
         # set up scenario
         survey_id = ["Ta", "Tb", "Tc", "Td"]
-        survey_name = ["split_0", "split_1", "split_0", "split_1"]
+        survey_name = ["s1", "s4", "s1", "s4"]
         win = {'Ta': window, 'Tb': window, 'Tc': window, 'Td': window}
         var = {
             'Ta': so_cov.make_weighted_variance_map(window, var0),
@@ -92,7 +92,7 @@ class SOCovmatTests(unittest.TestCase):
 
         # set up scenario
         survey_id = ["Ea", "Eb", "Ec", "Ed"]
-        survey_name = ["split_0", "split_1", "split_0", "split_1"]
+        survey_name = ["s1", "s4", "s1", "s4"]
         win = {'Ea': window, 'Eb': window, 'Ec': window, 'Ed': window}
         var = {
             'Ea': so_cov.make_weighted_variance_map(window, var0),
