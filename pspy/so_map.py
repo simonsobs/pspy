@@ -152,7 +152,7 @@ class so_map:
             l_max_limit = 360 / cdelt / 4
         return l_max_limit
 
-    def get_pixwin(self, order=0):
+    def get_pixwin(self, order=0, dtype=np.float64):
         """compute the pixel window function corresponding to the map pixellisation
            order stands for the map making pointing matrix
            order=0 is Neareast Neighbour while order=1 is bilinear interpolation
@@ -162,7 +162,7 @@ class so_map:
         if self.pixel == "CAR":
             wy, wx = enmap.calc_window(self.data.shape, order=order)
             pixwin = (wy[:,None] * wx[None,:])
-        return pixwin
+        return pixwin.astype(dtype)
 
     def convolve_with_pixwin(self, niter=3, window=None, pixwin=None, order=0, use_ducc_rfft=False):
         """Convolve a ``so_map`` object with a pixel window function
