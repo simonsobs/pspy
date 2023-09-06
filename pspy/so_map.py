@@ -619,15 +619,15 @@ def healpix2car(healpix_map, template, lmax=None):
     if lmax > 3 * healpix_map.nside - 1:
         print("WARNING: your lmax is too large, setting it to 3*nside-1 now")
         lmax = 3 * healpix_map.nside - 1
-    project.data = reproject.enmap_from_healpix(
+
+    spin = [0, 2] if healpix_map.ncomp == 3 else [0]
+    project.data = reproject.healpix2map(
         healpix_map.data,
         template.data.shape,
         template.data.wcs,
-        ncomp=healpix_map.ncomp,
-        unit=1,
         lmax=lmax,
         rot=rot,
-        first=0,
+        spin=spin
     )
 
     project.ncomp == healpix_map.ncomp
@@ -979,7 +979,7 @@ def fourier_convolution(map_car, fourier_kernel, window=None, use_ducc_rfft=Fals
     """
     if window is not None:
         map_car.data *= window.data
-        
+
     if use_ducc_rfft == True:
         ft = rfft(map_car.data[:])
         ft  *= fourier_kernel[: ft.shape[-2], : ft.shape[-1]]
