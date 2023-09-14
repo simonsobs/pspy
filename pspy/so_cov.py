@@ -1127,11 +1127,26 @@ def organize_covmat_products(survey_id, survey_names, weighted_variances, window
         _same_pol(a, b) and survey[a] == survey[b]) else zero_map
     return win, var
 
+
+def coupling_00(m1, m2, lmax, niter=0):
+    return so_mcm.mcm_and_bbl_spin0(
+        m1, "", lmax, niter, "Cl", m2, return_coupling_only=True) / (4 * np.pi)
+    
+def coupling_02(m1, m2, lmax, niter=0):
+    return so_mcm.mcm_and_bbl_spin0and2(
+        m1, "", lmax, niter, "Cl", m2, return_coupling_only=True)[1,:,:] / (4 * np.pi)
+
+# ++ coupling
+def coupling_PP(m1, m2, lmax, niter=0):
+    return so_mcm.mcm_and_bbl_spin0and2(
+            (m1, m1), "", lmax, niter, "Cl", (m2, m2),   # EXTREMELY INEFFICIENT
+            return_coupling_only=True)[3,:,:] / (4 * np.pi)
+
+
 def generate_aniso_couplings_TTTT(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    coupling = lambda m1, m2 : coupling_00(m1, m2, lmax, niter=niter)
     return [
         coupling(win(i, p), win(j, q)),
         coupling(win(i, q), win(j, p)),
@@ -1146,9 +1161,7 @@ def generate_aniso_couplings_TTTT(survey_id, surveys, windows, weighted_var, lma
 def generate_aniso_couplings_EEEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
-        (prod1, prod1), "", lmax, niter, "Cl", (prod2, prod2),   # EXTREMELY INEFFICIENT
-        return_coupling_only=True)[3,:,:] / (4 * np.pi)
+    coupling = lambda m1, m2 : coupling_PP(m1, m2, lmax, niter=niter)
     return [
         coupling(win(i, p), win(j, q)),
         coupling(win(i, q), win(j, p)),
@@ -1178,10 +1191,8 @@ def coupled_cov_aniso_same_pol(survey_id, Clth, Rl, couplings):
 def generate_aniso_couplings_TETE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
-    coupling_TE = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True)[1,:,:] / (4 * np.pi)
+    coupling_TT = lambda m1, m2 : coupling_00(m1, m2, lmax, niter=niter)
+    coupling_TE = lambda m1, m2 : coupling_02(m1, m2, lmax, niter=niter)
     return [
         coupling_TE(win(i, p), win(j, q)),
         coupling_TT(win(i, q), win(j, p)),
@@ -1221,8 +1232,7 @@ def coupled_cov_aniso_TTTE(survey_id, Clth, Rl, couplings):
 def generate_aniso_couplings_TTTE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    coupling_TT = lambda m1, m2 : coupling_00(m1, m2, lmax, niter=niter)
     return [
         coupling_TT(win(i, p), win(j, q)),
         coupling_TT(win(i, q), win(j, p)),
@@ -1241,8 +1251,7 @@ def coupled_cov_aniso_TTEE(survey_id, Clth, Rl, couplings):
 def generate_aniso_couplings_TTEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling_TT = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0(
-        prod1, "", lmax, niter, "Cl", prod2, return_coupling_only=True) / (4 * np.pi)
+    coupling_TT = lambda m1, m2 : coupling_00(m1, m2, lmax, niter=niter)
     return [
         coupling_TT(win(i, p), win(j, q)),
         coupling_TT(win(i, q), win(j, p))
@@ -1263,9 +1272,7 @@ def coupled_cov_aniso_TEEE(survey_id, Clth, Rl, couplings):
 def generate_aniso_couplings_TEEE(survey_id, surveys, windows, weighted_var, lmax, niter=0):
     i, j, p, q = survey_id
     win, var = organize_covmat_products(survey_id, surveys, weighted_var, windows)
-    coupling_EE = lambda prod1, prod2 : so_mcm.mcm_and_bbl_spin0and2(
-        (prod1, prod1), "", lmax, niter, "Cl", (prod2, prod2),   # EXTREMELY INEFFICIENT
-        return_coupling_only=True)[3,:,:] / (4 * np.pi)
+    coupling_EE = lambda m1, m2 : coupling_PP(m1, m2, lmax, niter=niter)
     return [
         coupling_EE(win(i, p), win(j, q)),
         coupling_EE(win(i, q), win(j, p)),
