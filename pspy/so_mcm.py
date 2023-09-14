@@ -482,7 +482,8 @@ def coupling_block(
                 l_exact=None,
                 l_toep=None,
                 l_band=None,
-                l3_pad=2000):
+                l3_pad=2000,
+                legacy_thibaut=True):
  
     """Get the coupling matrix for two fields
      Parameters
@@ -520,7 +521,7 @@ def coupling_block(
     wcl *= (2 * l + 1)
 
 
-    mcm = np.zeros((lmax, lmax))
+    mcm = np.zeros((lmax+1, lmax+1))
 
     if l_toep is None: l_toep = lmax
     if l_band is None: l_band = lmax
@@ -540,4 +541,7 @@ def coupling_block(
 
     mcm_fortran.fill_upper(mcm.T)
 
-    return mcm[:lmax - 2, :lmax - 2]
+    if legacy_thibaut:
+        return mcm[2:-1, 2:-1]
+    else:
+        return mcm
