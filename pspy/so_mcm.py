@@ -470,3 +470,72 @@ def read_coupling(prefix, spin_pairs=None):
         Bbl = np.load(prefix + "_Bbl.npy")
     
     return mode_coupling_inv, Bbl
+
+
+def coupling_matrix(
+                mode,
+                win1,
+                lmax,
+                niter,
+                win2=None,
+                input_alm=False,
+                l_exact=None,
+                l_toep=None,
+                l_band=None,
+                l3_pad=2000):
+ 
+    """Get the coupling matrix for spin0 fields
+     Parameters
+     ----------
+     win1: so_map (or alm)
+       the window function of survey 1, if input_alm=True, expect wlm1
+     lmax: integer
+       the maximum multipole to consider for the spectra computation
+     win2: so_map (or alm)
+       the window function of survey 2, if input_alm=True, expect wlm2
+     niter: int
+       specify the number of iteration in map2alm
+     l_toep: int
+     l_band: int
+     l_exact: int
+     """
+
+    if input_alm == False:
+        l_max_limit = win1.get_lmax_limit()
+        if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
+        maxl = np.minimum(lmax + l3_pad, l_max_limit)
+
+        win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
+        if win2 is not None:
+            win2 = sph_tools.map2alm(win2, niter=niter, lmax=maxl)
+
+    if win2 is None:
+        wcl = hp.alm2cl(win1)
+    else:
+        wcl = hp.alm2cl(win1, win2)
+
+    l = np.arange(len(wcl))
+    wcl *= (2 * l + 1)
+
+
+    mcm = np.zeros((lmax, lmax))
+
+    if l_toep is None: l_toep = lmax
+    if l_band is None: l_band = lmax
+    if l_exact is None: l_exact = lmax
+
+    if mode == "00":
+        mcm_fortran.calc_coupling_spin0(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "02":
+        mcm_fortran.calc_coupling_spin02(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "++":
+        mcm_fortran.calc_coupling_spin2_pp(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "--":
+        mcm_fortran.calc_coupling_spin2_mm(wcl, l_exact, l_band, l_toep, mcm.T)
+
+    if l_toep < lmax:
+        mcm = format_toepliz_fortran2(mcm, l_toep, l_exact, lmax)
+
+    mcm_fortran.fill_upper(mcm.T)
+
+    return mcm[:lmax - 2, :lmax - 2]
