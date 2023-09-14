@@ -19,8 +19,8 @@ class SOCovmatTests(unittest.TestCase):
         self.cov_ref_TTTT = np.load(os.path.join(TEST_DATA_PREFIX, "cov_TTTT.npy")) 
         self.cov_ref_EEEE = np.load(os.path.join(TEST_DATA_PREFIX, "cov_EEEE.npy")) 
 
-        var0.data = np.reciprocal(var0.data,where=(var0.data!=0))
-        var1.data = np.reciprocal(var1.data,where=(var1.data!=0))
+        var0.data = 1 / var0.data
+        var1.data = 1 / var1.data
         var0.data[np.isinf(var0.data)] = 0.
         var1.data[np.isinf(var1.data)] = 0.
         self.var0, self.var1 = var0, var1

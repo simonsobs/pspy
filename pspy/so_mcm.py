@@ -472,7 +472,7 @@ def read_coupling(prefix, spin_pairs=None):
     return mode_coupling_inv, Bbl
 
 
-def coupling_matrix(
+def coupling_block(
                 mode,
                 win1,
                 lmax,
@@ -484,9 +484,11 @@ def coupling_matrix(
                 l_band=None,
                 l3_pad=2000):
  
-    """Get the coupling matrix for spin0 fields
+    """Get the coupling matrix for two fields
      Parameters
      ----------
+     mode: string
+        one of "00", "02", "++" or "--"
      win1: so_map (or alm)
        the window function of survey 1, if input_alm=True, expect wlm1
      lmax: integer
