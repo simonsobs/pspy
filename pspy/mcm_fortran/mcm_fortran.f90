@@ -403,7 +403,49 @@ subroutine calc_coupling_elem_spin2_mm(wcl, l1, l2, elem)
 end subroutine
 
 
-subroutine calc_coupling_spin02(wcl, l_exact, l_band, l_toeplitz, coupling)
+! unlike calc_coupling_spin0, this keeps ell=0,1,lmax
+subroutine calc_coupling_block_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
+    real(8), intent(inout) :: coupling(:,:)
+    integer :: l1, l2, nlmax, lmax_band
+
+    nlmax = size(coupling,1) - 1
+
+    !$omp parallel do private(l2, l1) schedule(dynamic)
+    do l1 = 2, min(nlmax, l_exact)
+        do l2 = l1, nlmax
+            call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
+        end do
+    end do
+
+    if (l_exact .lt. nlmax) then
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
+
+            do l2 = l1, lmax_band
+                call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
+            end do
+        end do
+
+        if (l_toeplitz .lt. nlmax) then
+            !$omp parallel do
+            do l1 = l_toeplitz + 1, nlmax
+                call calc_coupling_elem_spin0(wcl, l1, l1, coupling(l1-1, l1-1))
+            end do
+        end if
+    end if
+
+end subroutine
+
+
+subroutine calc_coupling_block_spin02(wcl, l_exact, l_band, l_toeplitz, coupling)
     implicit none
     real(8), intent(in)    :: wcl(:)
     integer, intent(in)    :: l_exact , l_band, l_toeplitz
@@ -444,7 +486,7 @@ subroutine calc_coupling_spin02(wcl, l_exact, l_band, l_toeplitz, coupling)
 end subroutine
 
 
-subroutine calc_coupling_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupling)
+subroutine calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupling)
     implicit none
     real(8), intent(in)    :: wcl(:)
     integer, intent(in)    :: l_exact , l_band, l_toeplitz
@@ -485,7 +527,7 @@ subroutine calc_coupling_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupling)
 end subroutine
 
 
-subroutine calc_coupling_spin2_mm(wcl, l_exact, l_band, l_toeplitz, coupling)
+subroutine calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toeplitz, coupling)
     implicit none
     real(8), intent(in)    :: wcl(:)
     integer, intent(in)    :: l_exact , l_band, l_toeplitz
