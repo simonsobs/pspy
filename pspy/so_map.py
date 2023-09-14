@@ -842,6 +842,7 @@ def generate_source_mask(binary, coordinates, point_source_radius_arcmin):
       the radius of the point sources
     """
     mask = binary.copy()
+    mask.data[:] = 1
 
     if mask.pixel == "HEALPIX":
         vectors = hp.ang2vec(np.pi / 2.0 - coordinates[0], 2 * np.pi - coordinates[1])
