@@ -10,7 +10,7 @@ class SOCovmatTests(unittest.TestCase):
     def setUp(self, verbose=False):
 
         # read in downgraded windows and ivar
-        self.lmax = 1350
+        self.lmax = 1349
         self.window = so_map.read_map(os.path.join(TEST_DATA_PREFIX, "window_adjusted.fits"))
         var0 = so_map.read_map(os.path.join(TEST_DATA_PREFIX, "ivar1_adjusted.fits"))
         var1 = so_map.read_map(os.path.join(TEST_DATA_PREFIX, "ivar2_adjusted.fits"))
@@ -63,22 +63,21 @@ class SOCovmatTests(unittest.TestCase):
         Clth_dict = {}
         Rl_dict = {}
         for name1, id1 in zip(survey_name, survey_id):
-            Rl_dict[id1] = np.sqrt(nl_dict[id1[0] + id1[0] + id2spec[id1] + id2spec[id1]][:lmax]
-                / white_noise[id1])[2:] 
+            Rl_dict[id1] = np.sqrt(nl_dict[id1[0] + id1[0] + id2spec[id1] + id2spec[id1]][:(lmax+1)]
+                / white_noise[id1])
             for name2, id2 in zip(survey_name, survey_id):
                 spec = id1[0] + id2[0]
                 key12 = spec + id2spec[id1] + id2spec[id2]
                 if name1 == name2:
-                    Clth_dict[id1 + id2] = cl_dict[key12][:lmax]
+                    Clth_dict[id1 + id2] = cl_dict[key12][:(lmax+1)]
                 else:
-                    Clth_dict[id1 + id2] = cl_dict[key12][:lmax]
-                Clth_dict[id1 + id2] = Clth_dict[id1 + id2][2:]
+                    Clth_dict[id1 + id2] = cl_dict[key12][:(lmax+1)]
 
         cov_e = so_cov.coupled_cov_aniso_same_pol(survey_id, Clth_dict, Rl_dict, couplings)
 
         num_diag = 30 # check first 30 off-diagonals
         diag_max_errors = [
-            np.max(np.abs(np.diag(self.cov_ref_TTTT[2:,2:] / cov_e, k) - 1))
+            np.max(np.abs(np.diag(self.cov_ref_TTTT / cov_e, k) - 1))
             for k in range(0,num_diag)
         ]
         np.testing.assert_almost_equal(np.zeros(num_diag), 
@@ -118,22 +117,21 @@ class SOCovmatTests(unittest.TestCase):
         Clth_dict = {}
         Rl_dict = {}
         for name1, id1 in zip(survey_name, survey_id):
-            Rl_dict[id1] = np.sqrt(nl_dict[id1[0] + id1[0] + id2spec[id1] + id2spec[id1]][:lmax]
-                / white_noise[id1])[2:] 
+            Rl_dict[id1] = np.sqrt(nl_dict[id1[0] + id1[0] + id2spec[id1] + id2spec[id1]][:(lmax+1)]
+                / white_noise[id1])
             for name2, id2 in zip(survey_name, survey_id):
                 spec = id1[0] + id2[0]
                 key12 = spec + id2spec[id1] + id2spec[id2]
                 if name1 == name2:
-                    Clth_dict[id1 + id2] = cl_dict[key12][:lmax]
+                    Clth_dict[id1 + id2] = cl_dict[key12][:(lmax+1)]
                 else:
-                    Clth_dict[id1 + id2] = cl_dict[key12][:lmax]
-                Clth_dict[id1 + id2] = Clth_dict[id1 + id2][2:]
+                    Clth_dict[id1 + id2] = cl_dict[key12][:(lmax+1)]
 
         cov_e = so_cov.coupled_cov_aniso_same_pol(survey_id, Clth_dict, Rl_dict, couplings)
 
         num_diag = 30 # check first 30 off-diagonals
         diag_max_errors = [
-            np.max(np.abs(np.diag(self.cov_ref_EEEE[2:,2:] / cov_e, k) - 1))
+            np.max(np.abs(np.diag(self.cov_ref_EEEE[2:,2:] / cov_e[2:,2:], k) - 1))
             for k in range(0,num_diag)
         ]
         np.testing.assert_almost_equal(np.zeros(num_diag), 

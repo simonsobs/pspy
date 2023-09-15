@@ -483,7 +483,7 @@ def coupling_block(
                 l_toep=None,
                 l_band=None,
                 l3_pad=2000,
-                legacy_thibaut=True):
+                legacy_thibaut=False):
  
     """Get the coupling matrix for two fields
      Parameters
