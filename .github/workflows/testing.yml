@@ -36,6 +36,8 @@ jobs:
         python -m pip install -e .
         # Newest version of pillow does not play well with pixell
         python -m pip install pillow==9.5.0
+        # Let's try to re-install (properly) ducc
+        python -m pip install --no-binary ducc0 ducc0
 
     - name: Install extra dependencies (camb)
       run: |
