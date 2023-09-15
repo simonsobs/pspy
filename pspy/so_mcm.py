@@ -483,7 +483,7 @@ def coupling_block(
                 l_toep=None,
                 l_band=None,
                 l3_pad=2000,
-                legacy_thibaut=False):
+                legacy_ell_range=False):
  
     """Get the coupling matrix for two fields
      Parameters
@@ -541,7 +541,7 @@ def coupling_block(
 
     mcm_fortran.fill_upper(mcm.T)
 
-    if legacy_thibaut:
+    if legacy_ell_range:
         return mcm[2:-1, 2:-1]
     else:
         return mcm
