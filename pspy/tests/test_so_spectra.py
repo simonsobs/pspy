@@ -12,7 +12,7 @@ data_dir = os.path.join(test_dir, "data")
 
 
 class SOSpectraTests(unittest.TestCase):
-    def setUp(self, verbose=False):
+    def setUp(self, verbose=True):
         with open(os.path.join(data_dir, "test_data.pkl"), "rb") as f:
             self.reference = pickle.load(f)
 
@@ -34,7 +34,7 @@ class SOSpectraTests(unittest.TestCase):
         else:
             self.assertTrue(True, f"Data type {type(ref)} are not compared!")
 
-    def test_spectra(self, verbose=False):
+    def test_spectra(self, verbose=True):
         kinds = ["car", "healpix"]
         # do not test window function due to mismatch in distance computation
         # datas = ["cmb", "window", "mbb_inv", "bbl", "spectra"]
