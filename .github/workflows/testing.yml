@@ -36,7 +36,11 @@ jobs:
         python -m pip install -e .
         # Newest version of pillow does not play well with pixell
         python -m pip install pillow==9.5.0
-        # Let's try to re-install (properly) ducc
+
+    - name: Build ducc for macos
+      if: matrix.os == 'macos-latest'
+      run: |
+        export DUCC0_OPTIMIZATION=none
         python -m pip uninstall -y ducc0
         python -m pip install --no-binary ducc0 ducc0
 
