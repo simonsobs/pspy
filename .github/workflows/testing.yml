@@ -28,6 +28,7 @@ jobs:
         set -x
         sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
         gfortran --version
+        sudo xcode-select -switch /Library/Developer/CommandLineTools
 
     - name: Install via pip
       run: |
