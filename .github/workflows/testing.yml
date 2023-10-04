@@ -5,6 +5,9 @@ on:
   push:
     branches: [master]
 
+env:
+  OMP_NUM_THREADS: 0
+  
 jobs:
   build:
 
@@ -37,7 +40,6 @@ jobs:
         python -m pip install -e .
         # Newest version of pillow does not play well with pixell
         python -m pip install pillow==9.5.0
-        export OMP_NUM_THREADS=0
         
     - name: Install extra dependencies (camb)
       run: |
