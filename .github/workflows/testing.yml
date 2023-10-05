@@ -5,9 +5,6 @@ on:
   push:
     branches: [master]
 
-env:
-  OMP_NUM_THREADS: 0
-  
 jobs:
   build:
 
@@ -31,15 +28,12 @@ jobs:
         set -x
         sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
         gfortran --version
-        sudo xcode-select -switch /Library/Developer/CommandLineTools
 
     - name: Install via pip
       run: |
         python -m pip install --upgrade pip wheel
         python -m pip install "numpy<1.26" pytest pytest-cov
         python -m pip install -e .
-        # Newest version of pillow does not play well with pixell
-        python -m pip install pillow==9.5.0
         
     - name: Install extra dependencies (camb)
       run: |
@@ -63,7 +57,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         python -m pip install jupyter
-        # jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
+        jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
 
     - name: Comparing pspy to NaMaster
       if: matrix.os == 'ubuntu-latest'
