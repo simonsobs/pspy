@@ -72,13 +72,14 @@ window.data *= mask.data
 window = (window, window)
 
 
-def run_pspy():
+def run_pspy(pure=False):
     binning_file = os.path.join(output_dir, "binning.dat")
     pspy_utils.create_binning_file(bin_size=40, n_bins=100, file_name=binning_file)
     mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
-        window, binning_file, lmax=lmax, type="Cl", niter=niter
+        window, binning_file, lmax=lmax, type="Cl", niter=niter, pure=pure
     )
-    alms = sph_tools.get_alms(cmb, window, niter=niter, lmax=lmax)
+    get_alms = sph_tools.get_pure_alms if pure else sph_tools.get_alms
+    alms = get_alms(cmb, window, niter=niter, lmax=lmax)
     ell, ps = so_spectra.get_spectra(alms, spectra=spectra)
     lb, Clb = so_spectra.bin_spectra(
         ell, ps, binning_file, lmax, type="Cl", mbb_inv=mbb_inv, spectra=spectra
@@ -86,32 +87,49 @@ def run_pspy():
     return lb, Clb
 
 
-def run_namaster():
-    field_0 = nmt.NmtField(window[0].data, [cmb.data[0]])
-    field_2 = nmt.NmtField(window[1].data, [cmb.data[1], cmb.data[2]])
+def run_namaster(pure=False):
     nlb = 40
     b = nmt.NmtBin(nside, nlb=nlb)
     lb = b.get_effective_ells()
-    wsp = nmt.NmtWorkspace()
-    wsp.compute_coupling_matrix(field_0, field_2, b, is_teb=True, n_iter=niter, lmax_mask=lmax)
-    cl_coupled_00 = nmt.compute_coupled_cell(field_0, field_0)
-    cl_coupled_02 = nmt.compute_coupled_cell(field_0, field_2)
-    cl_coupled_22 = nmt.compute_coupled_cell(field_2, field_2)
-    cls_coupled = np.array(
-        [
-            cl_coupled_00[0],  # TT
-            cl_coupled_02[0],  # TE
-            cl_coupled_02[1],  # TB
-            cl_coupled_22[0],  # EE
-            cl_coupled_22[1],  # EB
-            cl_coupled_22[2],  # BE
-            cl_coupled_22[3],  # BB
-        ]
-    )
-    cls_uncoupled = wsp.decouple_cell(cls_coupled)
-    Clb = {k: cls_uncoupled[i] for i, k in enumerate(["TT", "TE", "TB", "EE", "EB", "BE", "BB"])}
-    Clb["ET"] = Clb["TE"]
-    Clb["BT"] = Clb["TB"]
+    if pure:
+        field = nmt.NmtField(
+            window[1].data,
+            [cmb.data[1], cmb.data[2]],
+            purify_e=True,
+            purify_b=True,
+            n_iter_mask_purify=niter,
+            n_iter=niter,
+        )
+        wsp = nmt.NmtWorkspace()
+        wsp.compute_coupling_matrix(field, field, b, n_iter=niter)
+        cls_coupled = nmt.compute_coupled_cell(field, field)
+        cls_uncoupled = wsp.decouple_cell(cls_coupled)
+        Clb = {"BB": cls_uncoupled[3]}
+    else:
+        field_0 = nmt.NmtField(window[0].data, [cmb.data[0]])
+        field_2 = nmt.NmtField(window[1].data, [cmb.data[1], cmb.data[2]])
+        wsp = nmt.NmtWorkspace()
+        wsp.compute_coupling_matrix(field_0, field_2, b, is_teb=True, n_iter=niter, lmax_mask=lmax)
+        cl_coupled_00 = nmt.compute_coupled_cell(field_0, field_0)
+        cl_coupled_02 = nmt.compute_coupled_cell(field_0, field_2)
+        cl_coupled_22 = nmt.compute_coupled_cell(field_2, field_2)
+        cls_coupled = np.array(
+            [
+                cl_coupled_00[0],  # TT
+                cl_coupled_02[0],  # TE
+                cl_coupled_02[1],  # TB
+                cl_coupled_22[0],  # EE
+                cl_coupled_22[1],  # EB
+                cl_coupled_22[2],  # BE
+                cl_coupled_22[3],  # BB
+            ]
+        )
+        cls_uncoupled = wsp.decouple_cell(cls_coupled)
+        Clb = {
+            k: cls_uncoupled[i] for i, k in enumerate(["TT", "TE", "TB", "EE", "EB", "BE", "BB"])
+        }
+        Clb["ET"] = Clb["TE"]
+        Clb["BT"] = Clb["TB"]
     return lb, Clb
 
 
@@ -137,6 +155,19 @@ class SOPspyNamasterTests(unittest.TestCase):
             np.testing.assert_almost_equal(
                 Clb_pspy[spec], Clb_nmt[spec], err_msg=msg, decimal=decimal
             )
+
+    def test_pspy_namaster_pure(self):
+        t0 = time.time()
+        lb_pspy, Clb_pspy = run_pspy(pure=True)
+        print(f"pspy (pure) runs in {time.time() - t0:.2f} seconds")
+
+        t0 = time.time()
+        lb_nmt, Clb_nmt = run_namaster(pure=True)
+        print(f"namaster (pure) runs in {time.time() - t0:.2f} seconds")
+
+        np.testing.assert_almost_equal(
+            Clb_pspy["BB"], Clb_nmt["BB"], err_msg=f"Testing BB spectrum", decimal=12
+        )
 
 
 if __name__ == "__main__":
