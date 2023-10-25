@@ -53,7 +53,7 @@ subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1,
     integer, intent(in)   :: l1, l2
     real(8), intent(in)   :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
     real(8), intent(inout):: elems(5)
-    real(8) :: thrcof0(2*size(wcl_00)), thrcofa(2*size(wcl_00)), thrcofb(2*size(wcl_00)), thrcofc(2*size(wcl_00)), l1f, l2f, fac_b, fac_c, combin
+    real(8) :: thrcof0(2*size(wcl_00)), thrcofa(2*size(wcl_00)), thrcofb(2*size(wcl_00)), thrcofc(2*size(wcl_00)), l1f, l2f, fac_b, fac_c, combin, combin2, combin3
     integer :: info, l3, wlmin1, wlmax1, i1, wlmin2, i2, wlmin3, i3, lmax
 
     lmax = size(wcl_00)-1 ! wcl starts at 0
@@ -74,25 +74,29 @@ subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1,
         fac_b = 2 * dsqrt((l3 + 1d0) * l3 / ((l2 - 1d0) * (l2 + 2d0)))
         fac_c = dsqrt((l3 + 2d0) * (l3 + 1d0) * l3 * (l3 - 1d0) / ((l2 + 2d0) * (l2 + 1d0) * l2 * (l2 - 1d0)))
 
-        if (i2 < 0) then
-            fac_b = 0d0
+        if (i2 < 1) then
+            combin2 = 0d0
+         else
+            combin2 = fac_b * thrcofb(i2)
         end if
 
-        if (i3 < 0) then
-            fac_c = 0d0
+        if (i3 < 1) then
+            combin3 = 0d0
+         else
+            combin3 = fac_c * thrcofc(i3)
         end if
 
-        combin = thrcofa(i1) + fac_b * thrcofb(i2) + fac_c * thrcofc(i3)
+        combin = thrcofa(i1) + combin2 + combin3
         elems(1) = elems(1) + (wcl_00(l3 + 1) * thrcof0(i1)**2d0)
         elems(2) = elems(2) + (wcl_02(l3 + 1) * thrcof0(i1) * combin)
         elems(3) = elems(3) + (wcl_20(l3 + 1) * thrcof0(i1) * combin)
         elems(4) = elems(4) + (wcl_22(l3 + 1) * combin**2 * (1 + (-1)**(l1 + l2 + l3)) / 2)
         elems(5) = elems(5) + (wcl_22(l3 + 1) * combin**2 * (1 - (-1)**(l1 + l2 + l3)) / 2)
-    
+
     end do
 end subroutine
 
- 
+
 
 subroutine calc_coupling_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
     implicit none
@@ -164,7 +168,7 @@ subroutine calc_coupling_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l_exact, l_ba
         end do
 
         if (l_toeplitz .lt. nlmax) then
-            !$omp parallel do 
+            !$omp parallel do
             do l1 = l_toeplitz + 1, nlmax
                 call calc_coupling_elem_spin0and2(wcl_00, wcl_02, wcl_20, wcl_22, l1, l1, coupling(l1-1, l1-1, :))
             end do
@@ -338,4 +342,3 @@ end subroutine
 
 
 end module
-
