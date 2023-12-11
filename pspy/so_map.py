@@ -218,12 +218,13 @@ class so_map:
 
         return self
 
-    def subtract_mono_dipole(self, mask=None, bunch=24):
+    def subtract_mono_dipole(self, mask=None, values=None, bunch=24):
         """Subtract monopole and dipole from a ``so_map`` object.
 
         Parameters
         ----------
         mask: either a single so_map (for ncomp = 1) or a tuple of SO map e.g (mask_T, mask_P)
+        values: the value of the monopole and dipole to subtract
         bunch: int
             the bunch size (default: 24)
         """
@@ -234,6 +235,7 @@ class so_map:
                 mask=None if mask is None else mask.data,
                 healpix=self.pixel == "HEALPIX",
                 bunch=bunch,
+                values=values,
             )
         else:
             for i in range(self.ncomp):
@@ -242,6 +244,7 @@ class so_map:
                     mask=None if mask is None else mask[i if i < 2 else 1].data,
                     healpix=self.pixel == "HEALPIX",
                     bunch=bunch,
+                    values=values,
                 )
 
     def plot(
@@ -861,7 +864,7 @@ def generate_source_mask(binary, coordinates, point_source_radius_arcmin):
     return mask
 
 
-def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=False):
+def subtract_mono_dipole(emap, mask=None, healpix=True, values=None, bunch=24, return_values=False):
     """Subtract monopole and dipole from a ``enmap`` object.
 
     Parameters
@@ -874,6 +877,7 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
       flag for using HEALPIX (default) or CAR pixellisation
     bunch: int
       the bunch size (default: 24)
+    values
     return_values: bool
       Return mono/dipole values with the subtracted map (default: False)
     """
@@ -882,7 +886,11 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
         map_masked = hp.ma(emap)
         if mask is not None:
             map_masked.mask = mask < 1
-        mono, dipole = hp.fit_dipole(map_masked)
+        if values is None:
+            mono, dipole = hp.fit_dipole(map_masked)
+        else:
+            mono, dipole = values
+            
         npix = len(emap)
         nside = hp.npix2nside(npix)
         bunchsize = npix // bunch
@@ -896,58 +904,61 @@ def subtract_mono_dipole(emap, mask=None, healpix=True, bunch=24, return_values=
             map_cleaned.flat[ipix] -= mono
 
     else:
+    
+        if values is None:
+            def _get_xyz(dec, ra):
+                x = np.cos(dec) * np.cos(ra)
+                y = np.cos(dec) * np.sin(ra)
+                z = np.sin(dec)
+                return x, y, z
 
-        def _get_xyz(dec, ra):
-            x = np.cos(dec) * np.cos(ra)
-            y = np.cos(dec) * np.sin(ra)
-            z = np.sin(dec)
-            return x, y, z
+            dec, ra = emap.posmap()
+            dec = dec.flatten()
+            ra = ra.flatten()
+            weights = emap.pixsizemap()
+            weights = weights.flatten() / (4 * np.pi)
 
-        dec, ra = emap.posmap()
-        dec = dec.flatten()
-        ra = ra.flatten()
-        weights = emap.pixsizemap()
-        weights = weights.flatten() / (4 * np.pi)
+            npix = dec.size
+            bunchsize = npix // bunch
 
-        npix = dec.size
-        bunchsize = npix // bunch
+            aa = np.zeros((4, 4))
+            v = np.zeros(4)
+            for ibunch in range(npix // bunchsize):
+                ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
+                if mask is not None:
+                    ipix = ipix[mask.flat[ipix] > 0]
 
-        aa = np.zeros((4, 4))
-        v = np.zeros(4)
-        for ibunch in range(npix // bunchsize):
-            ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
-            if mask is not None:
-                ipix = ipix[mask.flat[ipix] > 0]
-
-            x, y, z = _get_xyz(dec[ipix], ra[ipix])
-            w = weights[ipix]
+                x, y, z = _get_xyz(dec[ipix], ra[ipix])
+                w = weights[ipix]
 
             # aa[0, 0] += ipix.size
-            aa[0, 0] += np.sum(w)
-            aa[1, 0] += np.sum(x * w)
-            aa[2, 0] += np.sum(y * w)
-            aa[3, 0] += np.sum(z * w)
-            aa[1, 1] += np.sum(x ** 2 * w)
-            aa[2, 1] += np.sum(x * y * w)
-            aa[3, 1] += np.sum(x * z * w)
-            aa[2, 2] += np.sum(y ** 2 * w)
-            aa[3, 2] += np.sum(y * z * w)
-            aa[3, 3] += np.sum(z ** 2 * w)
-            v[0] += np.sum(emap.flat[ipix] * w)
-            v[1] += np.sum(emap.flat[ipix] * x * w)
-            v[2] += np.sum(emap.flat[ipix] * y * w)
-            v[3] += np.sum(emap.flat[ipix] * z * w)
+                aa[0, 0] += np.sum(w)
+                aa[1, 0] += np.sum(x * w)
+                aa[2, 0] += np.sum(y * w)
+                aa[3, 0] += np.sum(z * w)
+                aa[1, 1] += np.sum(x ** 2 * w)
+                aa[2, 1] += np.sum(x * y * w)
+                aa[3, 1] += np.sum(x * z * w)
+                aa[2, 2] += np.sum(y ** 2 * w)
+                aa[3, 2] += np.sum(y * z * w)
+                aa[3, 3] += np.sum(z ** 2 * w)
+                v[0] += np.sum(emap.flat[ipix] * w)
+                v[1] += np.sum(emap.flat[ipix] * x * w)
+                v[2] += np.sum(emap.flat[ipix] * y * w)
+                v[3] += np.sum(emap.flat[ipix] * z * w)
 
-        aa[0, 1] = aa[1, 0]
-        aa[0, 2] = aa[2, 0]
-        aa[0, 3] = aa[3, 0]
-        aa[1, 2] = aa[2, 1]
-        aa[1, 3] = aa[3, 1]
-        aa[2, 3] = aa[3, 2]
-        res = np.dot(np.linalg.inv(aa), v)
-        mono = res[0]
-        dipole = res[1:4]
-
+            aa[0, 1] = aa[1, 0]
+            aa[0, 2] = aa[2, 0]
+            aa[0, 3] = aa[3, 0]
+            aa[1, 2] = aa[2, 1]
+            aa[1, 3] = aa[3, 1]
+            aa[2, 3] = aa[3, 2]
+            res = np.dot(np.linalg.inv(aa), v)
+            mono = res[0]
+            dipole = res[1:4]
+        else:
+            mono, dipole = values
+            
         for ibunch in range(npix // bunchsize):
             ipix = np.arange(ibunch * bunchsize, (ibunch + 1) * bunchsize)
 
