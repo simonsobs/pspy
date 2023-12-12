@@ -476,7 +476,7 @@ def coupling_block(
                 mode,
                 win1,
                 lmax,
-                niter,
+                niter=None,
                 win2=None,
                 input_alm=False,
                 l_exact=None,
@@ -504,6 +504,8 @@ def coupling_block(
      """
 
     if input_alm == False:
+        if niter is None:
+            raise ValueError("niter required")
         l_max_limit = win1.get_lmax_limit()
         if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
         maxl = np.minimum(lmax + l3_pad, l_max_limit)
