@@ -52,7 +52,7 @@ jobs:
           CIBW_BUILD: "${{ matrix.cp }}-*x86_64"
           CIBW_SKIP: "*-musllinux_*"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
           retention-days: 1
@@ -86,7 +86,7 @@ jobs:
           python -m pip install numpy
           python setup.py sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
           retention-days: 1
