@@ -1,6 +1,8 @@
 import numpy as np, pylab as plt
+from scipy.integrate import dblquad
 from pspy import flat_tools, pspy_utils
 from pixell import enmap, utils
+from itertools import product
 
 def build_std_filter(shape, wcs, vk_mask, hk_mask, dtype=np.float64):
     ly, lx  = enmap.laxes(shape, wcs, method="auto")
@@ -68,7 +70,35 @@ def analytical_tf(map, filter, binning_file, lmax):
 
     return bin_c, tf
 
+def analytical_tf_vkhk(vk_mask, hk_mask, ells, dtype=np.float64):
+    out = np.zeros(ells.shape, dtype=dtype)
+    for vk, hk in product(vk_mask, hk_mask):
+        rk = np.sqrt(vk**2 + hk**2)
+        out[ells > rk] += .25 - (np.abs(np.arcsin(vk/ells[ells > rk])) + np.abs(np.arcsin(hk/ells[ells > rk]))) / (2*np.pi)
+    return out
 
+def analytical_tf_yxint(yxfilter_func, ells, dtype=np.float64):
+    def x(r, phi):
+        return r*np.cos(phi)
+    def y(r, phi):
+        return r*np.sin(phi)
+    def rphifilter_func(r, phi):
+        return yxfilter_func(y(r, phi), x(r, phi)) * r
+
+    assert ells.ndim == 1, 'expect 1d ells'
+    assert np.all(ells >= 0), 'expect non-negative ells'
+    out = np.zeros(ells.shape, dtype=dtype)
+    for i, ell in enumerate(ells):
+        if i % 10 == 0: print(ell)
+        if ell == 0:
+            rlow = ell
+        else:
+            rlow = ell - 0.5
+        rhigh = ell + 0.5
+
+        out[i] = dblquad(rphifilter_func, 0, 2*np.pi, rlow, rhigh)[0] / (np.pi * (rhigh**2 - rlow**2))
+    
+    return out
 
 #def analytical_tf_old(map, binning_file, lmax, vk_mask=None, hk_mask=None):
 #    import time
