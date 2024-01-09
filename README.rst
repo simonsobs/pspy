@@ -72,7 +72,7 @@ Dependencies
 * Python >= 3.8
 * ``pyFFTW`` https://pyfftw.readthedocs.io
 * ``healpy`` https://healpy.readthedocs.io
-* ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
+* ``pixell`` https://pixell.readthedocs.io
 
 
 Authors
