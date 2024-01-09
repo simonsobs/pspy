@@ -66,7 +66,7 @@ setup(
         "healpy",
         "pyFFTW",
         "pillow",  # this one should be installed by pixell
-        "pixell>=0.20.3",
+        "pixell>=0.21.1",
     ],
     packages=find_packages(),
     include_package_data=True,
