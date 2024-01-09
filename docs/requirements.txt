@@ -1,3 +1,4 @@
+mock
 numpy>=1.16.1
 healpy>=1.12.8
 pyfftw>=0.10.4
