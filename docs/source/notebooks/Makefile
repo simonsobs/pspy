@@ -2,7 +2,7 @@ IPYNB_FILES := $(wildcard *.ipynb)
 HTML_FILES  := $(filter-out index.html, $(IPYNB_FILES:.ipynb=.html))
 
 %.html: %.ipynb
-	jupyter nbconvert --ExecutePreprocessor.timeout=None --output-dir="../docs/source/notebooks" --to html --execute $<
+	jupyter nbconvert --ExecutePreprocessor.timeout=None --to html --execute $<
 
 all: html
 

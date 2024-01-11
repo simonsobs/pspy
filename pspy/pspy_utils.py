@@ -44,22 +44,23 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
 
 
 def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accuracy_pars):
-
     """Given a set of cosmological parameters compute the corresponding lensed power spectrum
-       You need to have camb installed to use this function
-      ----------
-      cosmo_params: dict
-        dictionnary of cosmological parameters
-        # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
-      output_type :  string
-        'Cl' or 'Dl'
-      lmax: integer
-        the maximum multipole to consider
-      start_at_zero : boolean
-        if True, ps start at l=0 and cl(l=0) and cl(l=1) are set to 0
-        else, start at l=2
-      accuracy_pars : dict
-        optional accuracy parameters that CAMB understand (e.g. lens_potential_accuracy)
+     You need to have camb installed to use this function
+
+    Parameters
+    ----------
+    cosmo_params: dict
+      dictionnary of cosmological parameters
+      # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
+    output_type :  string
+      'Cl' or 'Dl'
+    lmax: integer
+      the maximum multipole to consider
+    start_at_zero : boolean
+      if True, ps start at l=0 and cl(l=0) and cl(l=1) are set to 0
+      else, start at l=2
+    accuracy_pars : dict
+      optional accuracy parameters that CAMB understand (e.g. lens_potential_accuracy)
     """
     try:
         import camb
@@ -72,14 +73,14 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accur
         lmin = 2
 
     camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
-    camb_cosmo.update({"As": 1e-10*np.exp(cosmo_params["logA"]), "lmax": lmax, **accuracy_pars})
+    camb_cosmo.update({"As": 1e-10 * np.exp(cosmo_params["logA"]), "lmax": lmax, **accuracy_pars})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
     powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=output_type == "Cl")
     l = np.arange(lmin, lmax)
-    ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE" ])}
+    ps = {spec: powers["total"][l][:, count] for count, spec in enumerate(["TT", "EE", "BB", "TE"])}
     ps["ET"] = ps["TE"].copy()
-    for spec in ["TB", "BT", "EB", "BE" ]:
+    for spec in ["TB", "BT", "EB", "BE"]:
         ps[spec] = ps["TT"] * 0
 
     return l, ps
@@ -123,9 +124,15 @@ def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=Non
             rms_uKarcmin_pol = rms_uKarcmin_T * np.sqrt(2)
         for spec in spectra:
             nl_th[spec] = np.zeros(lmax)
-        nl_th["TT"] = np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
-        nl_th["EE"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
-        nl_th["BB"] = np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 :lmax + 2] ** 2
+        nl_th["TT"] = (
+            np.ones(lmax) * (rms_uKarcmin_T * np.pi / (60 * 180)) ** 2 / bl[2 : lmax + 2] ** 2
+        )
+        nl_th["EE"] = (
+            np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 : lmax + 2] ** 2
+        )
+        nl_th["BB"] = (
+            np.ones(lmax) * (rms_uKarcmin_pol * np.pi / (60 * 180)) ** 2 / bl[2 : lmax + 2] ** 2
+        )
         if type == "Dl":
             for spec in spectra:
                 nl_th[spec] *= l_th * (l_th + 1) / (2 * np.pi)
@@ -258,7 +265,7 @@ def beam_from_fwhm(fwhm_arcminute, lmax):
     fac = beam_fwhm_rad / np.sqrt(8 * np.log(2))
 
     ell = np.arange(2, lmax)
-    bl = np.exp(-ell * (ell + 1) * fac ** 2 / 2.0)
+    bl = np.exp(-ell * (ell + 1) * fac**2 / 2.0)
     return ell, bl
 
 
@@ -286,7 +293,7 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
     lmin = 2
     for count, ells in enumerate(l_bound_list):
         while True:
-            lmax = lmin +  delta_l_list[count]
+            lmax = lmin + delta_l_list[count]
 
             if lmax > l_bound_list[count]:
                 break
@@ -302,6 +309,7 @@ def create_arbitrary_binning_file(delta_l_list, l_bound_list, binning_file=None)
         np.savetxt(binning_file, np.transpose([lmin_list, lmax_list, lmean_list]))
 
     return lmin_list, lmax_list, lmean_list
+
 
 def maximum_likelihood_combination(cov_mat, P_mat, data_vec, test_matrix=False):
     """
@@ -343,7 +351,7 @@ def is_symmetric(mat, tol=1e-8):
     tol:
         the absolute tolerance on assymetry
     """
-    if np.all(np.abs(mat-mat.T) < tol):
+    if np.all(np.abs(mat - mat.T) < tol):
         print("the tested matrix is symmetric")
     else:
         print("the tested matrix is not symmetric")
@@ -367,7 +375,7 @@ def is_pos_def(mat):
     return
 
 
-def calibrate_alms(alms, cal = 1.0, pol_eff = 1.0):
+def calibrate_alms(alms, cal=1.0, pol_eff=1.0):
     """
     Apply a calibration amplitude
     and a polarization efficiency
@@ -401,6 +409,8 @@ def rotate_pol_alms(alms, pol_rot_angle):
     """
     cos_alpha = np.cos(np.deg2rad(2 * pol_rot_angle))
     sin_alpha = np.sin(np.deg2rad(2 * pol_rot_angle))
-    alms[1], alms[2] = (alms[1] * cos_alpha + alms[2] * sin_alpha,
-                       -alms[1] * sin_alpha + alms[2] * cos_alpha)
+    alms[1], alms[2] = (
+        alms[1] * cos_alpha + alms[2] * sin_alpha,
+        -alms[1] * sin_alpha + alms[2] * cos_alpha,
+    )
     return alms
