@@ -21,7 +21,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 project = "pspy"
-copyright = "2019, Simons Observatory Collaboration Analysis Library Task Force"
+copyright = "2019 - 2024, Simons Observatory Collaboration Analysis Library Task Force"
 author = "T. Louis, S. Choi, DW Han, X. Garrido"
 language = "en"
 version = __version__
