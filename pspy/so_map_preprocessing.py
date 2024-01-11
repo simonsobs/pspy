@@ -1,5 +1,5 @@
 import numpy as np, pylab as plt
-from scipy.integrate import dblquad
+from scipy.integrate import quad
 from pspy import flat_tools, pspy_utils
 from pixell import enmap, utils
 from itertools import product
@@ -71,32 +71,48 @@ def analytical_tf(map, filter, binning_file, lmax):
     return bin_c, tf
 
 def analytical_tf_vkhk(vk_mask, hk_mask, ells, dtype=np.float64):
+    if vk_mask is None:
+        vk_mask = [0, 0]
+    if hk_mask is None:
+        hk_mask = [0, 0]
+    assert len(vk_mask) == 2 and len(hk_mask) == 2, \
+        f'{len(vk_mask)=} and {len(hk_mask)=} should both be 2'
+    
     out = np.zeros(ells.shape, dtype=dtype)
     for vk, hk in product(vk_mask, hk_mask):
         rk = np.sqrt(vk**2 + hk**2)
         out[ells > rk] += .25 - (np.abs(np.arcsin(vk/ells[ells > rk])) + np.abs(np.arcsin(hk/ells[ells > rk]))) / (2*np.pi)
     return out
 
-def analytical_tf_yxint(yxfilter_func, ells, dtype=np.float64):
-    def x(r, phi):
-        return r*np.cos(phi)
-    def y(r, phi):
-        return r*np.sin(phi)
-    def rphifilter_func(r, phi):
-        return yxfilter_func(y(r, phi), x(r, phi)) * r
+def analytical_tf_yxint(yxfilter_func, ells, x_fac=1, y_fac=1, dtype=np.float64):
+    def x(r, t):
+        return r*x_fac*np.cos(t)
+    def y(r, t):
+        return r*y_fac*np.sin(t)
+    
+    if x_fac == y_fac:
+        def v(r, t):
+            return r*x_fac
+    else:
+        def v(r, t):
+            return r*np.sqrt(x_fac**2 * np.sin(t)**2 + y_fac**2 * np.cos(t)**2)
 
     assert ells.ndim == 1, 'expect 1d ells'
     assert np.all(ells >= 0), 'expect non-negative ells'
     out = np.zeros(ells.shape, dtype=dtype)
     for i, ell in enumerate(ells):
-        if i % 10 == 0: print(ell)
-        if ell == 0:
-            rlow = ell
+        if i % 100 == 0:
+            print(ell)
+            
+        def vell(t):
+            return v(ell, t)
+        def rphifilter_func(t):
+            return yxfilter_func(y(ell, t), x(ell, t)) * vell(t)
+        
+        if x_fac == y_fac:
+            out[i] = quad(rphifilter_func, 0, 2*np.pi)[0] / (2*np.pi*ell*x_fac)
         else:
-            rlow = ell - 0.5
-        rhigh = ell + 0.5
-
-        out[i] = dblquad(rphifilter_func, 0, 2*np.pi, rlow, rhigh)[0] / (np.pi * (rhigh**2 - rlow**2))
+            out[i] = quad(rphifilter_func, 0, 2*np.pi)[0] / quad(vell, 0, 2*np.pi)[0]
     
     return out
 
