@@ -11,9 +11,9 @@ from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
 import matplotlib as mpl
 
 def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=None, l_toep=None):
-    """compute the coupling kernels corresponding to the T only covariance matrix
+    """Compute the coupling kernels corresponding to the T only covariance matrix
 
-   Parameters
+    Parameters
     ----------
 
     win: so_map or dictionnary of so_map
