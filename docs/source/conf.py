@@ -9,8 +9,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath("../.."))
-sys.path.append(os.path.abspath("../../pspy"))
-# autodoc_mock_imports = ["numpy"]
+autodoc_mock_imports = ["pspy.mcm_fortran", "pspy.cov_fortran"]
 
 # General stuff
 extensions = [
