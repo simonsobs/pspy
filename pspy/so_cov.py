@@ -1064,7 +1064,7 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
             mean_b[spec] = vec_mean_b[i * n_bins : (i + 1) * n_bins ]
 
     n_el = int(mc_cov.shape[0] / 2)
-    return mean_a, mean_b, mc_cov[n_el:, :n_el]
+    return mean_a, mean_b, mc_cov[:n_el, n_el:]
 
 
 def measure_white_noise_level(var, mask, dtype=np.float64):
