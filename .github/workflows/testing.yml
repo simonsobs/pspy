@@ -55,7 +55,7 @@ jobs:
 
     - name: Report Coverage (codecov)
       if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
     - name: Test notebooks (Only on Linux for saving time)
       if: matrix.os == 'ubuntu-latest'
