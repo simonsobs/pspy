@@ -754,6 +754,42 @@ def car_template_from_shape_wcs(ncomp_out, shape, wcs, dtype=np.float64):
     return template
 
 
+def draw_random_location_car(map_car, n_pts):
+    """
+    Draw n_pts uniformly on a car template and return their pixel indices, taking into accout the fact that the car pixels have different area
+    according to their declination.
+    also returns a corresponding hit_map also accounting for the fact that a pixel can be drawn
+    more than once.
+    
+    Parameters
+    ----------
+    map_car : ``so_map`` in CAR coordinates
+      the map used to define the box
+    n_pts : integer
+        the number of point to draw on the map
+    """
+            
+    cumarea = np.cumsum(map_car.data.pixsizemap())
+    # Normalize from 0 to 1. We now have something like a CDF
+    cumarea /= cumarea[-1]
+    # Generate random numbers from 0 to 1:
+    r = np.random.uniform(0, 1, n_pts)
+    
+    # Find where in cumarea each should be
+    mpix = np.searchsorted(cumarea, r)
+    
+    # Expand masked pixel index to full pixel index
+    # You can use this directly on the flattened map, but if you want it as a 2d index you can use
+    pix2d = np.unravel_index(mpix, map_car.data.shape)
+    
+    # also produce a map describing how many time a given pixel has been hit
+    hitmap = np.bincount(mpix, minlength=map_car.data.npix).reshape(map_car.data.shape[:])
+
+    return pix2d, hitmap
+
+
+
+
 def white_noise(template, rms_uKarcmin_T, rms_uKarcmin_pol=None):
     """Generate a white noise realisation corresponding to the template pixellisation
 
