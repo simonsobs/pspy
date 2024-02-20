@@ -24,6 +24,7 @@ def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
       [theta_min,theta_max] in radian.
       for healpix pixellisation all pixel outside this range will be assumed to be zero.
     """
+    print("new")
     if map.pixel == "HEALPIX":
         if theta_range is None:
             alm = hp.sphtfunc.map2alm(map.data, lmax=lmax, iter=niter)
@@ -33,21 +34,11 @@ def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
             alm = curvedsky.map2alm_healpix(map.data,
                                             lmax=lmax,
                                             theta_min=theta_range[0],
-                                            theta_max=theta_range[1])
-            if niter != 0:
-                map_copy = map.copy()
-                for _ in range(niter):
-                    alm += curvedsky.map2alm_healpix(map.data-curvedsky.alm2map_healpix(alm,map_copy.data),
-                                                     lmax=lmax,
-                                                     theta_min=theta_range[0],
-                                                     theta_max=theta_range[1])
+                                            theta_max=theta_range[1],
+                                            niter=niter)
 
     elif map.pixel=="CAR":
-        alm = curvedsky.map2alm(map.data, lmax=lmax)
-        if niter != 0:
-            map_copy = map.copy()
-            for _ in range(niter):
-                alm += curvedsky.map2alm(map.data-curvedsky.alm2map(alm, map_copy.data), lmax=lmax)
+        alm = curvedsky.map2alm(map.data, lmax=lmax, niter=niter)
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
 
