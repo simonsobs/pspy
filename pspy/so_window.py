@@ -171,7 +171,7 @@ def get_survey_solid_angle(window, naive=False):
     window: ``so_map``
       map of the window function
     naive: boolean
-      the area of the non zero pixell
+      wether to just compute the area of the non zero pixell
     """
     
     pixsize_map = window.data.pixsizemap()
@@ -190,6 +190,5 @@ def get_survey_solid_angle(window, naive=False):
         w2 = get_w(window, 2)
         w4 =  get_w(window, 4)
         Omega = w2 ** 2 / w4
-    
     
     return Omega
