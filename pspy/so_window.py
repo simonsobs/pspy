@@ -185,12 +185,11 @@ def get_survey_solid_angle(window, naive=False):
     else:
         def get_w(window, order):
             pixsize_map = window.data.pixsizemap()
-            return 1 / (4 * np.pi) * np.sum(window.data ** order * pixsize_map)
+            return  np.sum(window.data ** order * pixsize_map)
 
         w2 = get_w(window, 2)
         w4 =  get_w(window, 4)
-        fsky_eff = w2 ** 2 / w4
-        Omega = fsky_eff * 4 *np.pi
+        Omega = w2 ** 2 / w4
     
     
     return Omega
