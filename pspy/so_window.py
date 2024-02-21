@@ -171,17 +171,15 @@ def get_survey_solid_angle(window, naive=False):
     window: ``so_map``
       map of the window function
     naive: boolean
-      wether to just compute the area of the non zero pixell
+      if True just compute the area covered by  the non-zero pixels
     """
     
     pixsize_map = window.data.pixsizemap()
 
-    
     if naive == True:
         binary = window.copy()
         binary.data[binary.data != 0] = 1
         Omega = np.sum(binary.data *  pixsize_map)
-        
     else:
         def get_w(window, order):
             pixsize_map = window.data.pixsizemap()
