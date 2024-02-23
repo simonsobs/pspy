@@ -86,6 +86,53 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accur
     return l, ps
 
 
+def unlensed_ps_from_params(cosmo_params, lmax, raw_cl=False, start_at_zero=False, **accuracy_pars):
+    """Given a set of cosmological parameters compute the corresponding unlensed power spectrum
+     as well as the corresponding lensing potential
+     You need to have camb installed to use this function
+
+    Parameters
+    ----------
+    cosmo_params: dict
+      dictionnary of cosmological parameters
+      # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
+    raw_cl :  boolean
+      wether to rescale or not the power spectrum, the rescaling factors are:
+        l * (l + 1) / (2 * np.pi) for TT, EE, BB, TE
+        (l * (l + 1)) ** 2 / (2 * np.pi) for PP
+        (l ** 2 * (l + 1)) / (2 * np.pi) for PT and PE
+    lmax: integer
+      the maximum multipole to consider
+    start_at_zero : boolean
+      if True, ps start at l=0 and cl(l=0) and cl(l=1) are set to 0
+      else, start at l=2
+    accuracy_pars : dict
+      optional accuracy parameters that CAMB understand (e.g. lens_potential_accuracy)
+    """
+    try:
+        import camb
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install camb to use this function")
+
+    if start_at_zero: lmin = 0
+    else: lmin = 2
+
+    camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
+    camb_cosmo.update({"As": 1e-10 * np.exp(cosmo_params["logA"]), "lmax": lmax, **accuracy_pars})
+    pars = camb.set_params(**camb_cosmo)
+    results = camb.get_results(pars)
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=raw_cl)
+    l = np.arange(lmin, lmax)
+    ps = {}
+    ps["TT"], ps["EE"], ps["BB"], ps["TE"] = powers["unlensed_total"].T
+    ps["PP"], ps["PT"], ps["PE"] = powers["lens_potential"].T
+    
+    for field in ps.keys():
+        ps[field] = ps[field][l]
+                
+    return l, ps
+
+
 def get_nlth_dict(rms_uKarcmin_T, type, lmax, spectra=None, rms_uKarcmin_pol=None, beamfile=None):
     """Return the effective noise power spectrum Nl/bl^2 given a beam file and a noise rms
 
