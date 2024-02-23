@@ -127,9 +127,15 @@ def unlensed_ps_from_params(cosmo_params, lmax, raw_cl=False, start_at_zero=Fals
     ps["TT"], ps["EE"], ps["BB"], ps["TE"] = powers["unlensed_total"].T
     ps["PP"], ps["PT"], ps["PE"] = powers["lens_potential"].T
     
-    for field in ps.keys():
-        ps[field] = ps[field][l]
-                
+    for spec in ps.keys():
+        ps[spec] = ps[spec][l]
+        
+    # fill in the dictionnary, useful for many application and not too big in memmory
+    ps["TP"], ps["EP"], ps["ET"] = ps["PT"].copy(), ps["PE"].copy(), ps["TE"].copy()
+    
+    for spec in ["TB", "BT", "EB", "BE", "PB", "BP"]:
+        ps[spec] = ps["TT"] * 0
+
     return l, ps
 
 
