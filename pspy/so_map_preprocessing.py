@@ -4,11 +4,40 @@ from pspy import flat_tools, pspy_utils
 from pixell import enmap, utils
 from itertools import product
 
-def build_std_filter(shape, wcs, vk_mask, hk_mask, dtype=np.float64):
+def build_std_filter(shape, wcs, vk_mask, hk_mask, dtype=np.float64,
+                     shape_y=None, wcs_y=None):
+    """Construct a "standard," binary-cross style filter.
+
+    Parameters
+    ----------
+    shape : (ny, nx) tuple
+        Shape of map and therefore shape of DFT.
+    wcs : astropy.wcs.WCS
+        wcs describing the map, used in enmap.laxes
+    vk_mask : (kx0, kx1) tuple
+        Modes between kx0 and kx1 (exclusive) are set to 0, otherwise 1.
+    hk_mask : (ky0, ky1) tuple
+        Modes between ky0 and ky1 (exclusive) are set to 0, otherwise 1.
+    dtype : np.dtype, optional
+        Type of output filter array, by default np.float64.
+    shape_y : (ny, nx) tuple, optional
+        If provided, together with wcs_y, used to override the y-spacing and
+        shape in Fourier space in enmap.laxes, by default None.
+    wcs_y : astropy.wcs.WCS, optional
+        If provided, together with shape_y, used to override the y-spacing and
+        shape in Fourier space in enmap.laxes, by default None.
+
+    Returns
+    -------
+    (ny, nx) enmap.ndmap
+        The binary-cross filter.
+    """
     ly, lx  = enmap.laxes(shape, wcs, method="auto")
+    if shape_y is not None and wcs_y is not None:
+        ly, _  = enmap.laxes(shape_y, wcs_y, method="auto")
     ly = ly.astype(dtype)
     lx = lx.astype(dtype)
-    filter = enmap.ones(shape[-2:], wcs, dtype)
+    filter = enmap.ones((ly.size, lx.size), wcs, dtype)
     if vk_mask is not None:
         id_vk = np.where((lx > vk_mask[0]) & (lx < vk_mask[1]))
         filter[:, id_vk] = 0
@@ -27,8 +56,11 @@ def apply_std_filter(imap, filter):
 
     return filtered_map
 
-def build_sigurd_filter(shape, wcs, lbounds, dtype=np.float64):
+def build_sigurd_filter(shape, wcs, lbounds, dtype=np.float64,
+                        shape_y=None, wcs_y=None):
     ly, lx  = enmap.laxes(shape, wcs, method="auto")
+    if shape_y is not None and wcs_y is not None:
+        ly, _  = enmap.laxes(shape_y, wcs_y, method="auto")
     ly = ly.astype(dtype)
     lx = lx.astype(dtype)
     lbounds = np.asarray(lbounds)
@@ -36,7 +68,7 @@ def build_sigurd_filter(shape, wcs, lbounds, dtype=np.float64):
         lbounds = np.broadcast_to(lbounds, (1,2))
     if lbounds.ndim > 2 or lbounds.shape[-1] != 2:
         raise ValueError("lbounds must be [:,{ly,lx}]")
-    filter = enmap.ones(shape[-2:], wcs, dtype)
+    filter = enmap.ones((ly.size, lx.size), wcs, dtype)
     # Apply the filters
     for i , (ycut, xcut) in enumerate(lbounds):
         filter *= 1-(np.exp(-0.5*(ly/ycut)**2)[:,None]*np.exp(-0.5*(lx/xcut)**2)[None,:])
