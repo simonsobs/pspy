@@ -52,7 +52,7 @@ jobs:
           CIBW_BEFORE_BUILD: "python -m pip install numpy==${{ matrix.numpyver }}"
           CIBW_BUILD_VERBOSITY: 3
           CIBW_BUILD: "${{ matrix.cp }}-*"
-          CIBW_SKIP: "*-musllinux_*"
+          CIBW_SKIP: "*-musllinux_* *i686*"
 
       - uses: actions/upload-artifact@v4
         with:
