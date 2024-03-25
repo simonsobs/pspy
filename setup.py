@@ -64,7 +64,6 @@ setup(
     install_requires=[
         "numpy>=1.20,!=1.26.0",
         "healpy",
-        "pyFFTW",
         "pillow",  # this one should be installed by pixell
         "pixell>=0.21.1",
     ],
