@@ -5,6 +5,10 @@ on:
   push:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
@@ -18,7 +22,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -34,7 +38,6 @@ jobs:
         python -m pip install --upgrade pip wheel
         python -m pip install numpy pytest pytest-cov
         python -m pip install -e .
-        python -m pip install pixell==0.17.3
 
     - name: Install extra dependencies (camb)
       run: |
@@ -52,13 +55,14 @@ jobs:
 
     - name: Report Coverage (codecov)
       if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
 
     - name: Test notebooks (Only on Linux for saving time)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        python -m pip install jupyter
-        # jupyter nbconvert --to notebook --execute notebooks/tutorial_io.ipynb
+        python -m pip install jupyter ipykernel
+        python -m ipykernel install --user --name=pspy
+        jupyter nbconvert --to notebook --execute docs/source/notebooks/tutorial_io.ipynb
 
     - name: Comparing pspy to NaMaster
       if: matrix.os == 'ubuntu-latest'

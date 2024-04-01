@@ -11,9 +11,9 @@ from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
 import matplotlib as mpl
 
 def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=None, l_toep=None):
-    """compute the coupling kernels corresponding to the T only covariance matrix
-        
-   Parameters
+    """Compute the coupling kernels corresponding to the T only covariance matrix
+
+    Parameters
     ----------
 
     win: so_map or dictionnary of so_map
@@ -46,7 +46,7 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
         coupling = np.zeros((lmax, lmax))
-        
+
 
         mcm_fortran.calc_coupling_spin0(wcl,
                                        l_exact,
@@ -54,7 +54,7 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
                                        l_toep,
                                        coupling.T)
 
-        
+
         if l_toep < lmax:
             # For toepliz fill the matrix
             coupling = so_mcm.format_toepliz_fortran(coupling, l_toep, lmax)
@@ -63,7 +63,7 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
 
         coupling_dict["TaTcTbTd"] = coupling[:lmax - 2, :lmax - 2]
         coupling_dict["TaTdTbTc"] = coupling[:lmax - 2, :lmax - 2]
-        
+
     else:
         wcl = {}
         for s in ["TaTcTbTd", "TaTdTbTc"]:
@@ -79,9 +79,9 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
             wcl[n0+n1+n2+n3] *= (2 * l + 1) / (4 * np.pi)
 
         coupling = np.zeros((2, lmax, lmax))
-        
+
         cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], l_exact, l_band, l_toep,  coupling.T)
-        
+
         for id_cov, name in enumerate(["TaTcTbTd", "TaTdTbTc"]):
             if l_toep < lmax:
                 coupling[id_cov] = so_mcm.format_toepliz_fortran(coupling[id_cov], l_toep, lmax)
@@ -89,7 +89,7 @@ def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=
 
             coupling_dict[name] = coupling[id_cov][:lmax - 2, :lmax - 2]
 
-        
+
     if save_file is not None:
         np.save("%s.npy"%save_file, coupling)
 
@@ -130,9 +130,9 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                 "TaTcPbTd", "TaTdPbTc", "PaTcTbTd", "PaTdTbTc",
                 "PaTcPbTd", "PaTdPbTc", "PaTcTbPd", "PaPdTbTc",
                 "PaTcPbPd", "PaPdPbTc", "PaPcPbTd", "PaTdPbPc"]
-                
+
     coupling_dict = {}
-    
+
     if l_toep is None: l_toep = lmax
     if l_band is None: l_band = lmax
     if l_exact is None: l_exact = lmax
@@ -145,7 +145,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         l = np.arange(len(wcl))
         wcl *= (2 * l + 1) / (4 * np.pi)
         coupling = np.zeros((1, lmax, lmax))
-    
+
 
         mcm_fortran.calc_coupling_spin0(wcl,
                                        l_exact,
@@ -153,7 +153,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
                                        l_toep,
                                        coupling[0].T)
 
-        
+
         if l_toep < lmax:
             # For toepliz fill the matrix
             coupling[0] = so_mcm.format_toepliz_fortran(coupling[0], l_toep, lmax)
@@ -165,7 +165,7 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
             coupling_dict[name] = coupling_dict[name][:lmax - 2, :lmax - 2]
     else:
         wcl={}
-        
+
         for s in win_list:
 
             n0, n1, n2, n3 = [s[i * 2:(i + 1) * 2] for i in range(4)]
@@ -188,8 +188,8 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
             doPlanck = 1
         else:
             doPlanck = 0
-            
-            
+
+
         cov_fortran.calc_cov_spin0and2_simple(wcl["TaTcTbTd"], wcl["TaTdTbTc"], wcl["PaPcPbPd"], wcl["PaPdPbPc"],
                                               wcl["TaTcPbPd"], wcl["TaPdPbTc"], wcl["PaPcTbTd"], wcl["PaTdTbPc"],
                                               wcl["TaPcTbPd"], wcl["TaPdTbPc"], wcl["TaTcTbPd"], wcl["TaPdTbTc"],
@@ -212,15 +212,15 @@ def cov_coupling_spin0and2_simple(win, lmax, niter=3, save_file=None, planck=Fal
         np.save("%s.npy"%save_file, coupling)
 
     return coupling_dict
-    
-    
+
+
 def fast_cov_coupling_spin0and2(sq_win_alms_dir,
                                 id_element,
                                 lmax,
                                 l_exact=None,
                                 l_band=None,
                                 l_toep=None):
-                                
+
     """Compute the coupling kernels corresponding to the T and E covariance matrix
     This routine assume that you have already precomputed the alms of the square of the windows
     and that the window in temperature and polarisation are the same.
@@ -250,14 +250,14 @@ def fast_cov_coupling_spin0and2(sq_win_alms_dir,
     if l_toep is None: l_toep = lmax
     if l_band is None: l_band = lmax
     if l_exact is None: l_exact = lmax
-    
+
     def try_alm_order(dir, a, b):
         try:
             alm = np.load("%s/alms_%sx%s.npy"  % (dir, a, b))
         except:
             alm = np.load("%s/alms_%sx%s.npy"  % (dir, b, a))
         return alm
-    
+
     alm_TaTc = try_alm_order(sq_win_alms_dir, na, nc)
     alm_TbTd = try_alm_order(sq_win_alms_dir, nb, nd)
     alm_TaTd = try_alm_order(sq_win_alms_dir, na, nd)
@@ -272,9 +272,9 @@ def fast_cov_coupling_spin0and2(sq_win_alms_dir,
     wcl["TaTdTbTc"] *= (2 * l + 1) / (4 * np.pi)
 
     coupling = np.zeros((2, lmax, lmax))
- 
+
     cov_fortran.calc_cov_spin0(wcl["TaTcTbTd"], wcl["TaTdTbTc"], l_exact, l_band, l_toep,  coupling.T)
- 
+
     coupling_dict = {}
 
     for id_cov, name in enumerate(["TaTcTbTd", "TaTdTbTc"]):
@@ -287,17 +287,17 @@ def fast_cov_coupling_spin0and2(sq_win_alms_dir,
              "TaPcTbPd", "TaTcTbPd", "TaPcTbTd", "TaPcPbTd",
              "TaPcPbPd", "PaPcTbPd", "TaTcPbTd", "PaTcTbTd",
              "PaTcPbTd", "PaTcTbPd", "PaTcPbPd", "PaPcPbTd"]
-        
+
     list2 = ["TaTdTbTc", "PaPdPbPc", "TaPdPbTc", "PaTdTbPc",
              "TaPdTbPc", "TaPdTbTc", "TaTdTbPc", "TaTdPbPc",
              "TaPdPbPc", "PaPdTbPc", "TaTdPbTc", "PaTdTbTc",
              "PaTdPbTc", "PaPdTbTc", "PaPdPbTc", "PaTdPbPc"]
- 
+
     for id1 in list1:
         coupling_dict[id1] = coupling_dict["TaTcTbTd"][:lmax - 2, :lmax - 2]
     for id2 in list2:
         coupling_dict[id2] = coupling_dict["TaTdTbTc"][:lmax - 2, :lmax - 2]
-        
+
     return coupling_dict
 
 
@@ -330,12 +330,12 @@ def read_coupling(file, spectra=None):
                     "TaTcPbTd", "TaTdPbTc", "PaTcTbTd", "PaTdTbTc",
                     "PaTcPbTd", "PaTdPbTc", "PaTcTbPd", "PaPdTbTc",
                     "PaTcPbPd", "PaPdPbTc", "PaPcPbTd", "PaTdPbPc"]
-                    
+
         if coupling.shape[0] == 32:
             indexlist = np.arange(32)
         elif coupling.shape[0] == 1:
             indexlist=np.zeros(32, dtype=np.int8)
-        
+
     for name, index in zip(win_list, indexlist):
         coupling_dict[name] = coupling[index]
 
@@ -354,7 +354,7 @@ def symmetrize(Clth, mode="arithm"):
       if geo return C_l1l2 = sqrt( |Cl1 Cl2 |)
       if arithm return C_l1l2 = (Cl1 + Cl2)/2
     """
-    
+
     if mode == "geo":
         return np.sqrt(np.abs(np.outer(Clth, Clth)))
     if mode == "arithm":
@@ -376,13 +376,13 @@ def bin_mat(mat, binning_file, lmax, speclist=["TT"]):
     n_bins = len(bin_hi)
     n_spec = len(speclist)
     n_ell = int(mat.shape[0] / n_spec)
-   
+
 
     coupling_b = np.zeros((n_spec * n_bins, n_spec * n_bins))
 
     for i, s1 in enumerate(speclist):
         for j, s2 in enumerate(speclist):
-        
+
             block = mat[i * n_ell : (i + 1) * n_ell,  j * n_ell : (j + 1) * n_ell]
             binned_block = np.zeros((n_bins, n_bins))
             mcm_fortran.bin_mcm(block.T, bin_lo, bin_hi, bin_size, binned_block.T, 0)
@@ -423,7 +423,7 @@ def cov_spin0(Clth_dict, coupling_dict, binning_file, lmax, mbb_inv_ab, mbb_inv_
     else:
         full_analytic_cov = mbb_inv_ab @ cov @ mbb_inv_cd.T
         analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax)
-        
+
     return analytic_cov
 
 def cov_spin0and2(Clth_dict,
@@ -436,7 +436,7 @@ def cov_spin0and2(Clth_dict,
                   cov_T_E_only=True,
                   dtype=np.float64,
                   old_way=False):
-                  
+
     """From the two point functions and the coupling kernel construct the T and E analytical covariance matrix of <(C_ab- Clth)(C_cd-Clth)>
 
     Parameters
@@ -463,12 +463,12 @@ def cov_spin0and2(Clth_dict,
     """
 
     n_ell = Clth_dict["TaTb"].shape[0]
-    
+
     if cov_T_E_only:
         speclist = ["TT", "TE", "ET", "EE"]
     else:
         speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-    
+
     nspec = len(speclist)
     full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell), dtype=dtype)
 
@@ -479,23 +479,23 @@ def cov_spin0and2(Clth_dict,
             id1 = X + "b" + Z + "d"
             id2 = W + "a" + Z + "d"
             id3 = X + "b" + Y + "c"
-            
+
             Cl0Cl1 = symmetrize(Clth_dict[id0]) * symmetrize(Clth_dict[id1])
             Cl2Cl3 = symmetrize(Clth_dict[id2]) * symmetrize(Clth_dict[id3])
-            
+
             for field in ["E", "B"]:
                 id0 = id0.replace(field, "P")
                 id1 = id1.replace(field, "P")
                 id2 = id2.replace(field, "P")
                 id3 = id3.replace(field, "P")
-                
+
             M = Cl0Cl1 * coupling_dict[id0 + id1]
             M += Cl2Cl3 * coupling_dict[id2 + id3]
 
             full_analytic_cov[i * n_ell:(i + 1) * n_ell, j * n_ell:(j + 1) * n_ell] = M
-    
+
     full_analytic_cov = np.triu(full_analytic_cov) + np.tril(full_analytic_cov.T, -1)
-    
+
     if old_way == True:
         mbb_inv_ab = extract_mbb(mbb_inv_ab, cov_T_E_only=cov_T_E_only, dtype=dtype)
         mbb_inv_cd = extract_mbb(mbb_inv_cd, cov_T_E_only=cov_T_E_only, dtype=dtype)
@@ -581,25 +581,25 @@ def generalized_cov_spin0and2(coupling_dict,
         speclist = ["TT", "TE", "ET", "EE"]
     else:
         speclist =  ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
-    
+
     nspec = len(speclist)
     full_analytic_cov = np.zeros((nspec * n_ell, nspec * n_ell), dtype=dtype)
 
     for i, (W, X) in enumerate(speclist):
         for j, (Y, Z) in enumerate(speclist):
-    
+
             id0 = W + "a" + Y + "c"
             id1 = X + "b" + Z + "d"
             id2 = W + "a" + Z + "d"
             id3 = X + "b" + Y + "c"
-            
+
             for field in ["E", "B"]:
                 id0 = id0.replace(field, "P")
                 id1 = id1.replace(field, "P")
                 id2 = id2.replace(field, "P")
                 id3 = id3.replace(field, "P")
 
-        
+
             M = coupling_dict[id0 + id1] * chi(na, nc, nb, nd, ns, ps_all, nl_all, W + Y + X + Z)
             M += coupling_dict[id2 + id3] * chi(na, nd, nb, nc, ns, ps_all, nl_all, W + Z + X + Y)
             full_analytic_cov[i * n_ell: (i + 1) * n_ell, j * n_ell: (j + 1) * n_ell] = M
@@ -622,8 +622,8 @@ def generalized_cov_spin0and2(coupling_dict,
         else:
             full_analytic_cov = block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, full_analytic_cov)
             analytic_cov = bin_mat(full_analytic_cov, binning_file, lmax, speclist=speclist)
-            
-            
+
+
     return analytic_cov
 
 
@@ -643,7 +643,7 @@ def covariance_element_beam(id_element,
     let's denote the normalised beam covariance <BB>_ac = < delta B_a delta B_c >/np.outer(B_a, B_c)
 
     Cov(Wa * Xb,  Yc * Zd) = Dl^{WaXb} Dl^{YcZd} ( <BB>_ac + <BB>_ad + <BB>_bc + <BB>_bd )
-   
+
     Parameters
     ----------
     id_element : list
@@ -678,24 +678,24 @@ def covariance_element_beam(id_element,
 
     nspec = len(speclist)
     analytic_cov_from_beam = np.zeros((nspec * nbins, nspec * nbins))
-    
+
     M =  (delta2(na, nc) + delta2(na, nd)) * norm_beam_cov[sv_alpha, ar_alpha]
     M += (delta2(nb, nc) + delta2(nb, nd)) * norm_beam_cov[sv_beta, ar_beta]
 
     for i, spec1 in enumerate(speclist):
         for j, spec2 in enumerate(speclist):
-            
+
             cov = M.copy()
             cov *=  np.outer(ps_all[na, nb, spec1], ps_all[nc, nd, spec2])
-        
+
             analytic_cov_from_beam[i * nbins: (i + 1) * nbins, j * nbins: (j + 1) * nbins] = bin_mat(cov, binning_file, lmax)
 
     return analytic_cov_from_beam
 
 
 def block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
-
     """Suggestion by adrien to do an operation of the type A M B, where A and B are block diagonal matrix
+
     Parameters
     ----------
     slices: list of tuple of integer
@@ -706,25 +706,25 @@ def block_diagonal_mult(slices, mbb_inv_ab_list, mbb_inv_cd_list, analytic_cov):
         list of the transpose of the inverse of the mode coupling matrix
     analytic_cov: 2d array
         analytic covariance matrix
-    
+
     """
     nblocks = len(slices)
-    
+
     for i in range(nblocks):
         for j in range(nblocks):
-        
+
             min_i, max_i = slices[i]
             min_j, max_j = slices[j]
 
             analytic_cov[min_i: max_i, min_j: max_j] = mbb_inv_ab_list[i] @ analytic_cov[min_i: max_i, min_j: max_j] @ mbb_inv_cd_list[j]
-            
+
     return analytic_cov
 
 def extract_mbb_list(mbb_inv,
                      cov_T_E_only=True,
                      dtype=np.float64,
                      transpose=False):
-                     
+
     """extract a list of inverse mode coupling matrix, you can optionnaly choose the dtype, if you want only the TT-TE-ET-EE part,
     and if you want to transpose it
 
@@ -744,7 +744,7 @@ def extract_mbb_list(mbb_inv,
 
     nbins = mbb_inv["spin0xspin0"].shape[0]
     slices = []
-    
+
     if cov_T_E_only == False:
 
         nblocks = 6
@@ -759,7 +759,7 @@ def extract_mbb_list(mbb_inv,
                     mbb_inv["spin2xspin0"],
                     mbb_inv["spin2xspin2"]]
     else:
-    
+
         nblocks = 4
         for i in range(nblocks):
             slices += [(i * nbins, (i + 1) * nbins)]
@@ -774,7 +774,7 @@ def extract_mbb_list(mbb_inv,
             mbb_list[i] = mbb_list[i].astype(dtype)
         if transpose == True:
             mbb_list[i] = mbb_list[i].T
-    
+
     return slices, mbb_list
 
 
@@ -951,7 +951,7 @@ def g(a, b, c, d, ns):
     result /= (ns[a] * ns[b] * (ns[c] - delta2(a, c)) * (ns[d] - delta2(b, d)))
     return result
 
-    
+
 def chi(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
     """doc not ready yet
     """
@@ -967,7 +967,7 @@ def chi(alpha, gamma, beta, eta, ns, Dl, DNl, id="TTTT"):
     chi += Dl[alpha, gamma, AB] * DNl[beta, eta, CD] * f(sv_beta, sv_eta, sv_alpha, sv_gamma, ns)
     chi += Dl[beta, eta, CD] * DNl[alpha, gamma, AB] * f(sv_alpha, sv_gamma, sv_beta, sv_eta, ns)
     chi += g(sv_alpha, sv_gamma, sv_beta, sv_eta, ns) * DNl[alpha, gamma, AB] * DNl[beta, eta, CD]
-    
+
     chi= symmetrize(chi, mode="arithm")
 
     return chi
@@ -991,7 +991,7 @@ def plot_cov_matrix(mat, color_range=None, color="pwhite", file_name=None):
     """
 
     mat_plot = mat.copy()
-    
+
     try:
         if color not in mpl.colormaps:
             colorize.mpl_setdefault(color)
@@ -1050,9 +1050,9 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
                 vec_b = np.append(vec_b, spec_b[spec])
             vec_all_a +=  [vec_a]
             vec_all_b +=  [vec_b]
-            
+
         mc_cov = np.cov(vec_all_a, y=vec_all_b, rowvar=False)
-        
+
         vec_mean_a = np.mean(vec_all_a, axis=0)
         vec_mean_b = np.mean(vec_all_b, axis=0)
 
@@ -1064,7 +1064,7 @@ def mc_cov_from_spectra_list(spec_list_a, spec_list_b, spectra=None):
             mean_b[spec] = vec_mean_b[i * n_bins : (i + 1) * n_bins ]
 
     n_el = int(mc_cov.shape[0] / 2)
-    return mean_a, mean_b, mc_cov[n_el:, :n_el]
+    return mean_a, mean_b, mc_cov[:n_el, n_el:]
 
 
 def measure_white_noise_level(var, mask, dtype=np.float64):

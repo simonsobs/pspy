@@ -62,11 +62,10 @@ setup(
     entry_points={},
     ext_modules=[mcm, cov],
     install_requires=[
-        "numpy>=1.20",
+        "numpy>=1.20,!=1.26.0",
         "healpy",
-        "pyFFTW",
         "pillow",  # this one should be installed by pixell
-        "pixell>=0.7.0",
+        "pixell>=0.21.1",
     ],
     packages=find_packages(),
     include_package_data=True,

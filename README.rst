@@ -17,7 +17,7 @@ python example notebooks for an introductory set of examples on how to use the p
 .. image:: https://codecov.io/gh/simonsobs/pspy/branch/master/graph/badge.svg?token=HHAJ7NQ5CE
    :target: https://codecov.io/gh/simonsobs/pspy
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=notebooks/%2Findex.ipynb
+   :target: https://mybinder.org/v2/gh/simonsobs/pspy/master?filepath=docs/source/notebooks/%2Findex.ipynb
 
 * Free software: BSD license
 * ``pspy`` documentation: https://pspy.readthedocs.io.
@@ -29,13 +29,13 @@ Installing
 
 .. code:: shell
 
-    $ pip install pspy [--user]
+    pip install pspy [--user]
 
 You can test your installation by running
 
 .. code:: shell
 
-    $ test-pspy
+    test-pspy
 
 If everything goes fine, no errors will occur. Otherwise, you can report your problem on the `Issues tracker <https://github.com/simonsobs/pspy/issues>`_.
 
@@ -43,36 +43,36 @@ If you plan to develop ``pspy``, it is better to checkout the latest version by 
 
 .. code:: shell
 
-    $ git clone https://github.com/simonsobs/pspy.git /where/to/clone
+    git clone https://github.com/simonsobs/pspy.git /where/to/clone
 
 Then you can install the ``pspy`` library and its dependencies *via*
 
 .. code:: shell
 
-    $ pip install -e /where/to/clone
+    pip install -e /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
 to reinstall at every changes.
 
 
-Ipython notebooks
------------------
+Tutorials notebooks
+-------------------
 
-* `Reading, writing and plotting SO maps  <https://pspy.readthedocs.org/en/latest/tutorial_io.html>`_
-* `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_car_spin0and2.html>`_
-* `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/tutorial_spectra_healpix_spin0and2.html>`_
-* `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/tutorial_projection.html>`_
-* `Compute spectra for standard and pure B modes  <https://pspy.readthedocs.org/en/latest/tutorial_purebb.html>`_
+* `Reading, writing and plotting maps  <https://pspy.readthedocs.org/en/latest/notebooks/tutorial_io.html>`_
+* `Generate spin0 and spin2 spectra for CAR  <https://pspy.readthedocs.org/en/latest/notebooks/tutorial_spectra_car_spin0and2.html>`_
+* `Generate spin0 and spin2 spectra for HEALPIX  <https://pspy.readthedocs.org/en/latest/notebooks/tutorial_spectra_healpix_spin0and2.html>`_
+* `Projecting HEALPIX to CAR  <https://pspy.readthedocs.org/en/latest/notebooks/tutorial_projection.html>`_
+* `Compute spectra for standard and pure B modes  <https://pspy.readthedocs.org/en/latest/notebooks/tutorial_purebb.html>`_
 
 Others tutorials can be found under the ``tutorials`` directory.
 
 Dependencies
 ------------
 
-* Python >= 3.8
+* ``Python`` ≥ 3.8
 * ``pyFFTW`` https://pyfftw.readthedocs.io
 * ``healpy`` https://healpy.readthedocs.io
-* ``pixell`` >= 0.7.0 https://pixell.readthedocs.io
+* ``pixell`` https://pixell.readthedocs.io
 
 
 Authors

@@ -156,3 +156,37 @@ def get_spinned_windows(w, lmax, niter):
     w2_minus.data = w2[1]
 
     return w1_plus, w1_minus, w2_plus, w2_minus
+
+
+def get_survey_solid_angle(window, naive=False):
+    """
+    return Omega, the effective solid angle convered by the window function
+    we use the window correction as displayed in equation 17 of https://arxiv.org/pdf/astro-ph/0105302.pdf
+    to get f_sky just do:
+    
+    fsky = Omega / (4 * np.pi)
+    
+    Parameters
+    ----------
+    window: ``so_map``
+      map of the window function
+    naive: boolean
+      if True just compute the area covered by  the non-zero pixels
+    """
+    
+    pixsize_map = window.data.pixsizemap()
+
+    if naive == True:
+        binary = window.copy()
+        binary.data[binary.data != 0] = 1
+        Omega = np.sum(binary.data *  pixsize_map)
+    else:
+        def get_w(window, order):
+            pixsize_map = window.data.pixsizemap()
+            return  np.sum(window.data ** order * pixsize_map)
+
+        w2 = get_w(window, 2)
+        w4 =  get_w(window, 4)
+        Omega = w2 ** 2 / w4
+    
+    return Omega

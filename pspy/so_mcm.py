@@ -27,9 +27,10 @@ def mcm_and_bbl_spin0(win1,
                       l_band=None,
                       l3_pad=2000,
                       return_coupling_only=False):
-                      
-                      
+
+
     """Get the mode coupling matrix and the binning matrix for spin0 fields
+
      Parameters
      ----------
      win1: so_map (or alm)
@@ -108,7 +109,7 @@ def mcm_and_bbl_spin0(win1,
 
     bin_lo, bin_hi, bin_c, bin_size = pspy_utils.read_binning_file(binning_file, lmax)
     n_bins = len(bin_hi)
-    
+
     Bbl = np.zeros((n_bins, lmax))
 
     if binned_mcm == True:
@@ -125,7 +126,7 @@ def mcm_and_bbl_spin0(win1,
         mcm_fortran.binning_matrix(identity_matrix.T, bin_lo, bin_hi, bin_size, Bbl.T, doDl)
         mcm = mcm[:lmax - 2, :lmax - 2]
         mcm_inv = np.linalg.inv(mcm)
-            
+
         if save_file is not None:
             save_coupling(save_file, mcm_inv, Bbl)
         return mcm_inv, Bbl
@@ -148,7 +149,7 @@ def mcm_and_bbl_spin0and2(win1,
                           l_toep=None,
                           l_band=None,
                           return_coupling_only=False):
-                          
+
     """Get the mode coupling matrix and the binning matrix for spin 0 and 2 fields
 
     Parameters
@@ -182,7 +183,7 @@ def mcm_and_bbl_spin0and2(win1,
 
     save_coupling: str
     """
-        
+
     def get_coupling_dict(array):
         ncomp, dim1, dim2 = array.shape
         dict = {}
@@ -215,7 +216,7 @@ def mcm_and_bbl_spin0and2(win1,
             win2_alm_T = sph_tools.map2alm(win2[0], niter=niter, lmax=maxl)
             win2_alm_P = sph_tools.map2alm(win2[1], niter=niter, lmax=maxl)
             win2 = (win2_alm_T, win2_alm_P)
-                                                  
+
     if win2 is None: win2 = deepcopy(win1)
     if bl1 is None: bl1 = (np.ones(2 + lmax), np.ones(2 + lmax))
     if bl2 is None: bl2 = deepcopy(bl1)
@@ -231,7 +232,7 @@ def mcm_and_bbl_spin0and2(win1,
             wcl["%sx%s" % (spin1, spin2)] *= (2 * np.arange(wcl_lmax) + 1)
             wbl["%sx%s" % (spin1, spin2)] = bl1[i][2:lmax + 2] * bl2[j][2:lmax + 2]
             spin_pairs += ["%sx%s" % (spin1, spin2)]
-            
+
     mcm = np.zeros((5, lmax, lmax))
 
     if pure == False:
@@ -272,7 +273,7 @@ def mcm_and_bbl_spin0and2(win1,
     if binned_mcm == True:
         mbb_array = np.zeros((5, n_bins, n_bins))
         Bbl_array = np.zeros((5, n_bins, lmax))
-        
+
         for id_mcm in range(5):
 
             mcm_fortran.bin_mcm((mcm[id_mcm, :, :]).T,
@@ -289,7 +290,7 @@ def mcm_and_bbl_spin0and2(win1,
                                         (Bbl_array[id_mcm, :, :]).T,
                                         doDl)
 
-        
+
         mbb = get_coupling_dict(mbb_array)
         Bbl = get_coupling_dict(Bbl_array)
 
@@ -297,7 +298,7 @@ def mcm_and_bbl_spin0and2(win1,
         for s in spin_pairs:
             mbb_inv[s] = np.linalg.inv(mbb[s])
             Bbl[s] = np.dot(mbb_inv[s], Bbl[s])
-            
+
         if save_file is not None:
             save_coupling(save_file, mbb_inv, Bbl, spin_pairs=spin_pairs)
         return mbb_inv, Bbl
@@ -311,7 +312,7 @@ def mcm_and_bbl_spin0and2(win1,
         mcm_inv = {}
         for s in spin_pairs:
             mcm_inv[s] = np.linalg.inv(mcm[s])
-            
+
 
         # if we deconvolve the full mcm, the binning matrix is the same for all spectra
         Bbl = {}
@@ -323,12 +324,13 @@ def mcm_and_bbl_spin0and2(win1,
             Bbl["spin2xspin2"][i * n_bins:(i + 1) * n_bins, i * lmax:(i + 1) * lmax] = Bbl_array
         if save_file is not None:
             save_coupling(save_file, mcm_inv, Bbl, spin_pairs=spin_pairs)
-            
+
         return mcm_inv, Bbl
-    
+
 
 def format_toepliz_fortran(coupling, l_toep, lmax):
-    """take a matrix and apply the toepliz appoximation (fortran)
+    """Take a matrix and apply the toepliz appoximation (fortran)
+
     Parameters
     ----------
 
@@ -347,7 +349,8 @@ def format_toepliz_fortran(coupling, l_toep, lmax):
     return toepliz_array
 
 def format_toepliz_fortran2(coupling, l_toep, l_exact, lmax):
-    """take a matrix and apply the toepliz appoximation (fortran)
+    """Take a matrix and apply the toepliz appoximation (fortran)
+
     Parameters
     ----------
 
@@ -385,7 +388,7 @@ def coupling_dict_to_array(dict):
     array[3 * dim1:4 * dim1, 3 * dim2:4 * dim2] = dict["spin2xspin0"]
     array[4 * dim1:5 * dim1, 4 * dim2:5 * dim2] = dict["spin2xspin0"]
     array[5 * dim1:9 * dim1, 5 * dim2:9 * dim2] = dict["spin2xspin2"]
-    
+
     return array
 
 def apply_Bbl(Bbl, ps, spectra=None):
@@ -468,7 +471,7 @@ def read_coupling(prefix, spin_pairs=None):
     else:
         mode_coupling_inv = np.load(prefix + "_mode_coupling_inv.npy")
         Bbl = np.load(prefix + "_Bbl.npy")
-    
+
     return mode_coupling_inv, Bbl
 
 
