@@ -522,8 +522,7 @@ def coupling_block(
     l = np.arange(len(wcl))
     wcl *= (2 * l + 1)
 
-
-    mcm = np.zeros((lmax+1, lmax+1))
+    mcm = np.zeros((lmax, lmax))
 
     if l_toep is None: l_toep = lmax
     if l_band is None: l_band = lmax
@@ -542,8 +541,13 @@ def coupling_block(
         mcm = format_toepliz_fortran2(mcm, l_toep, l_exact, lmax)
 
     mcm_fortran.fill_upper(mcm.T)
+    
+    mcm_full = np.zeros((lmax+1, lmax+1))
+    mcm_full[2:, 2:] = mcm[:-1,:-1]
+    mcm_full[0,0] = 1.0
+    mcm_full[1,1] = 1.0
 
     if legacy_ell_range:
-        return mcm[2:-1, 2:-1]
+        return mcm_full[2:-1, 2:-1]
     else:
-        return mcm
+        return mcm_full

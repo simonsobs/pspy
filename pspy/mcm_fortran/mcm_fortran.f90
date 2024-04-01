@@ -414,9 +414,9 @@ subroutine calc_coupling_block_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
     nlmax = size(coupling,1) - 1
 
     !$omp parallel do private(l2, l1) schedule(dynamic)
-    do l1 = 0, min(nlmax, l_exact)
+    do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1+1, l2+1))
+            call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
         end do
     end do
 
@@ -430,14 +430,14 @@ subroutine calc_coupling_block_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
             end if
 
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1+1, l2+1))
+                call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin0(wcl, l1, l1, coupling(l1+1, l1+1))
+                call calc_coupling_elem_spin0(wcl, l1, l1, coupling(l1-1, l1-1))
             end do
         end if
     end if
@@ -457,11 +457,9 @@ subroutine calc_coupling_block_spin02(wcl, l_exact, l_band, l_toeplitz, coupling
     !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1+1, l2+1))
+            call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1-1, l2-1))
         end do
     end do
-    coupling(1,1) = 1
-    coupling(2,2) = 1
 
     if (l_exact .lt. nlmax) then
         !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
@@ -473,14 +471,14 @@ subroutine calc_coupling_block_spin02(wcl, l_exact, l_band, l_toeplitz, coupling
             end if
 
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1+1, l2+1))
+                call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1-1, l2-1))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin02(wcl, l1, l1, coupling(l1+1, l1+1))
+                call calc_coupling_elem_spin02(wcl, l1, l1, coupling(l1-1, l1-1))
             end do
         end if
     end if
@@ -500,11 +498,9 @@ subroutine calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupli
     !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1+1, l2+1))
+            call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1-1, l2-1))
         end do
     end do
-    coupling(1,1) = 1
-    coupling(2,2) = 1
 
     if (l_exact .lt. nlmax) then
         !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
@@ -516,14 +512,14 @@ subroutine calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupli
             end if
 
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1+1, l2+1))
+                call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1-1, l2-1))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin2_pp(wcl, l1, l1, coupling(l1+1, l1+1))
+                call calc_coupling_elem_spin2_pp(wcl, l1, l1, coupling(l1-1, l1-1))
             end do
         end if
     end if
@@ -543,11 +539,9 @@ subroutine calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toeplitz, coupli
     !$omp parallel do private(l2, l1) schedule(dynamic)
     do l1 = 2, min(nlmax, l_exact)
         do l2 = l1, nlmax
-            call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1+1, l2+1))
+            call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1-1, l2-1))
         end do
     end do
-    coupling(1,1) = 1
-    coupling(2,2) = 1
 
     if (l_exact .lt. nlmax) then
         !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
@@ -559,14 +553,14 @@ subroutine calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toeplitz, coupli
             end if
 
             do l2 = l1, lmax_band
-                call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1+1, l2+1))
+                call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1-1, l2-1))
             end do
         end do
 
         if (l_toeplitz .lt. nlmax) then
             !$omp parallel do
             do l1 = l_toeplitz + 1, nlmax
-                call calc_coupling_elem_spin2_mm(wcl, l1, l1, coupling(l1+1, l1+1))
+                call calc_coupling_elem_spin2_mm(wcl, l1, l1, coupling(l1-1, l1-1))
             end do
         end if
     end if
