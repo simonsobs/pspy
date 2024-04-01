@@ -536,7 +536,9 @@ def coupling_block(
         mcm_fortran.calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toep, mcm.T)
     elif mode == "--":
         mcm_fortran.calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toep, mcm.T)
-
+    else:
+        raise ValueError(f"mode \"{mode}\" not one of (\"00\", \"02\", \"++\", \"--\")")
+      
     if l_toep < lmax:
         mcm = format_toepliz_fortran2(mcm, l_toep, l_exact, lmax)
 
