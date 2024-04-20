@@ -525,11 +525,11 @@ def coupling_block(
     l = np.arange(len(wcl))
     wcl *= (2 * l + 1)
 
-    mcm = np.zeros((lmax, lmax))
+    mcm = np.zeros((lmax + 1, lmax + 1))
 
-    if l_toep is None: l_toep = lmax
-    if l_band is None: l_band = lmax
-    if l_exact is None: l_exact = lmax
+    if l_toep is None: l_toep = lmax + 1
+    if l_band is None: l_band = lmax + 1
+    if l_exact is None: l_exact = lmax + 1
 
     if mode == "00":
         mcm_fortran.calc_coupling_block_spin0(wcl, l_exact, l_band, l_toep, mcm.T)
@@ -547,10 +547,10 @@ def coupling_block(
 
     mcm_fortran.fill_upper(mcm.T)
     
-    mcm_full = np.zeros((lmax+1, lmax+1))
-    mcm_full[2:, 2:] = mcm[:-1,:-1]
-    mcm_full[0,0] = 1.0
-    mcm_full[1,1] = 1.0
+    mcm_full = np.zeros((lmax + 1, lmax + 1))
+    mcm_full[2:, 2:] = mcm[:-2, :-2]
+    mcm_full[0, 0] = 1.0
+    mcm_full[1, 1] = 1.0
 
     if legacy_ell_range:
         return mcm_full[2:-1, 2:-1]
