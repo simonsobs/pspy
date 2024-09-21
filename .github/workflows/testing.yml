@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set gfortran link on macos-latest
-      if: matrix.os == 'macos-latest'
+      if: matrix.os == 'macos-12'
       run: |
         export FC=gfortran-12
         ln -s $FC $(dirname $(which $FC))/gfortran
