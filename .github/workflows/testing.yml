@@ -10,6 +10,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  env:
+    CC: gcc-14
+    CXX: gcc-14
+    FC: gfortran-14
+
   build:
 
     runs-on: ${{ matrix.os }}
@@ -29,13 +34,12 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
-        export FC=gfortran-12
         ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
     - name: Install via pip
       run: |
-        python -m pip install --upgrade pip setuptools wheel meson ninja meson-python cython numpy
+        python -m pip install --upgrade pip setuptools wheel meson ninja meson-python numpy
         python -m pip install --no-build-isolation --editable '.[test]'
 
     - name: Download test data
