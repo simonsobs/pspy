@@ -19,9 +19,12 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         include:
+          - os: macos-lates
+            CC: gcc-14
+            CXX: gcc-14
+            FC: gfortran-14
 
-
-    steps:
+  steps:
     - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -32,9 +35,6 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
-        export CC=gcc-14
-        export CXX=gcc-14
-        export FC=gfortran-14
         ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
