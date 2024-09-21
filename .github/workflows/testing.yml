@@ -9,11 +9,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CC: gcc-14
-  CXX: gcc-14
-  FC: gfortran-14
-
 jobs:
 
   build:
@@ -23,7 +18,9 @@ jobs:
       matrix:
         os: [ubuntu-latest] #, macos-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-
+        include:
+          - os: ubuntu-latest
+            gfortran: 14
     steps:
     - uses: actions/checkout@v4
 
