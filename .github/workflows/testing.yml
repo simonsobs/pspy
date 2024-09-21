@@ -9,11 +9,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CC: gcc-14
+  CXX: gcc-14
+  FC: gfortran-14
+
 jobs:
-  env:
-    CC: gcc-14
-    CXX: gcc-14
-    FC: gfortran-14
 
   build:
 
