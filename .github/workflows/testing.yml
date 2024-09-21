@@ -29,8 +29,7 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
-        set -x
-        sudo ln -s /usr/local/bin/gfortran-12 /usr/local/bin/gfortran
+        FC=gfortran-12 ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
     - name: Install via pip
