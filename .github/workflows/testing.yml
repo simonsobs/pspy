@@ -9,6 +9,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FC: gfortran-12
+  CC: gcc-12
+  CXX: gcc-12
+
 jobs:
 
   build:
@@ -30,9 +35,6 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
-        export CC=gcc-14
-        export CXX=gcc-14
-        export FC=gfortran-14
         ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
