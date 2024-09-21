@@ -1,4 +1,0 @@
-include versioneer.py
-include pspy/_version.py
-
-recursive-include pspy/tests *

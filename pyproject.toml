@@ -1,0 +1,62 @@
+[build-system]
+build-backend = "mesonpy"
+requires = ["meson-python", "numpy", "build"]
+
+[project]
+name = "pspy"
+version = "1.8.0"
+authors = [
+  { name = "Simons Observatory Collaboration Power Spectrum Task Force" },
+]
+
+maintainers = [
+  { name = "Thibaut Louis", email = "thibaut.louis@ijclab.in2p3.fr" },
+]
+
+description = "Python power spectrum code"
+readme = "README.rst"
+license = { file = "LICENSE" }
+keywords = ["power spectra", "cosmology"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+  "License :: OSI Approved :: BSD License",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9.0"
+dependencies = ["pixell>=0.26.1"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "camb", "namaster"]
+notebook = ["jupyter", "ipykernel"]
+
+[project.scripts]
+# See scripts/meson.build for installation
+test-pspy = "pspy.scripts.test_pspy:main"
+
+
+[project.urls]
+Homepage = "https://github.com/simonsobs/pspy"
+Documentation = "https://pspy.readthedocs.io"
+Source = "https://github.com/simonsobs/pspy"
+Tracker = "https://github.com/simonsobs/pspy/issues"
+Licensing = "https://github.com/simonsobs/pspy/blob/master/LICENCE"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+
+[tool.coverage.run]
+omit = ["pspy/tests/*", "pspy/_version.py"]
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-*"
+skip = "*i686* *musllinux*"

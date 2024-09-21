@@ -6,8 +6,8 @@ import healpy as hp
 import numpy as np
 from pixell import colorize, enmap, enplot
 from pspy import pspy_utils, so_mcm, sph_tools
-from pspy.cov_fortran.cov_fortran import cov_compute as cov_fortran
-from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
+from ._cov_fortran import cov_compute as cov_fortran
+from ._mcm_fortran import mcm_compute as mcm_fortran
 import matplotlib as mpl
 
 def cov_coupling_spin0(win, lmax, niter=3, save_file=None, l_exact=None, l_band=None, l_toep=None):

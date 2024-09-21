@@ -166,7 +166,7 @@ subroutine calc_cov_spin0(ac_bd, ad_bc, l_exact, l_band, l_toeplitz, cov_array)
             end do
         end do
 
-    	if (l_toeplitz .lt. nlmax) then
+        if (l_toeplitz .lt. nlmax) then
             !$omp parallel do private(l1) schedule(dynamic)
             do l1 = l_toeplitz+1, nlmax
                 call calc_cov_elem_spin0(ac_bd, ad_bc, l1, l1, nlmax, cov_array(l1-1, l1-1,:))

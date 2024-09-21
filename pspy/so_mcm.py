@@ -9,7 +9,7 @@ import healpy as hp
 import numpy as np
 
 from pspy import pspy_utils, so_cov, sph_tools
-from pspy.mcm_fortran.mcm_fortran import mcm_compute as mcm_fortran
+from ._mcm_fortran import mcm_compute as mcm_fortran
 
 def mcm_and_bbl_spin0(win1,
                       binning_file,
