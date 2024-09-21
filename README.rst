@@ -57,7 +57,7 @@ case):
 Then you can install the ``pspy`` library and its dependencies *via*
 
 .. code:: shell
-    pip install --upgrade pip meson ninja meson-python cython numpy
+    pip install --upgrade pip setuptools meson ninja meson-python numpy
     pip install --no-build-isolation --editable /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
