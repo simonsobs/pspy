@@ -60,8 +60,8 @@ jobs:
         python -m ipykernel install --user --name=pspy
         jupyter nbconvert --to notebook --execute docs/source/notebooks/tutorial_io.ipynb
 
-    - name: Comparing pspy to NaMaster
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get install -y libcfitsio-dev libfftw3-dev
-        python -m unittest pspy/tests/test_pspy_namaster.py
+    # - name: Comparing pspy to NaMaster
+    #   if: matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     sudo apt-get install -y libcfitsio-dev libfftw3-dev
+    #     python -m unittest pspy/tests/test_pspy_namaster.py

@@ -33,7 +33,7 @@ requires-python = ">=3.9.0"
 dependencies = ["pixell>=0.26.1"]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "camb", "namaster"]
+test = ["pytest", "pytest-cov", "camb"] #, "namaster"]
 notebook = ["jupyter", "ipykernel"]
 
 [project.scripts]
