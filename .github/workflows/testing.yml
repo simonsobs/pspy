@@ -30,6 +30,7 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
+        export FC=gfortran-14
         ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
