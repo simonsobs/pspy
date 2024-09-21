@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest] #, macos-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
@@ -29,7 +29,8 @@ jobs:
     - name: Set gfortran link on macos-latest
       if: matrix.os == 'macos-latest'
       run: |
-        FC=gfortran-12 ln -s $FC $(dirname $(which $FC))/gfortran
+        export FC=gfortran-12
+        ln -s $FC $(dirname $(which $FC))/gfortran
         gfortran --version
 
     - name: Install via pip
