@@ -47,7 +47,7 @@ jobs:
           sudo ln -s /opt/homebrew/bin/gfortran-11 /usr/local/bin/gfortran
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.21.1
         env:
           CIBW_BEFORE_BUILD: "python -m pip install numpy==${{ matrix.numpyver }}"
           CIBW_BUILD_VERBOSITY: 3
