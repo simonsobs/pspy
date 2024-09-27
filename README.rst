@@ -37,7 +37,8 @@ You can test your installation by running
 
     test-pspy
 
-If everything goes fine, no errors will occur. Otherwise, you can report your problem on the `Issues tracker <https://github.com/simonsobs/pspy/issues>`_.
+If everything goes fine, no errors will occur. Otherwise, you can report your problem on the `Issues
+tracker <https://github.com/simonsobs/pspy/issues>`_.
 
 If you plan to develop ``pspy``, it is better to checkout the latest version by doing
 
@@ -45,11 +46,20 @@ If you plan to develop ``pspy``, it is better to checkout the latest version by 
 
     git clone https://github.com/simonsobs/pspy.git /where/to/clone
 
+Once downloaded, you can install using ``pip install .`` inside the project directory. We use the
+``meson`` build system, which should be understood by ``pip`` (it will build in an isolated
+environment).
+
+To run an editable install, you will need to do so in a way that does not have build isolation (as
+the backend build system, ``meson`` and ``ninja``, actually perform micro-builds on usage in this
+case):
+
 Then you can install the ``pspy`` library and its dependencies *via*
 
 .. code:: shell
 
-    pip install -e /where/to/clone
+    pip install --upgrade pip setuptools meson ninja meson-python numpy
+    pip install --no-build-isolation --editable /where/to/clone
 
 The ``-e`` option allow the developer to make changes within the ``pspy`` directory without having
 to reinstall at every changes.

@@ -1,4 +1,5 @@
 """Tests pspy versus namaster."""
+
 import os
 import tempfile
 import time
@@ -6,6 +7,7 @@ import unittest
 
 import healpy as hp
 import numpy as np
+
 import pspy
 from pspy import pspy_utils, so_map, so_mcm, so_spectra, so_window, sph_tools
 
@@ -24,6 +26,9 @@ _assert_import("pymaster")
 
 import camb
 import pymaster as nmt
+
+print(f"pspy current version : {pspy.__version__}")
+print(f"namaster current version : {nmt.__version__}")
 
 output_dir = os.path.join(tempfile.gettempdir(), "test_pspy_namaster")
 os.makedirs(output_dir, exist_ok=True)
@@ -53,6 +58,7 @@ lmax = 3 * nside - 1
 ncomp = 3
 niter = 3
 spectra = ["TT", "TE", "TB", "ET", "BT", "EE", "EB", "BE", "BB"]
+nlb = 40
 
 template_healpix = so_map.healpix_template(ncomp, nside=nside)
 
@@ -74,7 +80,7 @@ window = (window, window)
 
 def run_pspy(pure=False):
     binning_file = os.path.join(output_dir, "binning.dat")
-    pspy_utils.create_binning_file(bin_size=40, n_bins=100, file_name=binning_file)
+    pspy_utils.create_binning_file(bin_size=nlb, n_bins=100, file_name=binning_file)
     mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
         window, binning_file, lmax=lmax, type="Cl", niter=niter, pure=pure
     )
@@ -88,8 +94,7 @@ def run_pspy(pure=False):
 
 
 def run_namaster(pure=False):
-    nlb = 40
-    b = nmt.NmtBin(nside, nlb=nlb)
+    b = nmt.NmtBin.from_nside_linear(nside, nlb=nlb)
     lb = b.get_effective_ells()
     if pure:
         field = nmt.NmtField(
@@ -97,19 +102,19 @@ def run_namaster(pure=False):
             [cmb.data[1], cmb.data[2]],
             purify_e=True,
             purify_b=True,
-            n_iter_mask_purify=niter,
+            n_iter_mask=niter,
             n_iter=niter,
         )
-        wsp = nmt.NmtWorkspace()
-        wsp.compute_coupling_matrix(field, field, b, n_iter=niter)
+        wsp = nmt.NmtWorkspace.from_fields(field, field, b)
+        wsp.compute_coupling_matrix(field, field, b)
         cls_coupled = nmt.compute_coupled_cell(field, field)
         cls_uncoupled = wsp.decouple_cell(cls_coupled)
         Clb = {"BB": cls_uncoupled[3]}
     else:
         field_0 = nmt.NmtField(window[0].data, [cmb.data[0]])
         field_2 = nmt.NmtField(window[1].data, [cmb.data[1], cmb.data[2]])
-        wsp = nmt.NmtWorkspace()
-        wsp.compute_coupling_matrix(field_0, field_2, b, is_teb=True, n_iter=niter, lmax_mask=lmax)
+        wsp = nmt.NmtWorkspace.from_fields(field_0, field_2, b)
+        wsp.compute_coupling_matrix(field_0, field_2, b, is_teb=True)
         cl_coupled_00 = nmt.compute_coupled_cell(field_0, field_0)
         cl_coupled_02 = nmt.compute_coupled_cell(field_0, field_2)
         cl_coupled_22 = nmt.compute_coupled_cell(field_2, field_2)
@@ -134,12 +139,6 @@ def run_namaster(pure=False):
 
 
 class SOPspyNamasterTests(unittest.TestCase):
-    def setUp(self):
-        print(f"pspy current version : {pspy.__version__}")
-        # This sould be fixed see https://github.com/LSSTDESC/NaMaster/issues/172
-        # print(f"namaster current version : {nmt.__version__}")
-        pass
-
     def test_pspy_namaster(self):
         t0 = time.time()
         lb_pspy, Clb_pspy = run_pspy()

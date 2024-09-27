@@ -53,7 +53,8 @@ subroutine calc_coupling_elem_spin0and2_pure(wcl_00, wcl_02, wcl_20, wcl_22, l1,
     integer, intent(in)   :: l1, l2
     real(8), intent(in)   :: wcl_00(:), wcl_02(:), wcl_20(:), wcl_22(:)
     real(8), intent(inout):: elems(5)
-    real(8) :: thrcof0(2*size(wcl_00)), thrcofa(2*size(wcl_00)), thrcofb(2*size(wcl_00)), thrcofc(2*size(wcl_00)), l1f, l2f, fac_b, fac_c, combin, combin2, combin3
+    real(8) :: thrcof0(2*size(wcl_00)), thrcofa(2*size(wcl_00)), thrcofb(2*size(wcl_00)), thrcofc(2*size(wcl_00))
+    real(8) :: l1f, l2f, fac_b, fac_c, combin, combin2, combin3
     integer :: info, l3, wlmin1, wlmax1, i1, wlmin2, i2, wlmin3, i3, lmax
 
     lmax = size(wcl_00)-1 ! wcl starts at 0
