@@ -79,9 +79,7 @@ Others tutorials can be found under the ``tutorials`` directory.
 Dependencies
 ------------
 
-* ``Python`` ≥ 3.8
-* ``pyFFTW`` https://pyfftw.readthedocs.io
-* ``healpy`` https://healpy.readthedocs.io
+* ``Python`` ≥ 3.10
 * ``pixell`` https://pixell.readthedocs.io
 
 
