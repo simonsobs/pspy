@@ -58,5 +58,5 @@ profile = "black"
 omit = ["pspy/tests/*", "pspy/_version.py"]
 
 [tool.cibuildwheel]
-build = "cp39-* cp310-* cp311-* cp312-*"
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "*i686* *musllinux*"
