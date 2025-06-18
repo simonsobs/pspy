@@ -31,7 +31,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 requires-python = ">=3.9.0"
-dependencies = ["pixell>=0.26.1"]
+dependencies = ["pixell>=0.29.0"]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "camb"] #, "namaster"]
