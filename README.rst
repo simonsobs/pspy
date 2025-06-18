@@ -52,7 +52,7 @@ environment).
 
 To run an editable install, you will need to do so in a way that does not have build isolation (as
 the backend build system, ``meson`` and ``ninja``, actually perform micro-builds on usage in this
-case):
+case).
 
 Then you can install the ``pspy`` library and its dependencies *via*
 
