@@ -4,7 +4,7 @@ requires = ["meson-python", "numpy", "build"]
 
 [project]
 name = "pspy"
-version = "1.8.1"
+version = "1.8.2"
 authors = [
   { name = "Simons Observatory Collaboration Power Spectrum Task Force" },
 ]
