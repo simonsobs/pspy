@@ -342,4 +342,235 @@ subroutine binning_matrix(mcm, binLo, binHi, binsize, bbl, doDl)
 end subroutine
 
 
+! sub-blocks of the coupling matrix
+
+subroutine calc_coupling_elem_spin2_pp(wcl, l1, l2, elem)
+    implicit none
+    integer, intent(in)   :: l1, l2
+    real(8), intent(in)   :: wcl(:)
+    real(8), intent(inout):: elem
+    real(8) :: thrcof1(2*size(wcl)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i, lmax
+    lmax = size(wcl)-1 ! wcl starts at 0
+
+    call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcof1, size(thrcof1), info)
+
+    wlmin = int(l1f)
+    wlmax = min(lmax, int(l2f))
+    elem = 0
+    do l3 = wlmin, wlmax
+        i = l3 - wlmin + 1
+        elem = elem + wcl(l3 + 1) * thrcof1(i)**2 * (1 + (-1)**(l1 + l2 + l3)) / 2
+    end do
+end subroutine
+
+
+subroutine calc_coupling_elem_spin02(wcl, l1, l2, elem)
+    implicit none
+    integer, intent(in)   :: l1, l2
+    real(8), intent(in)   :: wcl(:)
+    real(8), intent(inout):: elem
+    real(8) :: thrcof0(2*size(wcl)), thrcof1(2*size(wcl)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i, lmax
+    lmax = size(wcl)-1 ! wcl starts at 0
+
+    call drc3jj(dble(l1), dble(l2), 0d0, 0d0, l1f, l2f, thrcof0, size(thrcof0), info)
+    call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcof1, size(thrcof1), info)
+
+    wlmin = int(l1f)
+    wlmax = min(lmax, int(l2f))
+    elem = 0
+    do l3 = wlmin, wlmax
+        i = l3 - wlmin + 1
+        elem = elem + wcl(l3 + 1) * thrcof0(i) * thrcof1(i)
+    end do
+end subroutine
+
+
+subroutine calc_coupling_elem_spin2_mm(wcl, l1, l2, elem)
+    implicit none
+    integer, intent(in)   :: l1, l2
+    real(8), intent(in)   :: wcl(:)
+    real(8), intent(inout):: elem
+    real(8) :: thrcof1(2*size(wcl)), l1f, l2f
+    integer :: info, l3, wlmin, wlmax, i, lmax
+    lmax = size(wcl)-1 ! wcl starts at 0
+
+    call drc3jj(dble(l1), dble(l2), -2d0, 2d0, l1f, l2f, thrcof1, size(thrcof1), info)
+
+    wlmin = int(l1f)
+    wlmax = min(lmax, int(l2f))
+    elem = 0
+    do l3 = wlmin, wlmax
+        i = l3 - wlmin + 1
+        elem = elem + wcl(l3 + 1) * thrcof1(i)**2 * (1 - (-1)**(l1 + l2 + l3)) / 2
+    end do
+end subroutine
+
+
+! unlike calc_coupling_spin0, this keeps ell=0,1,lmax
+subroutine calc_coupling_block_spin0(wcl, l_exact, l_band, l_toeplitz, coupling)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
+    real(8), intent(inout) :: coupling(:,:)
+    integer :: l1, l2, nlmax, lmax_band
+
+    nlmax = size(coupling,1) - 1
+
+    !$omp parallel do private(l2, l1) schedule(dynamic)
+    do l1 = 2, min(nlmax, l_exact)
+        do l2 = l1, nlmax
+            call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
+        end do
+    end do
+
+    if (l_exact .lt. nlmax) then
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
+
+            do l2 = l1, lmax_band
+                call calc_coupling_elem_spin0(wcl, l1, l2, coupling(l1-1, l2-1))
+            end do
+        end do
+
+        if (l_toeplitz .lt. nlmax) then
+            !$omp parallel do
+            do l1 = l_toeplitz + 1, nlmax
+                call calc_coupling_elem_spin0(wcl, l1, l1, coupling(l1-1, l1-1))
+            end do
+        end if
+    end if
+
+end subroutine
+
+
+subroutine calc_coupling_block_spin02(wcl, l_exact, l_band, l_toeplitz, coupling)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
+    real(8), intent(inout) :: coupling(:,:)
+    integer :: l1, l2, nlmax, lmax_band
+
+    nlmax = size(coupling,1) - 1
+
+    !$omp parallel do private(l2, l1) schedule(dynamic)
+    do l1 = 2, min(nlmax, l_exact)
+        do l2 = l1, nlmax
+            call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1-1, l2-1))
+        end do
+    end do
+
+    if (l_exact .lt. nlmax) then
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
+
+            do l2 = l1, lmax_band
+                call calc_coupling_elem_spin02(wcl, l1, l2, coupling(l1-1, l2-1))
+            end do
+        end do
+
+        if (l_toeplitz .lt. nlmax) then
+            !$omp parallel do
+            do l1 = l_toeplitz + 1, nlmax
+                call calc_coupling_elem_spin02(wcl, l1, l1, coupling(l1-1, l1-1))
+            end do
+        end if
+    end if
+
+end subroutine
+
+
+subroutine calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toeplitz, coupling)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
+    real(8), intent(inout) :: coupling(:,:)
+    integer :: l1, l2, nlmax, lmax_band
+
+    nlmax = size(coupling,1) - 1
+
+    !$omp parallel do private(l2, l1) schedule(dynamic)
+    do l1 = 2, min(nlmax, l_exact)
+        do l2 = l1, nlmax
+            call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1-1, l2-1))
+        end do
+    end do
+
+    if (l_exact .lt. nlmax) then
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
+
+            do l2 = l1, lmax_band
+                call calc_coupling_elem_spin2_pp(wcl, l1, l2, coupling(l1-1, l2-1))
+            end do
+        end do
+
+        if (l_toeplitz .lt. nlmax) then
+            !$omp parallel do
+            do l1 = l_toeplitz + 1, nlmax
+                call calc_coupling_elem_spin2_pp(wcl, l1, l1, coupling(l1-1, l1-1))
+            end do
+        end if
+    end if
+
+end subroutine
+
+
+subroutine calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toeplitz, coupling)
+    implicit none
+    real(8), intent(in)    :: wcl(:)
+    integer, intent(in)    :: l_exact , l_band, l_toeplitz
+    real(8), intent(inout) :: coupling(:,:)
+    integer :: l1, l2, nlmax, lmax_band
+
+    nlmax = size(coupling,1) - 1
+
+    !$omp parallel do private(l2, l1) schedule(dynamic)
+    do l1 = 2, min(nlmax, l_exact)
+        do l2 = l1, nlmax
+            call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1-1, l2-1))
+        end do
+    end do
+
+    if (l_exact .lt. nlmax) then
+        !$omp parallel do private(l2, l1, lmax_band) schedule(dynamic)
+        do l1 = l_exact + 1, l_toeplitz
+            if (l1 .lt. l_toeplitz) then
+                lmax_band = min(l1 + l_band, nlmax)
+            else
+                lmax_band = nlmax
+            end if
+
+            do l2 = l1, lmax_band
+                call calc_coupling_elem_spin2_mm(wcl, l1, l2, coupling(l1-1, l2-1))
+            end do
+        end do
+
+        if (l_toeplitz .lt. nlmax) then
+            !$omp parallel do
+            do l1 = l_toeplitz + 1, nlmax
+                call calc_coupling_elem_spin2_mm(wcl, l1, l1, coupling(l1-1, l1-1))
+            end do
+        end if
+    end if
+
+end subroutine
+
+
 end module
