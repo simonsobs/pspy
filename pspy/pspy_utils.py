@@ -86,7 +86,7 @@ def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accur
     return l, ps
 
 
-def unlensed_ps_from_params(cosmo_params, lmax, raw_cl=False, start_at_zero=False, **accuracy_pars):
+def unlensed_ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accuracy_pars):
     """Given a set of cosmological parameters compute the corresponding unlensed power spectrum
      as well as the corresponding lensing potential
      You need to have camb installed to use this function
@@ -121,7 +121,7 @@ def unlensed_ps_from_params(cosmo_params, lmax, raw_cl=False, start_at_zero=Fals
     camb_cosmo.update({"As": 1e-10 * np.exp(cosmo_params["logA"]), "lmax": lmax, **accuracy_pars})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
-    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=raw_cl)
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=output_type == "Cl")
     l = np.arange(lmin, lmax)
     ps = {}
     ps["TT"], ps["EE"], ps["BB"], ps["TE"] = powers["unlensed_total"].T
