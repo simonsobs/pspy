@@ -96,11 +96,11 @@ def unlensed_ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False
     cosmo_params: dict
       dictionnary of cosmological parameters
       # e.g cosmo_params = {"cosmomc_theta":0.0104085, "logA": 3.044, "ombh2": 0.02237, "omch2": 0.1200, "ns": 0.9649, "Alens": 1.0, "tau": 0.0544}
-    raw_cl :  boolean
-      wether to rescale or not the power spectrum, the rescaling factors are:
-        l * (l + 1) / (2 * np.pi) for TT, EE, BB, TE
-        (l * (l + 1)) ** 2 / (2 * np.pi) for PP
-        (l ** 2 * (l + 1)) / (2 * np.pi) for PT and PE
+    output_type :  string
+      'Cl' or 'Dl'. NOTE: this differs from camb, which has a unique scaling for
+      the lensing auto and crosses. By instead using standard 'Dl' scaling, we
+      can get standard Cl's in pspipe_utils.simulation without too much extra
+      code, and also spectra saved to disk with a 'Dl' header are accurate. 
     lmax: integer
       the maximum multipole to consider
     start_at_zero : boolean
@@ -114,21 +114,26 @@ def unlensed_ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False
     except ModuleNotFoundError:
         raise ModuleNotFoundError("you need to install camb to use this function")
 
-    if start_at_zero: lmin = 0
-    else: lmin = 2
+    if start_at_zero:
+        lmin = 0
+    else:
+        lmin = 2
 
     camb_cosmo = {k: v for k, v in cosmo_params.items() if k not in ["logA", "As"]}
     camb_cosmo.update({"As": 1e-10 * np.exp(cosmo_params["logA"]), "lmax": lmax, **accuracy_pars})
     pars = camb.set_params(**camb_cosmo)
     results = camb.get_results(pars)
-    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=output_type == "Cl")
+    powers = results.get_cmb_power_spectra(pars, CMB_unit="muK", raw_cl=True)
     l = np.arange(lmin, lmax)
     ps = {}
     ps["TT"], ps["EE"], ps["BB"], ps["TE"] = powers["unlensed_total"].T
     ps["PP"], ps["PT"], ps["PE"] = powers["lens_potential"].T
     
     for spec in ps.keys():
-        ps[spec] = ps[spec][l]
+        if output_type == "Cl":
+          ps[spec] = ps[spec][l]
+        else:
+          ps[spec] = ps[spec][l] * l*(l+1)/(2*np.pi)
         
     # fill in the dictionnary, useful for many application and not too big in memmory
     ps["TP"], ps["EP"], ps["ET"] = ps["PT"].copy(), ps["PE"].copy(), ps["TE"].copy()
