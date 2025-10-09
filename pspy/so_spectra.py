@@ -250,7 +250,7 @@ def write_ps(file_name, l, ps, type, spectra=None):
         np.savetxt(file_name, np.transpose(ps_list), header=str)
 
 
-def read_ps(file_name, spectra=None):
+def read_ps(file_name, spectra=None, return_type=False):
     """Read the power spectra.
         
     Parameters
@@ -258,7 +258,11 @@ def read_ps(file_name, spectra=None):
     file_name: str
       the name of the file to read the spectra
     spectra: list of strings
-      needed for spin0 and spin2 cross correlation, the arrangement of the spectra
+      needed for spin0 and spin2 cross correlation, the desired spectra. NOTE:
+      the spectra are extracted by their header so the order does not need to
+      match
+    return_type : bool
+      If True, return 'Dl' or 'Cl' from the header, by default False
       
     Return
     ----------
@@ -266,14 +270,30 @@ def read_ps(file_name, spectra=None):
     The function return the multipole l (or binned multipoles) and a 1d power spectrum
     array or a dictionnary of power spectra (if spectra is not None).
     """
-    
-    data = np.loadtxt(file_name)
-    if spectra is None:
-        return data[:, 0], data[:, 1]
+    with open(file_name) as f:
+      header = f.readline()
+      assert header[:2] == '# '
+      assert header[-1] == '\n'
+      header = header[2:-1].split(' ')
 
+    type = header[1][:2]
+    spec_list = ['l']
+    for h in header[1:]: # skip l column
+      _type, _spec = h.split('_') 
+      assert _type == type, f'Inconsistent type in columns, expected {type}'
+      spec_list.append(_spec) # holds order of spectra in file
+
+    data = np.loadtxt(file_name)
     l = data[:, 0]
-    ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
-    return l, ps
+    if spectra is None:
+      ps = data[:, 1]
+    else:
+      ps = {spec: data[:, spec_list.index(spec)] for spec in spectra} # gets spec by order
+    
+    if return_type:
+      return l, ps, type
+    else:
+      return l, ps
 
 def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
     """Write down the power spectra in a hdf5 file.
