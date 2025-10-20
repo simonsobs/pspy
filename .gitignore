@@ -109,3 +109,5 @@ venv.bak/
 
 # LaTeX
 *.aux
+
+pspy/tests/data/example_newcov/*
