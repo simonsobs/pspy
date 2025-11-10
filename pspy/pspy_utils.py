@@ -439,3 +439,31 @@ def rotate_pol_alms(alms, pol_rot_angle):
         -alms[1] * sin_alpha + alms[2] * cos_alpha,
     )
     return alms
+
+def fg_params_covmat(chain_filename, fg_par_list):
+    """Extract the covariance matrix for selected parameters from a chain.
+       The main purpose of this is to derive the covmat of foreground amplitudes from the P-ACT baseline lcdm 
+       chain.
+
+    Parameters
+    ----------
+    chain_filename: string
+      string indicating the position of the chains. Include also the chain name, without the extension 
+      (e.g. ".1.txt"), following the getdist convention 
+    fg_par_list :  list
+      list of the parameters for which we want to extract the covariance matrix  
+    """
+    try:
+        import getdist
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("you need to install getdist to use this function")
+    
+    samples = getdist.loadMCSamples(chain_filename,settings={'ignore_rows':0.4})
+    # get the list of pars of the total covmat first
+    covpar = samples.getCovMat().paramNames
+    # select indices where the fg params are
+    i = np.isin(covpar,fg_par_list)
+    # extract the covmat for the params of interest
+    covmat = samples.getCov(pars = i)
+    
+    return covmat
