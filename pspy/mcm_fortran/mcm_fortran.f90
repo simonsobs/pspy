@@ -290,6 +290,20 @@ end subroutine
 
 
 
+subroutine fill_upper_single(mat)
+  implicit none
+  real(4), intent(inout) :: mat(:,:)
+  integer :: j, k
+  !$omp parallel do private(j,k) schedule(dynamic)
+    do j = 1, size(mat,2)
+      do k = 1, j-1
+        mat(j,k) = mat(k,j)
+      end do
+    end do
+end subroutine
+
+
+
 subroutine bin_mcm(mcm, binLo, binHi, binsize, mbb, doDl)
     ! Bin the given mode coupling matrix mcm(0:lmax,0:lmax) into
     ! mbb(nbin,nbin) using bins of the given binsize
