@@ -11,6 +11,41 @@ import numpy as np
 from pspy import pspy_utils, so_cov, sph_tools
 from ._mcm_fortran import mcm_compute as mcm_fortran
 
+import ducc0
+from pixell import curvedsky
+
+def ducc_couplings(spec, lmax, spec_index=(0, 1, 2, 3),
+                   mat_index=(0, 1, 2, 3, 4), nthread=0, res=None,
+                   dtype=np.float64, coupling=False, pspy_index_convention=True):
+    if nthread == 0:
+        nthread = ducc0.misc.thread_pool_size()
+    if np.issubdtype(dtype, np.float64):
+        singleprec = False 
+    if np.issubdtype(dtype, np.float32):
+        singleprec = True
+
+    mcm = ducc0.misc.experimental.coupling_matrix_spin0and2_tri(spec, lmax, spec_index, mat_index,
+                                                                nthreads=nthread, res=res,
+                                                                singleprec=singleprec)
+    ainfo_tri = curvedsky.alm_info(lmax=lmax, layout='tri')
+    ainfo_rect = curvedsky.alm_info(lmax=lmax, layout='rect')
+    mcm = curvedsky.transfer_alm(ainfo_tri, mcm, ainfo_rect).reshape(*mcm.shape[:-1], lmax+1, lmax+1)
+
+    # have C-contiguous array in upper triangle, so use fill_lower instead of fill_upper
+    for idx in np.ndindex(mcm.shape[:-2]):
+        if singleprec:
+            mcm_fortran.fill_lower_single(mcm[idx].T)
+        else:
+            mcm_fortran.fill_lower(mcm[idx].T)
+
+    if not coupling:
+        mcm *= (2 * np.arange(lmax + 1) + 1)
+
+    if pspy_index_convention: # TODO: reconsider this convention
+        mcm = mcm[..., 2:lmax, 2:lmax]
+
+    return mcm
+
 def mcm_and_bbl_spin0(win1,
                       binning_file,
                       lmax,
@@ -131,6 +166,20 @@ def mcm_and_bbl_spin0(win1,
             save_coupling(save_file, mcm_inv, Bbl)
         return mcm_inv, Bbl
 
+def get_coupling_dict(array):
+    ncomp, dim1, dim2 = array.shape
+    dict = {}
+    dict["spin0xspin0"] = array[0, :, :]
+    dict["spin0xspin2"] = array[1, :, :]
+    dict["spin2xspin0"] = array[2, :, :]
+    dict["spin2xspin2"] = np.zeros((4 * dim1, 4 * dim2))
+    for i in range(4):
+        dict["spin2xspin2"][i * dim1:(i + 1) * dim1, i * dim2:(i + 1) * dim2] = array[3, :, :]
+    dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = -array[4, :, :]
+    dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = -array[4, :, :]
+    dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
+    dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
+    return dict
 
 def mcm_and_bbl_spin0and2(win1,
                           binning_file,
@@ -183,22 +232,6 @@ def mcm_and_bbl_spin0and2(win1,
 
     save_coupling: str
     """
-
-    def get_coupling_dict(array):
-        ncomp, dim1, dim2 = array.shape
-        dict = {}
-        dict["spin0xspin0"] = array[0, :, :]
-        dict["spin0xspin2"] = array[1, :, :]
-        dict["spin2xspin0"] = array[2, :, :]
-        dict["spin2xspin2"] = np.zeros((4 * dim1, 4 * dim2))
-        for i in range(4):
-            dict["spin2xspin2"][i * dim1:(i + 1) * dim1, i * dim2:(i + 1) * dim2] = array[3, :, :]
-        dict["spin2xspin2"][2 * dim1:3 * dim1, dim2:2 * dim2] = -array[4, :, :]
-        dict["spin2xspin2"][dim1:2 * dim1, 2 * dim2:3 * dim2] = -array[4, :, :]
-        dict["spin2xspin2"][3 * dim1:4 * dim1, :dim2] = array[4, :, :]
-        dict["spin2xspin2"][:dim1, 3 * dim2:4 * dim2] = array[4, :, :]
-        return dict
-
     if type == "Dl": doDl = 1
     if type == "Cl": doDl = 0
     if type not in ["Dl", "Cl"]:
