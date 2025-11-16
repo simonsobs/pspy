@@ -41,7 +41,7 @@ def map2alm(map, niter, lmax, theta_range=None, dtype=np.complex128):
     else:
         raise ValueError("Map is neither a CAR nor a HEALPIX")
 
-    alm = alm.astype(dtype)
+    alm = alm.astype(dtype, copy=False)
     return alm
 
 def alm2map(alms, template):
