@@ -288,8 +288,6 @@ subroutine fill_upper(mat)
     end do
 end subroutine
 
-
-
 subroutine fill_upper_single(mat)
   implicit none
   real(4), intent(inout) :: mat(:,:)
@@ -297,6 +295,30 @@ subroutine fill_upper_single(mat)
   !$omp parallel do private(j,k) schedule(dynamic)
     do j = 1, size(mat,2)
       do k = 1, j-1
+        mat(j,k) = mat(k,j)
+      end do
+    end do
+end subroutine
+
+subroutine fill_lower(mat)
+  implicit none
+  real(8), intent(inout) :: mat(:,:)
+  integer :: j, k
+  !$omp parallel do private(j,k) schedule(dynamic)
+    do j = 1, size(mat,2)
+      do k = j+1, size(mat,1)
+        mat(j,k) = mat(k,j)
+      end do
+    end do
+end subroutine
+
+subroutine fill_lower_single(mat)
+  implicit none
+  real(4), intent(inout) :: mat(:,:)
+  integer :: j, k
+  !$omp parallel do private(j,k) schedule(dynamic)
+    do j = 1, size(mat,2)
+      do k = j+1, size(mat,1)
         mat(j,k) = mat(k,j)
       end do
     end do
