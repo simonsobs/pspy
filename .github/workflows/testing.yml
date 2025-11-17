@@ -10,9 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FC: gfortran-12
-  CC: gcc-12
-  CXX: gcc-12
+  FC: gfortran-13
+  CC: gcc-13
+  CXX: gcc-13
 
 jobs:
 
