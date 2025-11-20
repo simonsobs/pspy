@@ -7,6 +7,7 @@ from copy import deepcopy
 
 import healpy as hp
 import numpy as np
+from scipy import sparse
 
 from pspy import pspy_utils, so_cov, sph_tools
 from ._mcm_fortran import mcm_compute as mcm_fortran
@@ -166,8 +167,112 @@ def mcm_and_bbl_spin0(win1,
             save_coupling(save_file, mcm_inv, Bbl)
         return mcm_inv, Bbl
 
+def invert_mcm(mcm_array):
+    """Get the blocks of the inverse of a spinxspin array from its blocks.
+
+    Parameters
+    ----------
+    mcm_array : (5, nel, nel) np.ndarray
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --
+
+    Returns
+    -------
+    (5, nel, nel) np.ndarray
+        The blocks of the inverse: inv(0x0), inv(0x2), inv(2x0). The inverse
+        of the ++, -- blocks are not separable, so the fourth and fifth 
+        returned arrays are the ++ and -- blocks of the joint ++-- inverse.
+    """
+    nmat, nel1, nel2 = mcm_array.shape
+
+    assert nmat == 5, f'expected nmat=5, got {nmat=}'
+    assert nel1 == nel2, f'must have square mats, got {nel1=} and {nel2=}'
+
+    inverse_mcm_array = np.zeros_like(mcm_array)
+    
+    # assume 00, 02, 20, ++, -- ordering
+    inverse_mcm_array[:3] = np.linalg.inv(mcm_array[:3])
+
+    # do the 2x2 parts manually to avoid wasted computation and numerical errors
+    pp, mm = mcm_array[3:]
+    pp_inv = np.linalg.inv(pp)
+
+    X = np.linalg.inv(pp - mm @ pp_inv @ mm)
+    Y = -mm @ pp_inv 
+    
+    inverse_mcm_array[3] = X
+    inverse_mcm_array[4] = X @ Y
+
+    return inverse_mcm_array
+
+def get_spec2spec_array_from_spin2spin_array(spin2spin_array, dense=True,
+                                             spin0=False):
+    """Get a full 9x9 spectrum-to-spectrum matrix from 5 (or 1) blocks of
+    a spinxspin array.
+
+    Parameters
+    ----------
+    spin2spin_array : ({5}, x, y) np.ndarray
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
+        True, then this is just the (x, y)-shaped 0x0 block.
+    dense : bool, optional
+        Return a scipy.sparse.bsr_array, by default True. If not, a dense array
+        is returned.
+    spin0 : bool, optional
+        If True, then spin2spin_array is just the 0x0 block, by default False.
+        In that case, it is copied along the block-diagonal for all the 9
+        spectra blocks.
+
+    Returns
+    -------
+    scipy.sparse.bsr_array or np.ndarray
+        The full 9x9 block matrix.
+    """
+    # for each row 0-8, indptr gives the indexes into the indices and data
+    # arrays for the placement, and data, of blocks respectively.
+    # NOTE: ordering assumes TT, TE, TB, ET, BT, EE, EB, BE, BB order
+    obj = spin2spin_array
+    if spin0:
+        indptr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] 
+        indices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        obj_data = np.tile(obj, (9, 1, 1))
+    else:
+        indptr = [0, 1, 2, 3, 4, 5, 7, 9, 11, 13] 
+        indices = [0, 1, 2, 3, 4, 5, 8, 6, 7, 6, 7, 5, 8]
+        obj_data = np.array([obj[0],           # TT (0x0)
+                             obj[1],           # TE (0x2)
+                             obj[1],           # TB (0x2)
+                             obj[2],           # ET (2x0)
+                             obj[2],           # BT (2x0)
+                             obj[3], obj[4],   # EE2EE BB2EE (pp, mm)
+                             obj[3], -obj[4],  # EB2EB BE2EB (pp, -mm)
+                             -obj[4], obj[3],  # BE2EB BE2BE (-mm, pp)
+                             obj[4], obj[3]])  # EE2BB BB2BB (mm, pp)
+
+    blocksize = obj_data[0].shape
+    shape = tuple(9 * x for x in blocksize)
+    out = sparse.bsr_array((obj_data, indices, indptr), shape=shape, blocksize=blocksize)
+    if dense:
+        out = out.toarray()
+    return out
+
 def get_coupling_dict(array):
-    ncomp, dim1, dim2 = array.shape
+    """Turns an array of spin-dependent mode-coupling matrices into a dict 
+    labeled by their spin, i.e., spin0xspin0, spin0xspin2, spin2xspin0, 
+    spin2xspin2. For spin2xspin2, it makes the full 4x4 nblock part of the 
+    mode-coupling matrix, assuming EE, EB, BE, BB ordering. 
+
+    Parameters
+    ----------
+    array : (5, dim1, dim2) np.ndarray
+        The 0x0, 0x2, 2x0, ++, and -- matrix blocks.
+
+    Returns
+    -------
+    dict
+        A dictionary representation of the input array, with the full 4x4
+        PP->PP block realized.
+    """
+    dim1, dim2 = array.shape[-2:]
     dict = {}
     dict["spin0xspin0"] = array[0, :, :]
     dict["spin0xspin2"] = array[1, :, :]
