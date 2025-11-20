@@ -57,7 +57,7 @@ def get_spectra(alm1, alm2=None, spectra=None):
     return l, cl_dict
     
     
-def get_spectra_pixell(alm1, alm2=None, spectra=None):
+def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False):
     """Get the power spectrum of alm1 and alm2, we use pixell.alm2cl (this is faster)
     Parameters
     ----------
@@ -67,6 +67,8 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None):
       the spherical harmonic transform of map2
     spectra: list of strings
     needed for spin0 and spin2 cross correlation, the arrangement of the spectra
+    apply_pspy_cut : bool
+      If the returned spectra should cut 0,1 and last elements
   
     Return
     ----------
@@ -77,21 +79,29 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None):
     
     if spectra is None:
         if alm2 is None:
-            cls = curvedsky.alm2cl(alm1)
+            out = curvedsky.alm2cl(alm1)
         else:
-            cls = curvedsky.alm2cl(alm1, alm2)
-        l = np.arange(len(cls))
-        return l, cls
+            out = curvedsky.alm2cl(alm1, alm2)
         
-        
-    cls = curvedsky.alm2cl(alm1[:,None], alm2[None,:])
-    l = np.arange(len(cls[0,0]))
-    cl_dict = {}
-    for i, l1 in enumerate(["T","E","B"]):
-        for j, l2 in enumerate(["T","E","B"]):
-            cl_dict[l1+l2] = cls[i,j]
-            
-    return(l, cl_dict)
+        l = np.arange(len(out))
+        if apply_pspy_cut:
+            l = l[2:-1]
+            out = out[2:-1]   
+
+    else:
+        cl = curvedsky.alm2cl(alm1[:, None], alm2[None, :])
+        out = {}
+        for i, l1 in enumerate(["T","E","B"]):
+            for j, l2 in enumerate(["T","E","B"]):
+                out[l1+l2] = cl[i, j]
+
+        l = np.arange(cl.shape[-1])
+        if apply_pspy_cut:
+            l = l[2:-1]
+            for k, v in out.items():
+                out[k] = v[2:-1]
+      
+    return l, out
 
 
 def deconvolve_mode_coupling_matrix(l, ps, inv_mode_coupling_matrix, spectra=None):
@@ -197,6 +207,35 @@ def bin_spectra(l, cl, binning_file, lmax, type, spectra=None, mbb_inv=None, bin
     if (mbb_inv is not None) & (binned_mcm == True):
         lb, ps = deconvolve_mode_coupling_matrix(lb, ps, mbb_inv, spectra)
     return lb, ps
+
+def get_binning_matrix(bin_lo, bin_hi, lmax, cltype='Dl'):
+    """Returns P_bl, the binning matrix that turns C_ell into C_b or D_b."""
+    l = np.arange(2, lmax) # assumes 2:lmax ordering
+    if cltype == 'Dl':
+        fac = (l * (l + 1) / (2 * np.pi))
+    elif cltype == 'Cl':
+        fac = l * 0 + 1
+    nbins = len(bin_lo)
+    Pbl = np.zeros((nbins, lmax-2))
+    for ibin in range(nbins):
+        loc = np.where((l >= bin_lo[ibin]) & (l <= bin_hi[ibin]))[0]
+        Pbl[ibin, loc] = fac[loc] / len(loc)
+    return Pbl
+
+def spec_dict2vec(spec_dict, spectra):
+    """Take a power spectra dictionnary of power spectra and return a vector.
+    The dictionary should be of the form {spec: val, ...}
+    For example {'TT': cl_TT, 'TE': cl_TE, ..., 'BB': cl_BB}
+    
+    Parameters
+    ----------
+    spec_dict: dict of 1d array
+      a dict containing spectra
+    spectra: list of strings
+      the desired ordering of the spectra for example:
+      ['TT','TE','TB','ET','BT','EE','EB','BE','BB']
+    """
+    return np.concatenate([spec_dict[spec] for spec in spectra])
 
 def vec2spec_dict(n_bins, vec, spectra):
     """Take a vector of power spectra and return a power spectra dictionnary.
