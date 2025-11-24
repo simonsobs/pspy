@@ -230,12 +230,17 @@ def get_spec2spec_array_from_spin2spin_array(spin2spin_array, dense=True,
     # for each row 0-8, indptr gives the indexes into the indices and data
     # arrays for the placement, and data, of blocks respectively.
     # NOTE: ordering assumes TT, TE, TB, ET, BT, EE, EB, BE, BB order
-    obj = spin2spin_array
     if spin0:
+        obj = spin2spin_array.squeeze()
+        assert obj.ndim == 2, \
+            f'If spin0, obj must be squeezable to a 2d array'
         indptr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] 
         indices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         obj_data = np.tile(obj, (9, 1, 1))
     else:
+        obj = spin2spin_array
+        assert obj.ndim == 3 and obj.shape[0] == 5, \
+            f'If not spin0, obj must be a 3d array whose first axis has size 5'
         indptr = [0, 1, 2, 3, 4, 5, 7, 9, 11, 13] 
         indices = [0, 1, 2, 3, 4, 5, 8, 6, 7, 6, 7, 5, 8]
         obj_data = np.array([obj[0],           # TT (0x0)
