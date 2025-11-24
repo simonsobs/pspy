@@ -222,8 +222,8 @@ def get_binning_matrix(bin_lo, bin_hi, lmax, cltype='Dl'):
         Pbl[ibin, loc] = fac[loc] / len(loc)
     return Pbl
 
-def spec_dict2vec(spec_dict, spectra):
-    """Take a power spectra dictionnary of power spectra and return a vector.
+def spec_dict2vec(spec_dict, spectra=None):
+    """Take a power spectra dictionary of power spectra and return a vector.
     The dictionary should be of the form {spec: val, ...}
     For example {'TT': cl_TT, 'TE': cl_TE, ..., 'BB': cl_BB}
     
@@ -231,10 +231,13 @@ def spec_dict2vec(spec_dict, spectra):
     ----------
     spec_dict: dict of 1d array
       a dict containing spectra
-    spectra: list of strings
+    spectra: list of strings, optional
       the desired ordering of the spectra for example:
-      ['TT','TE','TB','ET','BT','EE','EB','BE','BB']
+      ['TT','TE','TB','ET','BT','EE','EB','BE','BB']. If not provided, the keys
+      of spec_dict (in their insertion order)
     """
+    if spectra is None:
+        spectra = spec_dict.keys()
     return np.concatenate([spec_dict[spec] for spec in spectra])
 
 def vec2spec_dict(n_bins, vec, spectra):
@@ -254,6 +257,65 @@ def vec2spec_dict(n_bins, vec, spectra):
     """
     return {spec: vec[i * n_bins:(i + 1) * n_bins] for i, spec in enumerate(spectra)}
 
+def spin2spin_array_matmul_spec_dict(spin2spin_array, spec_dict, spin0=False,
+                                     return_as_vec=False):
+    """Apply a 5 (or 1) block spinxspin array to a spectrum stored in a
+    dictionary by polarization pair.
+
+    Parameters
+    ----------
+    spin2spin_array : ({5}, x, y) np.ndarray
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
+        True, then this is just the (x, y)-shaped 0x0 block.
+    spec_dict: dict of 1d array
+        A dictionary holding keys like 'TT', 'BE' and pointing to 1d arrays.
+    spin0 : bool, optional
+        If True, then spin2spin_array is just the 0x0 block, by default False.
+        In that case, it is copied along the block-diagonal for all the
+        spectra blocks.
+    return_as_vec : bool, optional
+        If True, return the output dictionary of spectra as a concatenated 1d 
+        vector array, by default False.
+
+    Returns
+    -------
+    dict or np.ndarray
+        The output spectrum either as a dictionary behind the same polarization
+        pair keys as the input, or a concatenated vector thereof.
+    """
+    out_dict = {}
+    if spin0:
+        obj = spin2spin_array.squeeze()
+        assert obj.ndim == 2, \
+            f'If spin0, obj must be squeezable to a 2d array'
+        for spec in spec_dict:
+            out_dict[spec] = obj @ spec_dict[spec]
+    else:
+        obj = spin2spin_array
+        assert obj.ndim == 3 and obj.shape[0] == 5, \
+            f'If not spin0, obj must be a 3d array whose first axis has size 5'
+        spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
+        spin2_pairs_and_signs = {
+            'EE': ('BB', 1),
+            'EB': ('BE', -1),
+            'BE': ('EB', -1),
+            'BB': ('EE', 1)
+        }
+    
+        for spec in spec_dict:
+            if spec in spin_diag_idxs:
+                idx = spin_diag_idxs[spec]
+                out_dict[spec] = obj[idx] @ spec_dict[spec]
+            else:
+                pair, sign = spin2_pairs_and_signs[spec]
+                out_dict[spec] = obj[3] @ spec_dict[spec] + sign * obj[4] @ spec_dict[pair]
+    
+    if return_as_vec:
+        out = spec_dict2vec(out_dict)
+    else:
+        out = out_dict
+
+    return out
 
 def write_ps(file_name, l, ps, type, spectra=None):
     """Write down the power spectra to disk.
