@@ -350,8 +350,34 @@ def write_ps(file_name, l, ps, type, spectra=None):
         ps_list = np.array(ps_list)
         np.savetxt(file_name, np.transpose(ps_list), header=str)
 
+def write_ps_matrix(file_name, l, ps_matrix, type, spectra=None):
+    """Write down the power spectra to disk, except the input file
+    can be a (3, 3, nl) np.ndarray, not a dict.
+    
+    Parameters
+    ----------
+    file_name: str
+      the name of the file to write the spectra
+    l: 1d array
+      the multipoles (or binned multipoles)
+    ps: (nl,) or (3, 3, nl) np.ndarray
+      the power spectrum in 'TEB x TEB' ordering (if 3x3)
+    type:  string
+      'Cl' or 'Dl'
+    spectra: list of strings
+      needed for spin0 and spin2 cross correlation, the arrangement of the spectra
+    """
+    if spectra is None:
+        ps = ps_matrix
+    else:
+        ps = {}
+        for pi, poli in enumerate('TEB'):
+            for pj, polj in enumerate('TEB'):
+                ps[poli + polj] = ps_matrix[pi, pj]
+    
+    write_ps(file_name, l, ps, type, spectra=spectra)
 
-def read_ps(file_name, spectra=None, return_type=False):
+def read_ps(file_name, spectra=None, return_type=None, return_dtype=None):
     """Read the power spectra.
         
     Parameters
@@ -362,8 +388,12 @@ def read_ps(file_name, spectra=None, return_type=False):
       needed for spin0 and spin2 cross correlation, the desired spectra. NOTE:
       the spectra are extracted by their header so the order does not need to
       match
-    return_type : bool
-      If True, return 'Dl' or 'Cl' from the header, by default False
+    return_type : str, optional
+      If not None, return loaded data as either 'Dl' or 'Cl'. The type-on-disk
+      if inferred from the header, and the data converted between types if 
+      necessary. If None, return as-is.
+    return_dtype : np.dtype, optional
+      Return as this dtype. If None, return as the default np.loadtxt dtype.
       
     Return
     ----------
@@ -384,17 +414,72 @@ def read_ps(file_name, spectra=None, return_type=False):
       assert _type == type, f'Inconsistent type in columns, expected {type}'
       spec_list.append(_spec) # holds order of spectra in file
 
-    data = np.loadtxt(file_name)
+    if return_dtype is None:
+      data = np.loadtxt(file_name)
+    else:
+      data = np.loadtxt(file_name, dtype=return_dtype)
     l = data[:, 0]
-    if spectra is None:
-      ps = data[:, 1]
+
+    if return_type is None:
+      if spectra is None:
+        ps = data[:, 1]
+      else:
+        ps = {spec: data[:, spec_list.index(spec)] for spec in spectra} # gets spec by order
     else:
-      ps = {spec: data[:, spec_list.index(spec)] for spec in spectra} # gets spec by order
+      if type == return_type and return_type in ('Cl', 'Dl'):
+          lfac = 1
+      elif type == 'Cl' and return_type == 'Dl':
+          lfac = l*(l + 1) / (2*np.pi)
+      elif type == 'Dl' and return_type == 'Cl':
+          lfac = 2*np.pi / (l*(l + 1))
+      
+      if spectra is None:
+          ps = data[:, 1] * lfac
+      else:
+          ps = {spec: data[:, spec_list.index(spec)] * lfac for spec in spectra} # gets spec by order
     
-    if return_type:
-      return l, ps, type
+    return l, ps
+    
+def read_ps_matrix(file_name, spectra=None, return_type=None, return_dtype=None):
+    """Read the power spectra, except into a (3, 3, nl) np.ndarray, not a dict.
+        
+    Parameters
+    ----------
+    file_name: str
+      the name of the file to read the spectra
+    spectra: list of strings
+      needed for spin0 and spin2 cross correlation, the desired spectra. NOTE:
+      the spectra are extracted by their header so the order does not need to
+      match. If a pol pair is missing, it is replaced with zeros.
+    return_type : str, optional
+      If not None, return loaded data as either 'Dl' or 'Cl'. The type-on-disk
+      if inferred from the header, and the data converted between types if 
+      necessary. If None, return as-is.
+    return_dtype : np.dtype, optional
+      Return as this dtype. If None, return as the default np.loadtxt dtype.
+      
+    Return
+    ----------
+      
+    The function return the multipole l (or binned multipoles) and a 1d power spectrum
+    array or a (3, 3) array of power spectra in 'TEB x TEB' ordering
+    (if spectra is not None).
+    """
+    l, ps = read_ps(file_name, spectra=spectra, return_type=return_type,
+                    return_dtype=return_dtype)
+
+    if spectra is None:
+        ps_matrix = ps
     else:
-      return l, ps
+        ps_matrix = np.zeros((3, 3, l.size), dtype=l.dtype)
+        for pi, poli in enumerate('TEB'):
+            for pj, polj in enumerate('TEB'):
+                spec = poli + polj
+                if spec in ps:
+                    ps_matrix[pi, pj] = ps[spec]
+        ps_matrix = np.array(ps_matrix).reshape(3, 3, -1)
+    
+    return l, ps_matrix
 
 def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
     """Write down the power spectra in a hdf5 file.
