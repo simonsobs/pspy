@@ -18,6 +18,42 @@ from pixell import curvedsky
 def ducc_couplings(spec, lmax, spec_index=(0, 1, 2, 3),
                    mat_index=(0, 1, 2, 3, 4), nthread=0, res=None,
                    dtype=np.float64, coupling=False, pspy_index_convention=True):
+    """Return coupling matrices calculated by ducc. This function is a 
+    wrapper around ducc0.misc.experimental.coupling_matrix_spin0and2_tri.
+
+    See https://mtr.pages.mpcdf.de/ducc/misc.html#module-ducc0.misc.experimental.
+
+    Parameters
+    ----------
+    spec : numpy.ndarray ((nspec, 1<=x<=4, lmax_spec+1), dtype=np.float64)
+        The window cross-spectra.
+    lmax : int
+        The lmax of the matrices. If spectra are zero-padded so that they are
+        size 2*lmax.
+    spec_index : tuple of int, length 4, optional
+        See ducc docs, by default (0, 1, 2, 3).
+    mat_index : tuple, optional
+        See ducc docs, by default (0, 1, 2, 3, 4)
+    nthread : int, optional
+        The number of threads to use, by default 0. If 0. the output of
+        ducc0.misc.thread_pool_size() (e.g., OMP_NUM_THREADS).
+    res : numpy.ndarray ((nspec, 1<=x<=5, ((lmax+1)*(lmax+2))/2),
+          dtype=np.float32 or np.float64), optional
+        Output buffer, by default None. Allocated if None.
+    dtype : np.dtype, optional
+        Output dtype, by default np.float64. Either np.float64 or np.float32.
+    coupling : bool, optional
+        If True, return the raw coupling; if False, return the mode-coupling 
+        matrix, by default False. The difference is just a factor of 2l+1
+        multiplied along the columns.
+    pspy_index_convention : bool, optional
+        If True, slice out 2:lmax along each axis, by default True.
+
+    Returns
+    -------
+    numpy.ndarray ((nspec, 1<=x<=5, nl, nl) np.ndarray
+        The mode-coupling matrices or coupling matrices.
+    """
     if nthread == 0:
         nthread = ducc0.misc.thread_pool_size()
     if np.issubdtype(dtype, np.float64):
@@ -215,8 +251,8 @@ def get_spec2spec_array_from_spin2spin_array(spin2spin_array, dense=True,
         The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
         True, then this is just the (x, y)-shaped 0x0 block.
     dense : bool, optional
-        Return a scipy.sparse.bsr_array, by default True. If not, a dense array
-        is returned.
+        If False, return a scipy.sparse.bsr_array. If True, a dense array
+        is returned. By default True
     spin0 : bool, optional
         If True, then spin2spin_array is just the 0x0 block, by default False.
         In that case, it is copied along the block-diagonal for all the 9
