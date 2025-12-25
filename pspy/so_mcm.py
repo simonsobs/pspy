@@ -28,7 +28,7 @@ def ducc_couplings(spec, lmax, spec_index=(0, 1, 2, 3),
     spec : numpy.ndarray ((nspec, 1<=x<=4, lmax_spec+1), dtype=np.float64)
         The window cross-spectra.
     lmax : int
-        The lmax of the matrices. If spectra are zero-padded so that they are
+        The lmax of the matrices. Spectra are zero-padded so that they are
         size 2*lmax.
     spec_index : tuple of int, length 4, optional
         See ducc docs, by default (0, 1, 2, 3).
