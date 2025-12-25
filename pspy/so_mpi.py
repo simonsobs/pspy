@@ -170,6 +170,54 @@ def broadcast(data, root=0):
     comm.bcast(data, root=root)
     comm.Barrier()
 
+def gather_set_or_dict(rank_obj, allgather=True, root=0, overlap_allowed=True):
+    """Gather a set or dict from many ranks to one rank or all ranks.
+
+    Parameters
+    ----------
+    rank_obj : set or dict
+        The object to be gathered from each rank.
+    allgather : bool, optional
+        Whether the objects are gathered to all ranks or one rank, by default
+        True (all ranks).
+    root : int, optional
+        If not allgather, the rank to which all objects are gathered, by default
+        0.
+    overlap_allowed : bool, optional
+        If items/keys in the gathered sets/dicts are enforced to be unique
+        across different ranks, by default True.
+
+    Returns
+    -------
+    set or dict (or None)
+        The merged rank_obj objects from each rank if allgather. Otherwise, 
+        only rank root returns a set or dict, while the others return None.
+    """
+    if allgather:
+        list_of_rank_objs = comm.allgather(rank_obj)
+        gather_condition = True
+    else:
+        list_of_rank_objs = comm.gather(rank_obj, root=root)
+        gather_condition = rank == root
+
+    if gather_condition:
+        if isinstance(rank_obj, set):
+            all_obj = set()
+        elif isinstance(rank_obj, dict):
+            all_obj = {}
+        for i, o in enumerate(list_of_rank_objs):
+            if not overlap_allowed:
+                if isinstance(rank_obj, set):
+                    overlap = all_obj & o
+                elif isinstance(rank_obj, dict):
+                    overlap = all_obj.keys() & o.keys()
+                assert len(overlap) == 0, \
+                    f'Items in rank {i} already provided in lower rank task'
+            all_obj.update(o)
+    else:
+        all_obj = None
+
+    return all_obj
 
 
 
