@@ -206,13 +206,23 @@ def gather_set_or_dict(rank_obj, allgather=True, root=0, overlap_allowed=True):
         elif isinstance(rank_obj, dict):
             all_obj = {}
         for i, o in enumerate(list_of_rank_objs):
+            if isinstance(rank_obj, set):
+                overlap_keys = all_obj & o
+            elif isinstance(rank_obj, dict):
+                overlap_keys = all_obj.keys() & o.keys()
+            else:
+                raise ValueError('Only set-types or dict-types allowed')
+            
             if not overlap_allowed:
-                if isinstance(rank_obj, set):
-                    overlap = all_obj & o
-                elif isinstance(rank_obj, dict):
-                    overlap = all_obj.keys() & o.keys()
-                assert len(overlap) == 0, \
-                    f'Items in rank {i} already provided in lower rank task'
+                assert len(overlap_keys) == 0, \
+                    f'Items in rank {i} already provided in lower-rank task'
+            elif isinstance(rank_obj, dict):
+                overlap_dict_all_obj = {k: all_obj[k] for k in overlap_keys}
+                overlap_dict_o = {k: o[k] for k in overlap_keys}
+                assert overlap_dict_all_obj == overlap_dict_o, \
+                    f'Keys in rank {i} already provided in lower-rank task, but ' + \
+                    'with different values'
+
             all_obj.update(o)
     else:
         all_obj = None
