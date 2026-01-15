@@ -2,7 +2,7 @@
 Routines for power spectra estimation and debiasing.
 """
 import healpy as hp, numpy as np
-from pspy import pspy_utils,so_mcm
+from pspy import pspy_utils
 from pixell import curvedsky
 
 def get_spectra(alm1, alm2=None, spectra=None):
@@ -256,66 +256,6 @@ def vec2spec_dict(n_bins, vec, spectra):
       ['TT','TE','TB','ET','BT','EE','EB','BE','BB']
     """
     return {spec: vec[i * n_bins:(i + 1) * n_bins] for i, spec in enumerate(spectra)}
-
-def spin2spin_array_matmul_spec_dict(spin2spin_array, spec_dict, spin0=False,
-                                     return_as_vec=False):
-    """Apply a 5 (or 1) block spinxspin array to a spectrum stored in a
-    dictionary by polarization pair.
-
-    Parameters
-    ----------
-    spin2spin_array : ({5}, x, y) np.ndarray
-        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
-        True, then this is just the (x, y)-shaped 0x0 block.
-    spec_dict: dict of 1d array
-        A dictionary holding keys like 'TT', 'BE' and pointing to 1d arrays.
-    spin0 : bool, optional
-        If True, then spin2spin_array is just the 0x0 block, by default False.
-        In that case, it is copied along the block-diagonal for all the
-        spectra blocks.
-    return_as_vec : bool, optional
-        If True, return the output dictionary of spectra as a concatenated 1d 
-        vector array, by default False.
-
-    Returns
-    -------
-    dict or np.ndarray
-        The output spectrum either as a dictionary behind the same polarization
-        pair keys as the input, or a concatenated vector thereof.
-    """
-    out_dict = {}
-    if spin0:
-        obj = spin2spin_array.squeeze()
-        assert obj.ndim == 2, \
-            f'If spin0, obj must be squeezable to a 2d array'
-        for spec in spec_dict:
-            out_dict[spec] = obj @ spec_dict[spec]
-    else:
-        obj = spin2spin_array
-        assert obj.ndim == 3 and obj.shape[0] == 5, \
-            f'If not spin0, obj must be a 3d array whose first axis has size 5'
-        spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
-        spin2_pairs_and_signs = {
-            'EE': ('BB', 1),
-            'EB': ('BE', -1),
-            'BE': ('EB', -1),
-            'BB': ('EE', 1)
-        }
-    
-        for spec in spec_dict:
-            if spec in spin_diag_idxs:
-                idx = spin_diag_idxs[spec]
-                out_dict[spec] = obj[idx] @ spec_dict[spec]
-            else:
-                pair, sign = spin2_pairs_and_signs[spec]
-                out_dict[spec] = obj[3] @ spec_dict[spec] + sign * obj[4] @ spec_dict[pair]
-    
-    if return_as_vec:
-        out = spec_dict2vec(out_dict)
-    else:
-        out = out_dict
-
-    return out
 
 def write_ps(file_name, l, ps, type, spectra=None):
     """Write down the power spectra to disk.
