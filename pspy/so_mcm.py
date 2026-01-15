@@ -7,9 +7,8 @@ from copy import deepcopy
 
 import healpy as hp
 import numpy as np
-from scipy import sparse
 
-from pspy import pspy_utils, so_cov, sph_tools
+from pspy import pspy_utils, sph_tools
 from ._mcm_fortran import mcm_compute as mcm_fortran
 
 import ducc0
@@ -240,62 +239,344 @@ def invert_mcm(mcm_array):
 
     return inverse_mcm_array
 
-def get_spec2spec_array_from_spin2spin_array(spin2spin_array, dense=True,
-                                             spin0=False):
-    """Get a full 9x9 spectrum-to-spectrum matrix from 5 (or 1) blocks of
-    a spinxspin array.
+def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
+                                                       spectra,
+                                                       dense=False,
+                                                       spin0=False):
+    """Get a spectrum-to-spectrum matrix from 5 (or 1) blocks of a spinxspin
+    array. By default, the spectrum-to-spectrum matrix is represented by a
+    two-layer dictionary, indexing the row and col of each block of the matrix,
+    ordered by the provided spectra. This maximally preserves the sparsity of
+    the matrix.
 
     Parameters
     ----------
     spin2spin_array : ({5}, x, y) np.ndarray
         The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
         True, then this is just the (x, y)-shaped 0x0 block.
+    spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
+        The span (and ordering) of the blocks. Does not have to be all 9 pairs.
     dense : bool, optional
-        If False, return a scipy.sparse.bsr_array. If True, a dense array
-        is returned. By default True
+        If False, return a two-layer dictionary, row-major block matrix. If
+        True, realize the fully dense np.ndarray, which will be mostly 0.
     spin0 : bool, optional
         If True, then spin2spin_array is just the 0x0 block, by default False.
-        In that case, it is copied along the block-diagonal for all the 9
-        spectra blocks.
+        In that case, it is copied along the block-diagonal for all blocks.
 
     Returns
     -------
-    scipy.sparse.bsr_array or np.ndarray
-        The full 9x9 block matrix.
+    dict[dict[]] -> np.ndnarray, or np.ndarray (if dense)
+        The spectrum-to-spectrum block matrix (row-major).
+
+    Notes
+    -----
+    This is similar to a scipy.sparse.dok_array, but scipy often does not build
+    against a parallelized blas, so this allows underlying math to still be
+    computed with the installed numpy.  
     """
-    # for each row 0-8, indptr gives the indexes into the indices and data
-    # arrays for the placement, and data, of blocks respectively.
-    # NOTE: ordering assumes TT, TE, TB, ET, BT, EE, EB, BE, BB order
+    assert len(np.unique(spectra)) == len(spectra), \
+        f'{spectra=} are not unique'
+
+    out_dict = {spec: {} for spec in spectra}
+    
     if spin0:
         obj = spin2spin_array.squeeze()
         assert obj.ndim == 2, \
             f'If spin0, obj must be squeezable to a 2d array'
-        indptr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] 
-        indices = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        obj_data = np.tile(obj, (9, 1, 1))
+        
+        for spec in spectra:
+            out_dict[spec][spec] = obj
+    
     else:
         obj = spin2spin_array
         assert obj.ndim == 3 and obj.shape[0] == 5, \
             f'If not spin0, obj must be a 3d array whose first axis has size 5'
-        indptr = [0, 1, 2, 3, 4, 5, 7, 9, 11, 13] 
-        indices = [0, 1, 2, 3, 4, 5, 8, 6, 7, 6, 7, 5, 8]
-        obj_data = np.array([obj[0],           # TT (0x0)
-                             obj[1],           # TE (0x2)
-                             obj[1],           # TB (0x2)
-                             obj[2],           # ET (2x0)
-                             obj[2],           # BT (2x0)
-                             obj[3], obj[4],   # EE2EE BB2EE (pp, mm)
-                             obj[3], -obj[4],  # EB2EB BE2EB (pp, -mm)
-                             -obj[4], obj[3],  # BE2EB BE2BE (-mm, pp)
-                             obj[4], obj[3]])  # EE2BB BB2BB (mm, pp)
 
-    blocksize = obj_data[0].shape
-    shape = tuple(9 * x for x in blocksize)
-    out = sparse.bsr_array((obj_data, indices, indptr), shape=shape, blocksize=blocksize)
+        spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
+        spin2_pairs_and_signs = {
+            'EE': ('BB', 1),
+            'EB': ('BE', -1),
+            'BE': ('EB', -1),
+            'BB': ('EE', 1)
+        }
+        off_diag_dict = {}
+
+        for spec in spectra:
+            # first fill the diagonal blocks
+            if spec in spin_diag_idxs:
+                idx = spin_diag_idxs[spec]
+            else:
+                idx = 3
+            out_dict[spec][spec] = obj[idx]
+            
+            # now fill the off-diagonals
+            if spec in spin2_pairs_and_signs:
+                pair, sign = spin2_pairs_and_signs[spec]
+                
+                if pair in spectra:
+                    if sign not in off_diag_dict:
+                        off_diag_dict[sign] = sign * obj[4]
+                    
+                    out_dict[spec][pair] = off_diag_dict[sign]
+        
     if dense:
-        out = out.toarray()
-    return out
+        out_array = sparse_dict_mat2dense_array(out_dict, spin2spin_array.dtype)
+        return out_array
+    else:
+        return out_dict
+    
+def sparse_dict_mat2dense_array(in_dict, dtype):
+    """Actualize a sparse, block array from a two-level, row-major dictionary.
 
+    Format:
+    1. The block order for rows follows the dictionary keys for the first level.
+    2. For any column keys in the second level that are also row keys, the block
+    order follows the order of the row keys.
+    3. For any column keys in the second level that are not row keys, the block
+    order follows their order of appearance, when searched by row.
+    4. For any rows or columns that are empty, they are skipped because their
+    size cannot be inferred.
+
+    Parameters
+    ----------
+    in_dict : dict[dict[]] -> np.ndarray
+        The block matrix (row-major).
+    dtype : np.dtype
+        Data type for the output array
+
+    Returns
+    -------
+    (M, N) np.ndarray
+        The dense representation of the matrix. Blocks not in the input are set 
+        to zero.
+
+    Notes
+    -----
+    It may not be possible to go back to the block array from the dense array
+    due to loss of block information.
+    """
+    # first get the shape of each block and the dense array
+    nrows_dict = {}
+    ncols_dict = {}
+
+    for specr in in_dict:
+        for specc in in_dict[specr]:
+            
+            nblock_rows, nblock_cols = in_dict[specr][specc].shape # must be 2d
+            
+            if specr not in nrows_dict:
+                nrows_dict[specr] = nblock_rows
+            else:
+                assert nblock_rows == nrows_dict[specr], \
+                    f'block {specr}, {specc} with nrows {nblock_rows} does not ' + \
+                    f'match already-seen nrows {nrows_dict[specr]} for row {specr}'
+                
+            if specc not in ncols_dict:
+                ncols_dict[specc] = nblock_cols
+            else:
+                assert nblock_cols == ncols_dict[specc], \
+                    f'block {specr}, {specc} with ncols {nblock_cols} does not ' + \
+                    f'match already-seen ncols {ncols_dict[specc]} for col {specc}'
+            
+    nrows = sum(nrows_dict.values())
+    ncols = sum(ncols_dict.values())
+    out_array = np.zeros((nrows, ncols), dtype=dtype)
+
+    # get all the columns. we want any column indices that are also row indices
+    # to be in the same order as the row indices. any other columns are in their
+    # order of appearance, found by row
+    spec_col_iterator = []
+    for specr in in_dict:
+        if specr in ncols_dict:
+            spec_col_iterator.append(specr)
+    for specc in ncols_dict:
+        if specc not in spec_col_iterator:
+            spec_col_iterator.append(specc)
+
+    assert len(spec_col_iterator) == len(ncols_dict), \
+        f'{len(spec_col_iterator)=} != {len(ncols_dict)=}'
+
+    # now fill each block
+    ridx = 0
+    for specr, nblock_rows in nrows_dict.items():
+        
+        cidx = 0
+        for specc in spec_col_iterator:
+            nblock_cols = ncols_dict[specc]
+
+            if specc in in_dict[specr]:
+                out_array[ridx:ridx + nblock_rows, 
+                          cidx:cidx + nblock_cols] = in_dict[specr][specc]
+    
+            # else, left 0
+
+            cidx += nblock_cols
+        ridx += nblock_rows
+    
+    return out_array
+    
+def get_spec2spec_sparse_dict_mat_from_dense_mat(dense_array, spectra,
+                                                 skip_empty=True):
+    """Get a spectrum-to-spectrum matrix from a dense input array, skipping all-
+    zero blocks. By default, the spectrum-to-spectrum matrix is represented by a
+    two-layer dictionary, indexing the row and col of each block of the matrix,
+    ordered by the provided spectra. This maximally preserves the sparsity of
+    the matrix.
+
+    Parameters
+    ----------
+    dense_array : (x, y) np.ndarray
+        The array to make sparse. Any blocks that are all zero are skipped.
+    spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
+        The span (and ordering) of the blocks. Does not have to be all 9 pairs.
+        Must evenly divide the dense_array.
+    skip_empty : bool, optional
+        If True, skip empty blocks as described. If False, since the blocksize
+        can be inferred, realize empty blocks as dense zeros. This allows sparse
+        matmul with other sparse dicts but forces the existence of certain keys,
+        at the cost of possibly wasted compute.
+        
+    Returns
+    -------
+    dict[dict[]] -> np.ndnarray
+        The spectrum-to-spectrum block matrix (row-major).
+
+    Notes
+    -----
+    This is similar to a scipy.sparse.dok_array, but scipy often does not build
+    against a parallelized blas, so this allows underlying math to still be
+    computed with the installed numpy.  
+    """
+    assert len(np.unique(spectra)) == len(spectra), \
+        f'{spectra=} are not unique'
+
+    import numba
+
+    # because np.any apparently does not have any early-termination, so np.any
+    # is slow for large arrays, even if every element is not 0. numba, however,
+    # compiles a fast function that terminates on the first nonzero element.
+    @numba.njit()
+    def np_any(arr):
+        for item in arr.flat:
+            if item != 0:
+                return True 
+        return False
+
+    rows, cols = dense_array.shape
+    nblocks = len(spectra)
+
+    rows_per_block, extra_rows = divmod(rows, nblocks)
+    cols_per_block, extra_cols = divmod(cols, nblocks)
+
+    assert extra_rows == 0 and extra_cols == 0, \
+        f'{(rows, cols)} array shape is not compatible with {nblocks} blocks'
+
+    out_dict = {spec: {} for spec in spectra} # populate all rows with keys
+    for r_idx, specr in enumerate(spectra):
+        for c_idx, specc in enumerate(spectra):
+            
+            block = dense_array[r_idx*rows_per_block : (r_idx+1)*rows_per_block,
+                                c_idx*cols_per_block : (c_idx+1)*cols_per_block]
+            
+            if not skip_empty:
+                out_dict[specr][specc] = block
+            elif np_any(block):
+                out_dict[specr][specc] = block
+                
+    return out_dict
+
+def sparse_dict_mat_matmul_sparse_dict_mat(dict_a, dict_b, dense=False,
+                                           dtype=np.float64):
+    """Multiply two sparse dict matrices: C[i][j] = sum(A[i][k] @ B[k][j]). 
+    Only rows (i) in C are those in A for which a nonzero column (k) is a row
+    in B. Only columns (j) are those in B corresponding to a row (k) which is
+    also a nonzero column (k) in a nonzero row (i) of A. I.e., maximum sparsity.
+
+    Parameters
+    ----------
+    dict_a : dict[dict[]] -> np.ndarray
+        The first block matrix (row-major).
+    dict_b : dict[dict[]] -> np.ndarray
+        The second block matrix (row-major).
+    dense : bool, optional
+        Return the fully dense representation of C, by default False. If True,
+        the format of sparse_dict_mat2dense_array applies.
+    dtype : np.dtype, optional
+        The dtype of the dense array if dense is True, by default np.float64.
+
+    Returns
+    -------
+    dict[dict[]] -> np.ndnarray, or np.ndarray (if dense)
+        The spectrum-to-spectrum block matrix (row-major).
+    """
+    out_dict = {}
+
+    # iterate through blocks in a: a[i][k]
+    for (i, dict_ai) in dict_a.items():
+        for k, val_a in dict_ai.items():
+            # we want to multiply a[i][k] by b[k][j]
+            if k in dict_b:
+                for j, val_b in dict_b[k].items():
+                    block_prod = val_a @ val_b
+
+                    if i not in out_dict:
+                        out_dict[i] = {}
+
+                    if j in out_dict[i]:
+                        out_dict[i][j] += block_prod
+                    else:
+                        out_dict[i][j] = block_prod
+                    
+    if dense:
+        out_array = sparse_dict_mat2dense_array(out_dict, dtype)
+        return out_array
+    else:
+        return out_dict
+    
+def sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=False,
+                                           dtype=np.float64):
+    """Multiply a sparse dict matrix and vector: C[i][j] = sum(A[i][k] @ B[k]). 
+    Only rows (i) in C are those in A for which a nonzero column (k) is a row
+    in B. I.e., maximum sparsity.
+
+    Parameters
+    ----------
+    dict_a : dict[dict[]] -> np.ndarray
+        The block matrix (row-major).
+    dict_b : dict[] -> np.ndarray
+        The block column vector (row-major).
+    dense : bool, optional
+        Return the fully dense representation of C, by default False. If True,
+        the format of sparse_dict_mat2dense_array applies.
+    dtype : np.dtype, optional
+        The dtype of the dense array if dense is True, by default np.float64.
+
+    Returns
+    -------
+    dict[] -> np.ndnarray, or np.ndarray (if dense)
+        The block column vector (row-major).
+    """
+    out_dict = {}
+
+    # iterate through blocks in a: a[i][k]
+    for (i, dict_ai) in dict_a.items():
+        for k, val_a in dict_ai.items():
+            # we want to multiply a[i][k] by b[k]
+            if k in dict_b:
+                val_b = dict_b[k]
+                block_prod = val_a @ val_b
+
+                if i in out_dict:
+                    out_dict[i] += block_prod
+                else:
+                    out_dict[i] = block_prod
+                    
+    if dense:
+        out_array = np.concatenate(list(out_dict.values()), dtype=dtype)
+        return out_array
+    else:
+        return out_dict
+    
 def get_coupling_dict(array):
     """Turns an array of spin-dependent mode-coupling matrices into a dict 
     labeled by their spin, i.e., spin0xspin0, spin0xspin2, spin2xspin0, 
