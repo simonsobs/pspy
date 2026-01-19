@@ -276,6 +276,130 @@ subroutine toepliz_array_fortran2(toepliz_array, coupling_array, l_toep, l_exact
 end subroutine
 
 
+! Made partly with Gemini
+!
+! Now that Martin has implemented these himself, we don't need them, but can keep
+! them for the record
+! 
+! Unlike the other Toeplitz filling routine, this does not assume the pspy 
+! start-from-two convention, it fills the upper half on its own, it fills
+! the array inplace, and it uses allocatable arrays (the heap)
+subroutine toeplitz_inplace_double_ducc(coupling_array, l_toep, dl_band, l_exact)
+    implicit none
+    integer, intent(in)    :: l_toep, dl_band, l_exact
+    real(8), intent(inout) :: coupling_array(:,:)
+    
+    integer :: l1, l2, nlmax
+    real(8), allocatable :: diag(:), row_toep(:), row_exact(:)
+    real(8) :: val
+
+    nlmax = size(coupling_array, 1)
+    
+    ! Allocate temporary vectors to store required original state
+    ! row_toep starts one off diag
+    ! row_exact ends one above the edge
+    allocate(diag(nlmax), row_toep(nlmax - l_toep - 1), row_exact(l_toep - l_exact - 1))
+
+    !$omp parallel do
+    do l1 = 1, nlmax
+        diag(l1) = sqrt(coupling_array(l1, l1))
+    end do
+
+    !$omp parallel do
+    do l2 = l_toep + 2, nlmax ! l starts at 0 (+1), and we start one off diag (+1)
+        row_toep(l2 - l_toep - 1) = coupling_array(l_toep + 1, l2) / (diag(l_toep + 1) * diag(l2))
+    end do
+
+    !$omp parallel do
+    do l2 = nlmax - l_toep + l_exact + 1, nlmax - 1
+        row_exact(l2 - nlmax + l_toep - l_exact) = coupling_array(l_exact + 1, l2) / (diag(l_exact + 1) * diag(l2))
+    end do
+
+    ! Main loops: Update in-place and fill opposite triangle
+    !$omp parallel do private(l2, l1, val) schedule(dynamic)
+    do l1 = l_exact + 2, l_toep
+        do l2 = l1 + dl_band + 1, nlmax
+            if (l2 <= l1 + nlmax - l_toep - 1) then
+                val = row_toep(l2 - l1) * (diag(l1) * diag(l2))
+            else
+                val = row_exact(l2 - l1 - nlmax + l_toep + 1) * (diag(l1) * diag(l2))
+            end if
+            coupling_array(l1, l2) = val
+            coupling_array(l2, l1) = val  ! Symmetry
+        end do
+    end do
+
+    !$omp parallel do private(l2, l1, val) schedule(dynamic)
+    do l1 = l_toep + 2, nlmax - 1
+        do l2 = l1 + 1, nlmax
+            val = row_toep(l2 - l1) * (diag(l1) * diag(l2))
+            coupling_array(l1, l2) = val
+            coupling_array(l2, l1) = val  ! Symmetry
+        end do
+    end do
+
+    deallocate(diag, row_toep, row_exact)
+end subroutine toeplitz_inplace_double_ducc
+
+
+subroutine toeplitz_inplace_single_ducc(coupling_array, l_toep, dl_band, l_exact)
+    implicit none
+    integer, intent(in)    :: l_toep, dl_band, l_exact
+    real(4), intent(inout) :: coupling_array(:,:)
+    
+    integer :: l1, l2, nlmax
+    real(4), allocatable :: diag(:), row_toep(:), row_exact(:)
+    real(4) :: val
+
+    nlmax = size(coupling_array, 1)
+    
+    ! Allocate temporary vectors to store required original state
+    ! row_toep starts one off diag
+    ! row_exact ends one above the edge
+    allocate(diag(nlmax), row_toep(nlmax - l_toep - 1), row_exact(l_toep - l_exact - 1))
+
+    !$omp parallel do
+    do l1 = 1, nlmax
+        diag(l1) = sqrt(coupling_array(l1, l1))
+    end do
+
+    !$omp parallel do
+    do l2 = l_toep + 2, nlmax ! l starts at 0 (+1), and we start one off diag (+1)
+        row_toep(l2 - l_toep - 1) = coupling_array(l_toep + 1, l2) / (diag(l_toep + 1) * diag(l2))
+    end do
+
+    !$omp parallel do
+    do l2 = nlmax - l_toep + l_exact + 1, nlmax - 1
+        row_exact(l2 - nlmax + l_toep - l_exact) = coupling_array(l_exact + 1, l2) / (diag(l_exact + 1) * diag(l2))
+    end do
+
+    ! Main loops: Update in-place and fill opposite triangle
+    !$omp parallel do private(l2, l1, val) schedule(dynamic)
+    do l1 = l_exact + 2, l_toep
+        do l2 = l1 + dl_band + 1, nlmax
+            if (l2 <= l1 + nlmax - l_toep - 1) then
+                val = row_toep(l2 - l1) * (diag(l1) * diag(l2))
+            else
+                val = row_exact(l2 - l1 - nlmax + l_toep + 1) * (diag(l1) * diag(l2))
+            end if
+            coupling_array(l1, l2) = val
+            coupling_array(l2, l1) = val  ! Symmetry
+        end do
+    end do
+
+    !$omp parallel do private(l2, l1, val) schedule(dynamic)
+    do l1 = l_toep + 2, nlmax - 1
+        do l2 = l1 + 1, nlmax
+            val = row_toep(l2 - l1) * (diag(l1) * diag(l2))
+            coupling_array(l1, l2) = val
+            coupling_array(l2, l1) = val  ! Symmetry
+        end do
+    end do
+
+    deallocate(diag, row_toep, row_exact)
+end subroutine toeplitz_inplace_single_ducc
+
+
 subroutine fill_upper(mat)
   implicit none
   real(8), intent(inout) :: mat(:,:)
