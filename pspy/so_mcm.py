@@ -240,9 +240,8 @@ def invert_mcm(mcm_array):
     return inverse_mcm_array
 
 def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
-                                                       spectra,
-                                                       dense=False,
-                                                       spin0=False):
+                                                       spectra, dense=False,
+                                                       spin0=False, copy=False):
     """Get a spectrum-to-spectrum matrix from 5 (or 1) blocks of a spinxspin
     array. By default, the spectrum-to-spectrum matrix is represented by a
     two-layer dictionary, indexing the row and col of each block of the matrix,
@@ -256,12 +255,19 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
         True, then this is just the (x, y)-shaped 0x0 block.
     spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
         The span (and ordering) of the blocks. Does not have to be all 9 pairs.
+        In particular, if an output (row) spectrum comes with an off-diagonal
+        in that row (e.g., for 'EE', 'BB'), but that off-diagonal is not in 
+        spectra, it will not be included in the matrix. I.e., spectra defines
+        both all the rows and all the columns.
     dense : bool, optional
         If False, return a two-layer dictionary, row-major block matrix. If
         True, realize the fully dense np.ndarray, which will be mostly 0.
     spin0 : bool, optional
         If True, then spin2spin_array is just the 0x0 block, by default False.
         In that case, it is copied along the block-diagonal for all blocks.
+    copy : bool, optional
+        If True, dictionary blocks are copies of the input array blocks, 
+        otherwise views, by default False.
 
     Returns
     -------
@@ -273,6 +279,9 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     This is similar to a scipy.sparse.dok_array, but scipy often does not build
     against a parallelized blas, so this allows underlying math to still be
     computed with the installed numpy.  
+
+    See description of the "spectra" argument; the returned block matrix is 
+    always block-square.
     """
     assert len(np.unique(spectra)) == len(spectra), \
         f'{spectra=} are not unique'
@@ -280,17 +289,22 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     out_dict = {spec: {} for spec in spectra}
     
     if spin0:
-        obj = spin2spin_array.squeeze()
-        assert obj.ndim == 2, \
-            f'If spin0, obj must be squeezable to a 2d array'
+        assert spin2spin_array.ndim == 2, \
+            f'If spin0, spin2spin_array must be a 2d array'
         
+        # put copy in loop so that we aren't just copying the input, each block
+        # gets its own array in memory (this is for safety; it's easy to modify
+        # multiple array values by accident otherwise)
         for spec in spectra:
-            out_dict[spec][spec] = obj
+            block = spin2spin_array
+            if copy:
+                block = block.copy()
+            out_dict[spec][spec] = block
     
     else:
-        obj = spin2spin_array
-        assert obj.ndim == 3 and obj.shape[0] == 5, \
-            f'If not spin0, obj must be a 3d array whose first axis has size 5'
+        assert spin2spin_array.ndim == 3 and spin2spin_array.shape[0] == 5, \
+            f'If not spin0, spin2spin_array must be a 3d array whose first ' + \
+            'axis has size 5'
 
         spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
         spin2_pairs_and_signs = {
@@ -299,7 +313,7 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
             'BE': ('EB', -1),
             'BB': ('EE', 1)
         }
-        off_diag_dict = {}
+        off_diag_dict = {} # to save some memory/compute
 
         for spec in spectra:
             # first fill the diagonal blocks
@@ -307,17 +321,27 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
                 idx = spin_diag_idxs[spec]
             else:
                 idx = 3
-            out_dict[spec][spec] = obj[idx]
+
+            # each block gets its own array in memory (this is for safety; it's
+            # easy to modify multiple array values by accident otherwise)
+            block = spin2spin_array[idx]
+            if copy:
+                block = block.copy()
+            out_dict[spec][spec] = block
             
             # now fill the off-diagonals
             if spec in spin2_pairs_and_signs:
                 pair, sign = spin2_pairs_and_signs[spec]
                 
+                # only add to column for this row if column in spectra
                 if pair in spectra:
                     if sign not in off_diag_dict:
-                        off_diag_dict[sign] = sign * obj[4]
-                    
-                    out_dict[spec][pair] = off_diag_dict[sign]
+                        off_diag_dict[sign] = sign * spin2spin_array[4]
+
+                    block = off_diag_dict[sign]
+                    if copy:
+                        block = block.copy()
+                    out_dict[spec][pair] = block
         
     if dense:
         out_array = sparse_dict_mat2dense_array(out_dict, spin2spin_array.dtype)
@@ -416,7 +440,7 @@ def sparse_dict_mat2dense_array(in_dict, dtype):
     return out_array
     
 def get_spec2spec_sparse_dict_mat_from_dense_mat(dense_array, spectra,
-                                                 skip_empty=True):
+                                                 skip_empty=True, copy=False):
     """Get a spectrum-to-spectrum matrix from a dense input array, skipping all-
     zero blocks. By default, the spectrum-to-spectrum matrix is represented by a
     two-layer dictionary, indexing the row and col of each block of the matrix,
@@ -435,6 +459,9 @@ def get_spec2spec_sparse_dict_mat_from_dense_mat(dense_array, spectra,
         can be inferred, realize empty blocks as dense zeros. This allows sparse
         matmul with other sparse dicts but forces the existence of certain keys,
         at the cost of possibly wasted compute.
+    copy : bool, optional
+        If True, dictionary blocks are copies of the input array blocks, 
+        otherwise views, by default False.
         
     Returns
     -------
@@ -477,10 +504,17 @@ def get_spec2spec_sparse_dict_mat_from_dense_mat(dense_array, spectra,
             
             block = dense_array[r_idx*rows_per_block : (r_idx+1)*rows_per_block,
                                 c_idx*cols_per_block : (c_idx+1)*cols_per_block]
-            
+
+            add_to_dict = False
             if not skip_empty:
-                out_dict[specr][specc] = block
+                add_to_dict = True
             elif np_any(block):
+                add_to_dict = True
+            
+            # this way, only copy if we are adding to dict
+            if add_to_dict:
+                if copy:
+                    block = block.copy()
                 out_dict[specr][specc] = block
                 
     return out_dict
