@@ -239,9 +239,89 @@ def invert_mcm(mcm_array):
 
     return inverse_mcm_array
 
+def get_block_diagonal_sparse_dict_mat_from_array(array, idxs, copy=False):
+    """Construct a 2d block-diagonal sparse dict matrix. The matrix is
+    represented by a two-layer dictionary, indexing the row and col of each
+    block of the matrix, ordered by the provided indices. This maximally
+    preserves the sparsity of the matrix.
+
+    Parameters
+    ----------
+    array : (m, n) np.ndarray
+        Array to populate along the block diagonal.
+    idxs : iterable of hashables
+        Row and column keys for each block.
+    copy : bool, optional
+        If True, dictionary blocks are copies of the input array block, 
+        otherwise views, by default False.
+
+    Returns
+    -------
+    dict[dict[]] -> np.ndarray
+        The block-diagonal matrix (row-major).
+    """
+    out_dict = {idx: {} for idx in idxs}
+
+    assert array.ndim == 2, \
+        f'If block diagonal, input array must be a 2d array'
+    
+    # put copy in loop so that we aren't just copying the input, each block
+    # gets its own array in memory (this is for safety; it's easy to modify
+    # multiple array values by accident otherwise)
+    for idx in idxs:
+        block = array
+        if copy:
+            block = block.copy()
+        out_dict[idx][idx] = block
+
+    return out_dict
+
+def sparse_dict_mat_transpose(in_dict, copy=False):
+    """Transpose a sparse dict matrix. The matrix is represented by a two-layer
+    dictionary, indexing the row and col of each block of the matrix, ordered by
+    the provided indices. This maximally preserves the sparsity of the matrix.
+
+    Parameters
+    ----------
+    in_dict : dict[dict[]] -> np.ndarray
+        The block matrix (row-major).
+    copy : bool, optional
+        If True, dictionary blocks are copies of the input array blocks, 
+        otherwise views, by default False.
+
+    Returns
+    -------
+    dict[dict[]] -> np.ndarray
+        The block-diagonal matrix transpose (row-major).
+    """
+    out_dict = {}
+
+    for row, col_dict in in_dict.items():
+        for col, arr in col_dict.items():
+
+            block = arr.T # transpose the block itself
+            if copy:
+                block = block.copy()
+
+            # transpose the blocks
+            if col not in out_dict:
+                out_dict[col] = {}
+            if row not in out_dict[col]:
+                out_dict[col][row] = block
+            else:
+                raise ValueError('This should be impossible')
+            
+    return out_dict
+
+def sparse_dict_mat_astype(in_dict, dtype):
+    """Change the dtype of the blocks of a sparse dict matrix inplace."""
+    for row, col_dict in in_dict.items():
+        for col, arr in col_dict.items():
+            in_dict[row][col] = arr.astype(dtype, copy=False)            
+
 def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
                                                        spectra, dense=False,
-                                                       spin0=False, copy=False):
+                                                       copy=False):
     """Get a spectrum-to-spectrum matrix from 5 (or 1) blocks of a spinxspin
     array. By default, the spectrum-to-spectrum matrix is represented by a
     two-layer dictionary, indexing the row and col of each block of the matrix,
@@ -262,16 +342,13 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     dense : bool, optional
         If False, return a two-layer dictionary, row-major block matrix. If
         True, realize the fully dense np.ndarray, which will be mostly 0.
-    spin0 : bool, optional
-        If True, then spin2spin_array is just the 0x0 block, by default False.
-        In that case, it is copied along the block-diagonal for all blocks.
     copy : bool, optional
         If True, dictionary blocks are copies of the input array blocks, 
         otherwise views, by default False.
 
     Returns
     -------
-    dict[dict[]] -> np.ndnarray, or np.ndarray (if dense)
+    dict[dict[]] -> np.ndarray, or np.ndarray (if dense)
         The spectrum-to-spectrum block matrix (row-major).
 
     Notes
@@ -285,63 +362,49 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     """
     assert len(np.unique(spectra)) == len(spectra), \
         f'{spectra=} are not unique'
-
+    
     out_dict = {spec: {} for spec in spectra}
-    
-    if spin0:
-        assert spin2spin_array.ndim == 2, \
-            f'If spin0, spin2spin_array must be a 2d array'
+
+    assert spin2spin_array.ndim == 3 and spin2spin_array.shape[0] == 5, \
+        f'If not spin0, spin2spin_array must be a 3d array whose first ' + \
+        'axis has size 5'
+
+    spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
+    spin2_pairs_and_signs = {
+        'EE': ('BB', 1),
+        'EB': ('BE', -1),
+        'BE': ('EB', -1),
+        'BB': ('EE', 1)
+    }
+    off_diag_dict = {} # to save some memory/compute
+
+    for spec in spectra:
+        # first fill the diagonal blocks
+        if spec in spin_diag_idxs:
+            idx = spin_diag_idxs[spec]
+        else:
+            idx = 3
+
+        # each block gets its own array in memory (this is for safety; it's
+        # easy to modify multiple array values by accident otherwise)
+        block = spin2spin_array[idx]
+        if copy:
+            block = block.copy()
+        out_dict[spec][spec] = block
         
-        # put copy in loop so that we aren't just copying the input, each block
-        # gets its own array in memory (this is for safety; it's easy to modify
-        # multiple array values by accident otherwise)
-        for spec in spectra:
-            block = spin2spin_array
-            if copy:
-                block = block.copy()
-            out_dict[spec][spec] = block
-    
-    else:
-        assert spin2spin_array.ndim == 3 and spin2spin_array.shape[0] == 5, \
-            f'If not spin0, spin2spin_array must be a 3d array whose first ' + \
-            'axis has size 5'
-
-        spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
-        spin2_pairs_and_signs = {
-            'EE': ('BB', 1),
-            'EB': ('BE', -1),
-            'BE': ('EB', -1),
-            'BB': ('EE', 1)
-        }
-        off_diag_dict = {} # to save some memory/compute
-
-        for spec in spectra:
-            # first fill the diagonal blocks
-            if spec in spin_diag_idxs:
-                idx = spin_diag_idxs[spec]
-            else:
-                idx = 3
-
-            # each block gets its own array in memory (this is for safety; it's
-            # easy to modify multiple array values by accident otherwise)
-            block = spin2spin_array[idx]
-            if copy:
-                block = block.copy()
-            out_dict[spec][spec] = block
+        # now fill the off-diagonals
+        if spec in spin2_pairs_and_signs:
+            pair, sign = spin2_pairs_and_signs[spec]
             
-            # now fill the off-diagonals
-            if spec in spin2_pairs_and_signs:
-                pair, sign = spin2_pairs_and_signs[spec]
-                
-                # only add to column for this row if column in spectra
-                if pair in spectra:
-                    if sign not in off_diag_dict:
-                        off_diag_dict[sign] = sign * spin2spin_array[4]
+            # only add to column for this row if column in spectra
+            if pair in spectra:
+                if sign not in off_diag_dict:
+                    off_diag_dict[sign] = sign * spin2spin_array[4]
 
-                    block = off_diag_dict[sign]
-                    if copy:
-                        block = block.copy()
-                    out_dict[spec][pair] = block
+                block = off_diag_dict[sign]
+                if copy:
+                    block = block.copy()
+                out_dict[spec][pair] = block
         
     if dense:
         out_array = sparse_dict_mat2dense_array(out_dict, spin2spin_array.dtype)
@@ -465,7 +528,7 @@ def get_spec2spec_sparse_dict_mat_from_dense_mat(dense_array, spectra,
         
     Returns
     -------
-    dict[dict[]] -> np.ndnarray
+    dict[dict[]] -> np.ndarray
         The spectrum-to-spectrum block matrix (row-major).
 
     Notes
@@ -540,7 +603,7 @@ def sparse_dict_mat_matmul_sparse_dict_mat(dict_a, dict_b, dense=False,
 
     Returns
     -------
-    dict[dict[]] -> np.ndnarray, or np.ndarray (if dense)
+    dict[dict[]] -> np.ndarray, or np.ndarray (if dense)
         The spectrum-to-spectrum block matrix (row-major).
     """
     out_dict = {}
@@ -587,7 +650,7 @@ def sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=False,
 
     Returns
     -------
-    dict[] -> np.ndnarray, or np.ndarray (if dense)
+    dict[] -> np.ndarray, or np.ndarray (if dense)
         The block column vector (row-major).
     """
     out_dict = {}
