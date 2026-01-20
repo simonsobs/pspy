@@ -12,35 +12,54 @@ from pspy import pspy_utils, sph_tools
 from ._mcm_fortran import mcm_compute as mcm_fortran
 
 import ducc0
-from pixell import curvedsky
 
-def ducc_couplings(spec, lmax, spec_index=(0, 1, 2, 3),
-                   mat_index=(0, 1, 2, 3, 4), nthread=0, res=None,
-                   dtype=np.float64, coupling=False, pspy_index_convention=True):
+def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
+                   dtype=np.float64, l_exact=-1, l_toeplitz=-1, dl_band=-1,
+                   redo_toeplitz_as_exact=True, log=None, coupling=False,
+                   pspy_index_convention=True):
     """Return coupling matrices calculated by ducc. This function is a 
-    wrapper around ducc0.misc.experimental.coupling_matrix_spin0and2_tri.
+    wrapper around ducc0.misc.experimental.coupling_matrix_spin0and2_new.
 
     See https://mtr.pages.mpcdf.de/ducc/misc.html#module-ducc0.misc.experimental.
 
     Parameters
     ----------
-    spec : numpy.ndarray ((nspec, 1<=x<=4, lmax_spec+1), dtype=np.float64)
+    spec : numpy.ndarray ((nspec, lmax_spec+1), dtype=np.float64)
         The window cross-spectra.
     lmax : int
         The lmax of the matrices. Spectra are zero-padded so that they are
         size 2*lmax.
-    spec_index : tuple of int, length 4, optional
-        See ducc docs, by default (0, 1, 2, 3).
-    mat_index : tuple, optional
-        See ducc docs, by default (0, 1, 2, 3, 4)
+    optype : (nspec,) iterable of int
+        From the ducc docs: operation type to carry out for every input spectrum
+        | 0: spectrum is of type 00, append a 00 coupling matrix to the output
+        | 1: spectrum is of type 02, append a 02 coupling matrix to the output
+        | 2: spectrum is of type 22, append a ++ coupling matrix to the output
+        | 3: spectrum is of type 22, append a -- coupling matrix to the output
+        | 4: spectrum is of type 22, append a ++ and a -- coupling matrix to the output
     nthread : int, optional
         The number of threads to use, by default 0. If 0. the output of
         ducc0.misc.thread_pool_size() (e.g., OMP_NUM_THREADS).
-    res : numpy.ndarray ((nspec, 1<=x<=5, ((lmax+1)*(lmax+2))/2),
-          dtype=np.float32 or np.float64), optional
+    res : numpy.ndarray ((nmat, lmax+1, lmax+1), dtype=np.float32 or np.float64), optional
         Output buffer, by default None. Allocated if None.
     dtype : np.dtype, optional
         Output dtype, by default np.float64. Either np.float64 or np.float32.
+    l_exact : int, optional
+        l_exact in the Toeplitz approximation (https://arxiv.org/abs/2010.14344).
+        If < 0, the Toeplitz approximation is not used.
+    l_toeplitz : int, optional
+        l_toeplitz in the Toeplitz approximation.
+    dl_band : int, optional 
+        dl_band in the Toeplitz approximation.
+    redo_toeplitz_as_exact : bool, optional
+        The Toeplitz approximation is only valid if all diagonal elements of a
+        coupling are positive for all l >= l_exact. If this is not true for a
+        coupling, redo the calculation exactly for that coupling. Note, for
+        optype 4, both are computed exactly even if a problem is only in one of
+        the two couplings. By default True, otherwise some elements of the
+        returned matrices may be nan.
+    log : logging.Logger, optional
+        If any Toeplitz matrix is redone as exact, log a notification, 
+        by default None.
     coupling : bool, optional
         If True, return the raw coupling; if False, return the mode-coupling 
         matrix, by default False. The difference is just a factor of 2l+1
@@ -60,19 +79,57 @@ def ducc_couplings(spec, lmax, spec_index=(0, 1, 2, 3),
     if np.issubdtype(dtype, np.float32):
         singleprec = True
 
-    mcm = ducc0.misc.experimental.coupling_matrix_spin0and2_tri(spec, lmax, spec_index, mat_index,
-                                                                nthreads=nthread, res=res,
-                                                                singleprec=singleprec)
-    ainfo_tri = curvedsky.alm_info(lmax=lmax, layout='tri')
-    ainfo_rect = curvedsky.alm_info(lmax=lmax, layout='rect')
-    mcm = curvedsky.transfer_alm(ainfo_tri, mcm, ainfo_rect).reshape(*mcm.shape[:-1], lmax+1, lmax+1)
+    optype = np.asarray(optype)
+    mcm = ducc0.misc.experimental.coupling_matrix_spin0and2_new(
+        spec, lmax, optype, nthreads=nthread, res=res, singleprec=singleprec,
+        l_exact=l_exact, l_toeplitz=l_toeplitz, dl_band=dl_band
+        )
+    
+    # look for any bad Toeplitz matrices
+    if l_exact > 0 and redo_toeplitz_as_exact:
+        bad_spec_idxs = []
+        bad_mcm_idxs = []
+        
+        mcm_start_idx = 0
+        for i in range(len(spec)):
+            if optype[i] in (0, 1, 2, 3):       # one spec, one mat
+                mcm_idxs = [mcm_start_idx]
+            else:                               # one spec, two mats
+                mcm_idxs = [mcm_start_idx, mcm_start_idx+1]
+            
+            # if any of the output mats for this spec are bad, they are all bad.
+            # this simplifies bookeeping, and is only a smidge more expensive
+            # than possible splitting apart optype 4 (speed of optype 4 is only
+            # a smidge more expensive than 2 or 3 individually, so might as well
+            # do both)
+            bad_i = False
+            for j in mcm_idxs:
+                if np.any(np.diag(mcm[j])[l_exact:] <= 0):
+                    bad_i = True
+            
+            if bad_i:
+                bad_spec_idxs += [i]
+                bad_mcm_idxs += mcm_idxs
 
-    # have C-contiguous array in upper triangle, so use fill_lower instead of fill_upper
-    for idx in np.ndindex(mcm.shape[:-2]):
-        if singleprec:
-            mcm_fortran.fill_lower_single(mcm[idx].T)
-        else:
-            mcm_fortran.fill_lower(mcm[idx].T)
+            mcm_start_idx += len(mcm_idxs)
+
+        if len(bad_spec_idxs) > 0:
+            if log:
+                log.info(f'Redoing {len(bad_mcm_idxs)} Toeplitz arrays using '
+                         f'{len(bad_spec_idxs)} spectra because of non-positive '
+                         f'diagonals for l >= {l_exact=}')
+            
+            # NOTE: unless bad_mcm_idxs are somehow contiguous, there is no way
+            # to write into mcm without allocating new memory for the new arrays.
+            # this could add up to double of memory requirements (if the entire
+            # mcm needs to be recomputed), possibly leading to OOM errors. an 
+            # OOM is very unlikely though.
+            #
+            # can't use res or Toeplitz; write directly into mcm
+            mcm[bad_mcm_idxs] = ducc0.misc.experimental.coupling_matrix_spin0and2_new(
+                spec[bad_spec_idxs], lmax, optype[bad_spec_idxs], nthreads=nthread,
+                singleprec=singleprec
+                )         
 
     if not coupling:
         mcm *= (2 * np.arange(lmax + 1) + 1)
