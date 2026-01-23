@@ -25,6 +25,75 @@ def apply_std_filter(imap, filter):
 
     return filtered_map
 
+def analytical_std_tf(shape, wcs, vk_mask, hk_mask, lmax, dtype=np.float64, binning_file=None):
+    """The 'analytic' per-ell kspace filter for the standard binary cross filter.
+    Can also be binned. Does a bit better than the old analytic function, and
+    is also faster and can provide per-ell results.
+
+    Parameters
+    ----------
+    shape : (m, n) tuple of ints
+        Shape of the map
+    wcs : astropy.wcs.WCS
+        wcs of the map
+    vk_mask : (-n, n) tuple of ints
+        The vertical filter stripe edge in 2d Fourier space. Must be symmetric.
+    hk_mask : (-n, n) tuple of ints
+        The horizontal filter stripe edge in 2d Fourier space. Must be symmetric.
+    lmax : int
+        Maximum ell of the filter, also see binning_file.
+    dtype : np.dtype, optional
+        dtype of output array, by default np.float64.
+    binning_file : path-like, optional
+        If supplied, apply this binning with 2l+1 weights, by default None.
+
+    Returns
+    -------
+    (x, tf)
+        The ell (or binned-ell) points, and the value of the function at those 
+        points.
+
+    Notes
+    -----
+    The shape and wcs is just used to get the "actual" edges of the filter, 
+    because usually they differ from the supplied edges due to pixelization.
+
+    This function just performs the 2d integral in Fourier space, so it's not 
+    intrinsically more accurate. Any such function will fail when the declination
+    range of a map is wide, especially if the data in a wide declination range
+    map is actually confined to a small declination range.
+    """
+    ly, lx  = enmap.laxes(shape, wcs, method="auto")
+
+    # we want the l of "boundary" between filt and no filt, which is halfway
+    # between the highest filt pixel and lowest unfilt pixel
+    if vk_mask is not None:
+        assert vk_mask[0] == -vk_mask[1], 'vk_mask must be symmetric'
+        lx_edge = (np.max(lx[lx < vk_mask[1]]) + np.min(lx[lx > vk_mask[1]]))/2
+    else:
+        lx_edge = 0
+
+    if hk_mask is not None:
+        assert hk_mask[0] == -hk_mask[1], 'vk_mask must be symmetric'
+        ly_edge = (np.max(ly[ly < hk_mask[1]]) + np.min(ly[ly > hk_mask[1]]))/2
+    else:
+        ly_edge = 0
+
+    l = np.arange(lmax+1)
+
+    # if l <= l_edge, then tf will be <= 0 or undefined
+    tf = 1 - 2/np.pi*(np.arcsin(np.divide(lx_edge, l, out=np.ones(l.size), where=l>lx_edge)) + np.arcsin(np.divide(ly_edge, l, out=np.ones(l.size), where=l>ly_edge)))
+    tf[tf < 0] = 0
+
+    if binning_file is not None:
+        lb, num = pspy_utils.naive_binning(l, tf * (2*l+1), binning_file, lmax)
+        _, den = pspy_utils.naive_binning(l, (2*l+1), binning_file, lmax)
+        tfb =  (num / den).astype(dtype)
+        return lb, tfb
+    else:
+        tf = tf.astype(dtype)
+        return l, tf
+
 def build_sigurd_filter(shape, wcs, lbounds, dtype=np.float64):
     ly, lx  = enmap.laxes(shape, wcs, method="auto")
     ly = ly.astype(dtype)
