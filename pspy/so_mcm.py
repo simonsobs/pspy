@@ -388,8 +388,7 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     Parameters
     ----------
     spin2spin_array : ({5}, x, y) np.ndarray
-        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --. If spin0 is
-        True, then this is just the (x, y)-shaped 0x0 block.
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
     spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
         The span (and ordering) of the blocks. Does not have to be all 9 pairs.
         In particular, if an output (row) spectrum comes with an off-diagonal
@@ -442,8 +441,8 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
         else:
             idx = 3
 
-        # each block gets its own array in memory (this is for safety; it's
-        # easy to modify multiple array values by accident otherwise)
+        # if copy, each block gets its own array in memory (this is for safety;
+        # it's easy to modify multiple array values by accident otherwise)
         block = spin2spin_array[idx]
         if copy:
             block = block.copy()
@@ -687,6 +686,41 @@ def sparse_dict_mat_matmul_sparse_dict_mat(dict_a, dict_b, dense=False,
     else:
         return out_dict
     
+def spin2spin_array_matmul_sparse_dict_mat(spin2spin_array, spectra, dict_b,
+                                           dense=False, dtype=np.float64):
+    """Build a sparse matrix from a spin2spin array and apply it to a sparse
+    matrix in one step. This is wrapper for a common operation around 
+    get_spec2spec_sparse_dict_mat_from_spin2spin_array and 
+    sparse_dict_mat_matmul_sparse_dict_mat that saves users from two lines of
+    code.
+
+    Parameters
+    ----------
+    spin2spin_array : ({5}, x, y) np.ndarray
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
+    spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
+        The span (and ordering) of the blocks. Does not have to be all 9 pairs.
+        In particular, if an output (row) spectrum comes with an off-diagonal
+        in that row (e.g., for 'EE', 'BB'), but that off-diagonal is not in 
+        spectra, it will not be included in the matrix. I.e., spectra defines
+        both all the rows and all the columns for the spin2spin matrix.
+    dict_b : dict[dict[]] -> np.ndarray
+        The second block matrix (row-major).
+    dense : bool, optional
+        Return the fully dense representation of C, by default False. If True,
+        the format of sparse_dict_mat2dense_array applies.
+    dtype : np.dtype, optional
+        The dtype of the dense array if dense is True, by default np.float64.
+
+    Returns
+    -------
+    dict[dict[]] -> np.ndarray, or np.ndarray (if dense)
+        The spectrum-to-spectrum block matrix (row-major).
+    """
+    # don't need copy or dense because just being used in math
+    dict_a = get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array, spectra)
+    return sparse_dict_mat_matmul_sparse_dict_mat(dict_a, dict_b, dense=dense, dtype=dtype)
+    
 def sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=False,
                                            dtype=np.float64):
     """Multiply a sparse dict matrix and vector: C[i][j] = sum(A[i][k] @ B[k]). 
@@ -730,6 +764,42 @@ def sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=False,
         return out_array
     else:
         return out_dict
+    
+def spin2spin_array_matmul_sparse_dict_vec(spin2spin_array, spectra, dict_b,
+                                           dense=False, dtype=np.float64):
+    """Build a sparse matrix from a spin2spin array and apply it to a sparse
+    vector in one step. This is wrapper for a common operation around 
+    get_spec2spec_sparse_dict_mat_from_spin2spin_array and 
+    sparse_dict_mat_matmul_sparse_dict_vec that saves users from two lines of
+    code.
+
+    Parameters
+    ----------
+    spin2spin_array : ({5}, x, y) np.ndarray
+        The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
+    spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
+        The span (and ordering) of the blocks. Does not have to be all 9 pairs.
+        In particular, if an output (row) spectrum comes with an off-diagonal
+        in that row (e.g., for 'EE', 'BB'), but that off-diagonal is not in 
+        spectra, it will not be included in the matrix. I.e., spectra defines
+        both all the rows and all the columns for the spin2spin matrix.
+    dict_b : dict[] -> np.ndarray
+        The block column vector (row-major).
+    dense : bool, optional
+        Return the fully dense representation of C, by default False. If True,
+        the format of sparse_dict_mat2dense_array applies.
+    dtype : np.dtype, optional
+        The dtype of the dense array if dense is True, by default np.float64.
+
+    Returns
+    -------
+    dict[] -> np.ndarray, or np.ndarray (if dense)
+        The block column vector (row-major).
+    """
+    # don't need copy or dense because just being used in math
+    dict_a = get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array, spectra)
+    return sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=dense, dtype=dtype)
+
     
 def get_coupling_dict(array):
     """Turns an array of spin-dependent mode-coupling matrices into a dict 
