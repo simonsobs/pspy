@@ -25,23 +25,26 @@ def apply_std_filter(imap, filter):
 
     return filtered_map
 
-def analytical_std_tf(shape, wcs, vk_mask, hk_mask, lmax, dtype=np.float64, binning_file=None):
+def analytical_std_tf(vk_mask, hk_mask, lmax, shape=None, wcs=None,
+                      dtype=np.float64, binning_file=None):
     """The 'analytic' per-ell kspace filter for the standard binary cross filter.
     Can also be binned. Does a bit better than the old analytic function, and
     is also faster and can provide per-ell results.
 
     Parameters
     ----------
-    shape : (m, n) tuple of ints
-        Shape of the map
-    wcs : astropy.wcs.WCS
-        wcs of the map
     vk_mask : (-n, n) tuple of ints
         The vertical filter stripe edge in 2d Fourier space. Must be symmetric.
+        Assumed no filter in this direction if None.
     hk_mask : (-n, n) tuple of ints
-        The horizontal filter stripe edge in 2d Fourier space. Must be symmetric.
+        The horizontal filter stripe edge in 2d Fourier space. Must be
+        symmetric. Assumed no filter in this direction if None.
     lmax : int
         Maximum ell of the filter, also see binning_file.
+    shape : (m, n) tuple of ints, optional
+        Shape of the map
+    wcs : astropy.wcs.WCS, optional
+        wcs of the map
     dtype : np.dtype, optional
         dtype of output array, by default np.float64.
     binning_file : path-like, optional
@@ -55,27 +58,36 @@ def analytical_std_tf(shape, wcs, vk_mask, hk_mask, lmax, dtype=np.float64, binn
 
     Notes
     -----
-    The shape and wcs is just used to get the "actual" edges of the filter, 
-    because usually they differ from the supplied edges due to pixelization.
+    If provided, the shape and wcs are just used to get the "actual" edges of
+    the filter, because usually they differ from the supplied edges due to
+    the discretization of Fourier space. If not provided (the default), the
+    supplied filter edges are taken as exact.
 
     This function just performs the 2d integral in Fourier space, so it's not 
     intrinsically more accurate. Any such function will fail when the declination
     range of a map is wide, especially if the data in a wide declination range
     map is actually confined to a small declination range.
     """
-    ly, lx  = enmap.laxes(shape, wcs, method="auto")
+    if shape is not None:
+        ly, lx  = enmap.laxes(shape, wcs, method="auto")
 
     # we want the l of "boundary" between filt and no filt, which is halfway
     # between the highest filt pixel and lowest unfilt pixel
     if vk_mask is not None:
         assert vk_mask[0] == -vk_mask[1], 'vk_mask must be symmetric'
-        lx_edge = (np.max(lx[lx < vk_mask[1]]) + np.min(lx[lx > vk_mask[1]]))/2
+        if shape is not None:
+            lx_edge = (np.max(lx[lx < vk_mask[1]]) + np.min(lx[lx >= vk_mask[1]]))/2
+        else:
+            lx_edge = vk_mask[1]
     else:
         lx_edge = 0
 
     if hk_mask is not None:
         assert hk_mask[0] == -hk_mask[1], 'vk_mask must be symmetric'
-        ly_edge = (np.max(ly[ly < hk_mask[1]]) + np.min(ly[ly > hk_mask[1]]))/2
+        if shape is not None:
+            ly_edge = (np.max(ly[ly < hk_mask[1]]) + np.min(ly[ly >= hk_mask[1]]))/2
+        else:
+            ly_edge = hk_mask[1]
     else:
         ly_edge = 0
 
