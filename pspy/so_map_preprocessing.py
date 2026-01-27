@@ -25,26 +25,49 @@ def apply_std_filter(imap, filter):
 
     return filtered_map
 
-def analytical_std_tf(vk_mask, hk_mask, lmax, shape=None, wcs=None,
-                      dtype=np.float64, binning_file=None):
+def analytical_std_tf(lmax, vk_masks=None, hk_masks=None, geometries=None,
+                      geometries_to_filt=None, dtype=np.float64,
+                      binning_file=None):
     """The 'analytic' per-ell kspace filter for the standard binary cross filter.
-    Can also be binned. Does a bit better than the old analytic function, and
-    is also faster and can provide per-ell results.
+    Can also be binned. Better than the old analytic function in several ways:
+    1. Is substantially faster.
+    2. Can provide per-ell transfer functions.
+    3. Appears to better match simulations.
+    4. Better handles multiple patches with different geometries.
 
     Parameters
     ----------
-    vk_mask : (-n, n) tuple of ints
-        The vertical filter stripe edge in 2d Fourier space. Must be symmetric.
-        Assumed no filter in this direction if None.
-    hk_mask : (-n, n) tuple of ints
-        The horizontal filter stripe edge in 2d Fourier space. Must be
-        symmetric. Assumed no filter in this direction if None.
     lmax : int
         Maximum ell of the filter, also see binning_file.
-    shape : (m, n) tuple of ints, optional
-        Shape of the map
-    wcs : astropy.wcs.WCS, optional
-        wcs of the map
+    vk_masks : iterable of (-n, n) tuple of ints
+        The vertical filter stripe edge in 2d Fourier space for legs of the 
+        spectrum that are filtered. If None (the default), assumed no filter(s)
+        are applied in this direction. If geometries are provided, then the i'th
+        vk_mask corresponds to the i'th entry of geometries_to_filt. The largest
+        vk_mask, as projected on the overlap of the geometries, sets the filter
+        edge. If geometries are not provided, then an "exact" flat-sky
+        approximation is assumed, in which case the largest vk_mask, as
+        provided, in vk_masks sets the filter edge. Each vk_mask be symmetric
+        when provided. A vk_mask can also be None, inside of the vk_masks list.
+    hk_mask : iterable of (-n, n) tuple of ints
+        Like vk_masks, but for the horizontal stripe in 2d Fourier space.
+    geometries : iterable of (shape, wcs), optional
+        Geometries of the maps in the spectrum. These geometries are used to 
+        compute the "overlap" geometry that is the intersection of them. This
+        "overlap" region defines where the information in the spectrum actually
+        comes from, and therefore the proper flat-sky-to-ell conversion. Also,
+        discretization of the overlap geometry is considered (i.e., that the
+        actual filter edges are not exactly the requested ones). If None, then
+        the transfer function of an "exact" flat-sky approximation is returned.
+    geometries_to_filt : iterable of ints, optional
+        Indexes into geometries that correspond to the geometries that are 
+        actually filtered. This is important for a cross-spectrum between a 
+        filtered and unfiltered map, especially when the two have different
+        declination ranges. The filtered geometries need to project their filter
+        onto the Fourier-space of the overlap region to be accurate. 
+        The i'th geometry index in geometries_to_filt also uses the i'th 
+        vk_mask in vk_masks and hk_mask in hk_masks. If not provided, assumed no
+        filters are applied. Not used at all if geometries is None.
     dtype : np.dtype, optional
         dtype of output array, by default np.float64.
     binning_file : path-like, optional
@@ -58,44 +81,101 @@ def analytical_std_tf(vk_mask, hk_mask, lmax, shape=None, wcs=None,
 
     Notes
     -----
-    If provided, the shape and wcs are just used to get the "actual" edges of
-    the filter, because usually they differ from the supplied edges due to
-    the discretization of Fourier space. If not provided (the default), the
-    supplied filter edges are taken as exact.
+    If geometries is provided, then for example if geometries_to_filt is [1, 3],
+    then the 0'th and 2'th geometry are not filtered but the 1'th and 3'th are.
+    The filtered geometries uses the 0'th and 1'th entries in vk_masks and
+    hk_masks. The 'overlap' geometry uses all 4 geometries.
 
     This function just performs the 2d integral in Fourier space, so it's not 
-    intrinsically more accurate. Any such function will fail when the declination
-    range of a map is wide, especially if the data in a wide declination range
-    map is actually confined to a small declination range.
+    intrinsically accurate. Any such function will fail when the declination
+    range of a map is too wide. Will also fail if the data in a wide declination
+    range map is actually confined to a small declination range.
     """
-    if shape is not None:
-        ly, lx  = enmap.laxes(shape, wcs, method="auto")
+    lx_edge, ly_edge = 0, 0
 
-    # we want the l of "boundary" between filt and no filt, which is halfway
-    # between the highest filt pixel and lowest unfilt pixel
-    if vk_mask is not None:
-        assert vk_mask[0] == -vk_mask[1], 'vk_mask must be symmetric'
-        if shape is not None:
-            lx_edge = (np.max(lx[lx < vk_mask[1]]) + np.min(lx[lx >= vk_mask[1]]))/2
-        else:
-            lx_edge = vk_mask[1]
-    else:
-        lx_edge = 0
+    if geometries is not None:
+        shape_overlap, wcs_overlap = geometries[0]
+        for i in range(1, len(geometries)):
+            shape_overlap, wcs_overlap = enmap.overlap(shape_overlap, wcs_overlap, *geometries[i])
+        if shape_overlap[0] <= 0 or shape_overlap[1] <= 0:
+            raise ValueError('Overlap of all input geometries is zero')
+        
+        ly_overlap, lx_overlap  = enmap.laxes(shape_overlap, wcs_overlap, method="auto")
 
-    if hk_mask is not None:
-        assert hk_mask[0] == -hk_mask[1], 'vk_mask must be symmetric'
-        if shape is not None:
-            ly_edge = (np.max(ly[ly < hk_mask[1]]) + np.min(ly[ly >= hk_mask[1]]))/2
+        if geometries_to_filt is None:
+            geometries_to_filt = []
+
+        if vk_masks is not None:
+            # get the lx_edge for each geometry, as projected in the overlap geometry.
+            # because of the binary mask, we want the largest of these lx_edges
+            for mask_idx, geom_idx in enumerate(geometries_to_filt):
+                vk_mask = vk_masks[mask_idx]
+                if vk_mask is not None:
+                    assert vk_mask[0] == -vk_mask[1], 'vk_mask must be symmetric'
+
+                    # we want the l of "boundary" between filt and no filt, which is halfway
+                    # between the highest filt pixel and lowest unfilt pixel
+                    _shape, _wcs = geometries[geom_idx]
+                    _, _lx  = enmap.laxes(_shape, _wcs, method="auto")
+                    _lx_edge = (np.max(_lx[_lx < vk_mask[1]]) + np.min(_lx[_lx >= vk_mask[1]]))/2
+
+                    # get the dlx overlap if it were sampled with the resolution of this geometry
+                    _dlx_overlap = abs(lx_overlap[1]) * shape_overlap[-1] / _shape[-1] 
+
+                    # rescale the l boundary from this geometry to the resampled overlap geometry
+                    _lx_edge *= (_dlx_overlap / abs(_lx[1]))
+
+                    if _lx_edge > lx_edge:
+                        lx_edge = _lx_edge
+
+        if hk_masks is not None:
+            # get the ly_edge for each geometry, as projected in the overlap geometry.
+            # because of the binary mask, we want the largest of these ly_edges
+            for mask_idx, geom_idx in enumerate(geometries_to_filt):
+                hk_mask = hk_masks[mask_idx]
+                if hk_mask is not None:
+                    assert hk_mask[0] == -hk_mask[1], 'hk_mask must be symmetric'
+
+                    # we want the l of "boundary" between filt and no filt, which is halfway
+                    # between the highest filt pixel and lowest unfilt pixel
+                    _shape, _wcs = geometries[geom_idx]
+                    _ly, _  = enmap.laxes(_shape, _wcs, method="auto")
+                    _ly_edge = (np.max(_ly[_ly < hk_mask[1]]) + np.min(_ly[_ly >= hk_mask[1]]))/2
+
+                    # get the dly overlap if it were sampled with the resolution of this geometry
+                    _dly_overlap = abs(ly_overlap[1]) * shape_overlap[-2] / _shape[-2]
+
+                    # rescale the l boundary from this geometry to the resampled overlap geometry
+                    _ly_edge *= (_dly_overlap / abs(_ly[1]))
+
+                    if _ly_edge > ly_edge:
+                        ly_edge = _ly_edge
         else:
-            ly_edge = hk_mask[1]
+            ly_edge = 0
+        
     else:
-        ly_edge = 0
+        if vk_masks is not None:
+            for vk_mask in vk_masks:
+                assert vk_mask[0] == -vk_mask[1], 'vk_mask must be symmetric'
+                _lx_edge = vk_mask[1]
+                if _lx_edge > lx_edge:
+                    lx_edge = _lx_edge
+        
+        if hk_masks is not None:
+            for hk_mask in hk_masks:
+                assert hk_mask[0] == -hk_mask[1], 'hk_mask must be symmetric'
+                _ly_edge = hk_mask[1]
+                if _ly_edge > ly_edge:
+                    ly_edge = _ly_edge
 
     l = np.arange(lmax+1)
 
-    # if l <= l_edge, then tf will be <= 0 or undefined
-    tf = 1 - 2/np.pi*(np.arcsin(np.divide(lx_edge, l, out=np.ones(l.size), where=l>lx_edge)) + np.arcsin(np.divide(ly_edge, l, out=np.ones(l.size), where=l>ly_edge)))
-    tf[tf < 0] = 0
+    if lx_edge == 0 and ly_edge == 0:
+        tf = np.ones(l.size)
+    else:
+        # if l <= l_edge, then tf will be <= 0 or undefined
+        tf = 1 - 2/np.pi*(np.arcsin(np.divide(lx_edge, l, out=np.ones(l.size), where=l>lx_edge)) + np.arcsin(np.divide(ly_edge, l, out=np.ones(l.size), where=l>ly_edge)))
+        tf[tf < 0] = 0
 
     if binning_file is not None:
         lb, num = pspy_utils.naive_binning(l, tf * (2*l+1), binning_file, lmax)
