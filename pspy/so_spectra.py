@@ -57,7 +57,8 @@ def get_spectra(alm1, alm2=None, spectra=None):
     return l, cl_dict
     
     
-def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False):
+def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False,
+                       dtype=np.float64):
     """Get the power spectrum of alm1 and alm2, we use pixell.alm2cl (this is faster)
     Parameters
     ----------
@@ -69,6 +70,8 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False):
     needed for spin0 and spin2 cross correlation, the arrangement of the spectra
     apply_pspy_cut : bool
       If the returned spectra should cut 0,1 and last elements
+    dtype : np.dtype
+      See curvedsky.alm2cl
   
     Return
     ----------
@@ -79,9 +82,9 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False):
     
     if spectra is None:
         if alm2 is None:
-            out = curvedsky.alm2cl(alm1)
+            out = curvedsky.alm2cl(alm1, dtype=dtype)
         else:
-            out = curvedsky.alm2cl(alm1, alm2)
+            out = curvedsky.alm2cl(alm1, alm2, dtype=dtype)
         
         l = np.arange(len(out))
         if apply_pspy_cut:
@@ -89,7 +92,7 @@ def get_spectra_pixell(alm1, alm2=None, spectra=None, apply_pspy_cut=False):
             out = out[2:-1]   
 
     else:
-        cl = curvedsky.alm2cl(alm1[:, None], alm2[None, :])
+        cl = curvedsky.alm2cl(alm1[:, None], alm2[None, :], dtype=dtype)
         out = {}
         for i, l1 in enumerate(["T","E","B"]):
             for j, l2 in enumerate(["T","E","B"]):
