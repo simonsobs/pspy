@@ -374,7 +374,8 @@ def sparse_dict_mat_astype(in_dict, dtype):
     """Change the dtype of the blocks of a sparse dict matrix inplace."""
     for row, col_dict in in_dict.items():
         for col, arr in col_dict.items():
-            in_dict[row][col] = arr.astype(dtype, copy=False)            
+            in_dict[row][col] = arr.astype(dtype, copy=False)
+    return in_dict            
 
 def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
                                                        spectra, dense=False,
