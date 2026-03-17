@@ -7,16 +7,116 @@ from copy import deepcopy
 
 import healpy as hp
 import numpy as np
+from numba import njit, prange
 
 from pspy import pspy_utils, sph_tools
 from ._mcm_fortran import mcm_compute as mcm_fortran
 
 import ducc0
 
+@njit(parallel=True)
+def _bin_kernel_1d(a, kw, op_is_mean):
+    """Parallel binning for 1D arrays."""
+    w = a.shape[0]
+    w_new = w // kw
+    inv_kw = 1.0 / kw
+    
+    out = np.empty(w_new, dtype=a.dtype)
+    
+    # For 1D, we parallelize over the result bins
+    for col in prange(w_new):
+        c_start = col * kw
+        s = 0.0
+        for n in range(kw):
+            s += a[c_start + n]
+        
+        out[col] = s * inv_kw if op_is_mean else s
+    return out
+
+@njit(parallel=True)
+def _bin_kernel_nd(a, kh, kw, op_is_mean):
+    """Parallel binning for 3D views (D, H, W). kh or kw can be 1."""
+    d0, h, w = a.shape
+    h_new = h // kh
+    w_new = w // kw
+    inv_area = 1.0 / (kh * kw)
+    
+    out = np.empty((d0, h_new, w_new), dtype=a.dtype)
+    
+    # For ND, we parallelize over the depth slices.
+    # Interior loops uses SIMD hopefully
+    for i in prange(d0):
+        for row in range(h_new):
+            r_start = row * kh
+            for col in range(w_new):
+                c_start = col * kw
+                s = 0.0
+                for m in range(kh):
+                    for n in range(kw):
+                        s += a[i, r_start + m, c_start + n]
+                
+                out[i, row, col] = s * inv_area if op_is_mean else s
+    return out
+
+def parallel_bin(a, bin_size, op='mean'):
+    """Bin an array using optimized numba compilation/parallelism. 
+    Binning is ONLY along one or both of the last two axes of the
+    array (or, the only axis if the array is 1-d). 
+
+    NOTE: if there are remaining elements at the end of a binned
+    axis, these are cropped (not included in any binning).
+
+    Parameters
+    ----------
+    a : (nw,) or (..., nh, nw) np.ndarray
+        Array to be binned
+    bin_size : int or 2-iterable of ints
+        The binwidth in number of elements. If a is 1-d, must be a scalar int. 
+        If a is n-d, can be a scalar int (same binwidth along both axes), or
+        a 2-iterable of ints. If 2-iterable, either can be 1. 
+    op : str, optional
+        The operation to perform per bin, by default 'mean'. If not 'mean' 
+        then the 'sum' is performed.
+
+    Returns
+    -------
+    (nw//kw,) or (..., nh//kh, nw//kw) np.ndarray
+        The binned array for binsize of kw or kh, kw.
+    """
+    op_is_mean = (op.lower() == 'mean')
+    dims = len(a.shape)
+    
+    # --- Case 1: 1D Array ---
+    if dims == 1:
+        kw = bin_size # must be an int
+        return _bin_kernel_1d(a, kw, op_is_mean)
+    
+    # --- Case 2: ND Array (N >= 2) ---
+    # Standardize bin_size to (kh, kw)
+    if isinstance(bin_size, int):
+        kh = kw = bin_size
+    else:
+        kh, kw = bin_size
+
+    orig_shape = a.shape
+    prefix_dims = orig_shape[:-2]
+    h, w = orig_shape[-2:]
+    
+    # Flatten prefix: (..., H, W) -> (D, H, W)
+    # np.prod returns 1.0 for empty tuples, so we force int64
+    d_flat = int(np.prod(prefix_dims)) if prefix_dims else 1
+    a_reshaped = a.reshape(d_flat, h, w)
+    
+    result = _bin_kernel_nd(a_reshaped, kh, kw, op_is_mean)
+    
+    # Reshape back to (..., h_new, w_new)
+    h_new, w_new = result.shape[1], result.shape[2]
+    return result.reshape((*prefix_dims, h_new, w_new))
+
 def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
                    dtype=np.float64, l_exact=-1, l_toeplitz=-1, dl_band=-1,
                    redo_toeplitz_as_exact=True, log=None, coupling=False,
-                   pspy_index_convention=True):
+                   pspy_index_convention=True, bin_size=1):
     """Return coupling matrices calculated by ducc. This function is a 
     wrapper around ducc0.misc.experimental.coupling_matrix_spin0and2_new.
 
@@ -66,6 +166,10 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
         multiplied along the columns.
     pspy_index_convention : bool, optional
         If True, slice out 2:lmax along each axis, by default True.
+    bin_size : int or 2-iterable of ints, optional
+        If provided and any is greater than 1, the returned matrices are binned
+        after all other operations, including after the pspy index convention
+        cuts.
 
     Returns
     -------
@@ -86,7 +190,7 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
         )
     
     # look for any bad Toeplitz matrices
-    if l_exact > 0 and redo_toeplitz_as_exact:
+    if l_exact >= 0 and redo_toeplitz_as_exact:
         bad_spec_idxs = []
         bad_mcm_idxs = []
         
@@ -137,6 +241,14 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
     if pspy_index_convention: # TODO: reconsider this convention
         mcm = mcm[..., 2:lmax, 2:lmax]
 
+    # TODO: reconsider how this interacts with pspy_index_convetion
+    if isinstance(bin_size, int):
+        kh = kw = bin_size
+    else:
+        kh, kw = bin_size
+    if kh > 1 or kw > 1:
+        mcm = parallel_bin(mcm, bin_size, op='mean')
+    
     return mcm
 
 def mcm_and_bbl_spin0(win1,
@@ -375,7 +487,14 @@ def sparse_dict_mat_astype(in_dict, dtype):
     for row, col_dict in in_dict.items():
         for col, arr in col_dict.items():
             in_dict[row][col] = arr.astype(dtype, copy=False)
-    return in_dict            
+    return in_dict         
+
+def sparse_dict_mat_bin(in_dict, bin_size, op='sum'):
+    """Bin the blocks of a sparse dict matrix."""
+    for row, col_dict in in_dict.items():
+        for col, arr in col_dict.items():
+            in_dict[row][col] = parallel_bin(arr, bin_size, op=op)
+    return in_dict      
 
 def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
                                                        spectra, dense=False,
