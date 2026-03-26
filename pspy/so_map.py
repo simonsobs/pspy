@@ -434,7 +434,17 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
         header = hdulist[1].header
         new_map.pixel = "HEALPIX"
         if fields_healpix is None:
-            new_map.ncomp = header["TFIELDS"]
+
+            # Handle "PARTIAL" HEALPix maps (common in surveys like SPT).
+            # In this format, the first FITS column is the pixel index, not data.
+            # We subtract 1 from TFIELDS to get the actual number of physical components.
+            
+            object_type = header.get("OBJECT", "").upper()
+            if object_type == "PARTIAL":
+                new_map.ncomp = header["TFIELDS"] - 1
+            else:
+                new_map.ncomp = header["TFIELDS"]
+        
             new_map.data = hp.fitsfunc.read_map(file, field=np.arange(new_map.ncomp))
         else:
             try:
