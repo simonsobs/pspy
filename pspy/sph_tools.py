@@ -3,7 +3,7 @@ Routines for generalized map2alm and alm2map (healpix and CAR).
 """
 import healpy as hp
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 from pixell import curvedsky, enmap
 
 from pspy import so_window
@@ -172,14 +172,17 @@ def get_pure_alms(so_map, window, niter, lmax):
 
     return np.array([alm,elm_p,blm_b])
 
-
-
 def show_alm_triangle(
-        alms, lmax, real=True,
-        vmin=None, vmax=None, cmap="Oranges_r",
-        xlims=None, ylims=None,
-        title="Triangle"):
-        
+    alms,
+    lmax,
+    real=True,
+    vmin=None,
+    vmax=None,
+    cmap="Oranges_r",
+    xlims=None,
+    ylims=None,
+    title="Triangle",
+):
     """
     This routine is from the spt3g data release
     https://pole.uchicago.edu/public/data/quan26/index.html
@@ -200,17 +203,16 @@ def show_alm_triangle(
     title: str
      title, if multiple alm, will appended an integer number 0,1,2...
     """
-    
 
     import warnings
+
     warnings.filterwarnings("ignore")
-    
-    def triangle_plot(alm, lmax, title, real=True, vmin=None, vmax=None, cmap="Oranges_r", xlims=None, ylims=None):
-    
-        triangle = np.empty((lmax+1, lmax+1))
-        triangle[:,:] = np.nan
-        for l in range(lmax+1):
-            for m in range(0, l+1):
+
+    def triangle_plot(alm, title):
+
+        triangle = np.full((lmax + 1, lmax + 1), np.nan)
+        for l in range(lmax + 1):
+            for m in range(0, l + 1):
                 i = hp.Alm.getidx(lmax, l, m)
                 if real:
                     triangle[m, l] = alm[i].real
@@ -222,8 +224,7 @@ def show_alm_triangle(
             vmin = np.min(triangle)
         if vmax is None:
             vmax = np.max(triangle)
-        img = plt.imshow(
-            triangle, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
+        img = plt.imshow(triangle, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
         if xlims is None:
             xlims = [0, triangle.shape[1]]
         if ylims is None:
@@ -241,7 +242,6 @@ def show_alm_triangle(
 
     if alms.ndim != 1:
         for i in range(len(alms)):
-            triangle_plot(alms[i], lmax, title + "_%d" % i)
+            triangle_plot(alms[i], f"{title}_{i}")
     else:
-        triangle_plot(alms, lmax, title)
-
+        triangle_plot(alms, title)
