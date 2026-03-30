@@ -412,7 +412,7 @@ class so_map:
 
 
 
-def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=None):
+def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=None, remove_unseen=True):
     """Create a ``so_map`` object from a fits file.
 
     Parameters
@@ -425,6 +425,10 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
       if fields_healpix is not None, load the specified field
     car_box:  2x2 array
         [[dec0,ra0],[dec1,ra1]] in degree
+    geometry:
+    remove_unseen: boolean
+        set the unseen healpix pixel to zero
+    change_pol_conv:
 
     """
 
@@ -432,6 +436,7 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
     hdulist = pyfits.open(file)
     try:
         header = hdulist[1].header
+
         new_map.pixel = "HEALPIX"
         if fields_healpix is None:
 
@@ -458,6 +463,10 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
             new_map.coordinate = header["SKYCOORD"]
         except:
             new_map.coordinate = None
+            
+        if remove_unseen:
+            id = np.where(new_map.data == hp.UNSEEN)
+            new_map.data[id] = 0
 
     except:
         header = hdulist[0].header

@@ -3,6 +3,7 @@ Routines for generalized map2alm and alm2map (healpix and CAR).
 """
 import healpy as hp
 import numpy as np
+import pylab as plt
 from pixell import curvedsky, enmap
 
 from pspy import so_window
@@ -67,7 +68,7 @@ def alm2map(alms, template):
         raise ValueError("Map is neither a CAR nor a HEALPIX")
     return map_from_alm
 
-def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128):
+def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128, alm_conv="HEALPIX"):
     """Get a map, multiply by a window and return alms
     This is basically map2alm but with application of the
     window functions.
@@ -84,14 +85,21 @@ def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128)
       for healpix pixellisation you can specify
       a range [theta_min,theta_max] in radian. All pixel outside this range
       will be assumed to be zero.
+    alm_conv: str
+        default is HEALPIX, if IAU multiply U by -1
     """
     windowed_map = so_map.copy()
     if so_map.ncomp == 3:
         windowed_map.data[0] = so_map.data[0]*window[0].data
         windowed_map.data[1] = so_map.data[1]*window[1].data
         windowed_map.data[2] = so_map.data[2]*window[1].data
+        if alm_conv == "IAU":
+            windowed_map.data[2] = -windowed_map.data[2]
+        
     if so_map.ncomp == 1:
         windowed_map.data = so_map.data * window.data
+        
+
     alms = map2alm(windowed_map, niter, lmax, theta_range=theta_range, dtype=dtype)
     return alms
 
@@ -163,3 +171,62 @@ def get_pure_alms(so_map, window, niter, lmax):
     blm_b = s2eblm[1] + s1eblm[1] + s0eblm[1]
 
     return np.array([alm,elm_p,blm_b])
+
+
+
+def show_alm_triangle(
+        alms, lmax, real=True,
+        vmin=None, vmax=None, cmap="Oranges_r",
+        xlims=None, ylims=None,
+        title="Triangle"):
+        
+    """
+    This routine is from the spt3g data release
+    https://pole.uchicago.edu/public/data/quan26/index.html
+    
+    """
+    
+
+    import warnings
+    warnings.filterwarnings("ignore")
+    
+    def triangle_plot(alm, lmax, title, real=True, vmin=None, vmax=None, cmap="Oranges_r", xlims=None, ylims=None):
+    
+        triangle = np.empty((lmax+1, lmax+1))
+        triangle[:,:] = np.nan
+        for l in range(lmax+1):
+            for m in range(0, l+1):
+                i = hp.Alm.getidx(lmax, l, m)
+                if real:
+                    triangle[m, l] = alm[i].real
+                else:
+                    triangle[m, l] = alm[i]
+
+        plt.figure(figsize=(7, 7))
+        if vmin is None:
+            vmin = np.min(triangle)
+        if vmax is None:
+            vmax = np.max(triangle)
+        img = plt.imshow(
+            triangle, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
+        if xlims is None:
+            xlims = [0, triangle.shape[1]]
+        if ylims is None:
+            ylims = [0, triangle.shape[0]]
+        plt.xlim(left=xlims[0], right=xlims[1])
+        plt.ylim(bottom=ylims[0], top=ylims[1])
+        plt.grid(False)
+        cb = plt.colorbar(pad=0.03, shrink=0.8)
+        plt.grid(True)
+        plt.xlabel(r"$\ell$")
+        plt.ylabel(r"$m$")
+        plt.title(title)
+        plt.show()
+        plt.close()
+
+    if alms.ndim != 1:
+        for i in range(len(alms)):
+            triangle_plot(alms[i], lmax, title + "_%d" % i)
+    else:
+        triangle_plot(alms, lmax, title)
+
