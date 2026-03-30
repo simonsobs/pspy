@@ -183,7 +183,22 @@ def show_alm_triangle(
     """
     This routine is from the spt3g data release
     https://pole.uchicago.edu/public/data/quan26/index.html
-    
+    Parameters
+    ----------
+    alms: array
+      a set of alms, the shape of alms should correspond to so_map.ncomp
+    lmax: int
+      the maximum multipole of the transform
+    real: boolean
+      withtout to take the real part or not
+    vmin, vmax: float
+      range of the colorbar
+    cmap: string
+      name of the colormap
+    xlims, ylims: int
+      x is for the \ell coordiante, y for the m coordinate
+    title: str
+     title, if multiple alm, will appended an integer number 0,1,2...
     """
     
 
