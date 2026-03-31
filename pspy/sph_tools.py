@@ -183,7 +183,7 @@ def show_alm_triangle(
     ylims=None,
     title="Triangle",
 ):
-    """
+    r"""
     This routine is from the spt3g data release
     https://pole.uchicago.edu/public/data/quan26/index.html
     Parameters
@@ -208,8 +208,7 @@ def show_alm_triangle(
 
     warnings.filterwarnings("ignore")
 
-    def triangle_plot(alm, title):
-
+    def triangle_plot(alm, title, vmin, vmax, xlims, ylims):
         triangle = np.full((lmax + 1, lmax + 1), np.nan)
         for l in range(lmax + 1):
             for m in range(0, l + 1):
@@ -240,8 +239,9 @@ def show_alm_triangle(
         plt.show()
         plt.close()
 
+    kwargs = dict(vmin=vmin, vmax=vmax, xlims=xlims, ylims=ylims)
     if alms.ndim != 1:
         for i in range(len(alms)):
-            triangle_plot(alms[i], f"{title}_{i}")
+            triangle_plot(alms[i], f"{title}_{i}", **kwargs)
     else:
-        triangle_plot(alms, title)
+        triangle_plot(alms, title, **kwargs)
