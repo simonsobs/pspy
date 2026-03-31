@@ -426,9 +426,9 @@ def read_map(file, coordinate=None, fields_healpix=None, car_box=None, geometry=
     car_box: 2x2 array
         [[dec0,ra0],[dec1,ra1]] in degree
     geometry: tuple, optional
-		Desired output geometry (shape, wcs) to extract the data on to.
-		The output geometry must be WCS-compatible with the geometry
-		on disk.
+	    Desired output geometry (shape, wcs) to extract the data on to.
+	    The output geometry must be WCS-compatible with the geometry
+	    on disk.
     remove_unseen: boolean
         set the unseen healpix pixel to zero
     """
