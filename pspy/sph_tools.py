@@ -173,17 +173,11 @@ def get_pure_alms(so_map, window, niter, lmax):
     return np.array([alm,elm_p,blm_b])
 
 def show_alm_triangle(
-    alms,
-    lmax,
-    real=True,
-    vmin=None,
-    vmax=None,
-    cmap="Oranges_r",
-    xlims=None,
-    ylims=None,
-    title="Triangle",
-):
-    r"""
+        alms, lmax, vmin, vmax, real=True, cmap="seismic",
+        xlims=None, ylims=None,
+        title="Triangle", fig_file=None):
+        
+    """
     This routine is from the spt3g data release
     https://pole.uchicago.edu/public/data/quan26/index.html
     Parameters
@@ -203,15 +197,17 @@ def show_alm_triangle(
     title: str
      title, if multiple alm, will appended an integer number 0,1,2...
     """
+    
 
     import warnings
-
     warnings.filterwarnings("ignore")
-
-    def triangle_plot(alm, title, vmin, vmax, xlims, ylims):
-        triangle = np.full((lmax + 1, lmax + 1), np.nan)
-        for l in range(lmax + 1):
-            for m in range(0, l + 1):
+    
+    def triangle_plot(alm, lmax, vmin, vmax, real, cmap, xlims, ylims, title, fig_file):
+    
+        triangle = np.empty((lmax+1, lmax+1))
+        triangle[:,:] = np.nan
+        for l in range(lmax+1):
+            for m in range(0, l+1):
                 i = hp.Alm.getidx(lmax, l, m)
                 if real:
                     triangle[m, l] = alm[i].real
@@ -219,11 +215,8 @@ def show_alm_triangle(
                     triangle[m, l] = alm[i]
 
         plt.figure(figsize=(7, 7))
-        if vmin is None:
-            vmin = np.min(triangle)
-        if vmax is None:
-            vmax = np.max(triangle)
-        img = plt.imshow(triangle, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
+        img = plt.imshow(
+            triangle, origin="lower", cmap=cmap, vmin=vmin, vmax=vmax)
         if xlims is None:
             xlims = [0, triangle.shape[1]]
         if ylims is None:
@@ -236,12 +229,24 @@ def show_alm_triangle(
         plt.xlabel(r"$\ell$")
         plt.ylabel(r"$m$")
         plt.title(title)
-        plt.show()
-        plt.close()
-
-    kwargs = dict(vmin=vmin, vmax=vmax, xlims=xlims, ylims=ylims)
+        if fig_file is not None:
+            plt.savefig(fig_file)
+            plt.clf()
+            plt.close()
+        else:
+            plt.show()
+            
     if alms.ndim != 1:
         for i in range(len(alms)):
-            triangle_plot(alms[i], f"{title}_{i}", **kwargs)
+            if fig_file is not None:
+                new_fig_file = fig_file + "_%d.png" % i
+            else:
+                new_fig_file = None
+            if title is not None:
+                new_title = title + "_%d" % i
+            else:
+                new_title = None
+                
+            triangle_plot(alms[i], lmax, vmin, vmax, real, cmap, xlims, ylims, new_title, new_fig_file)
     else:
-        triangle_plot(alms, title, **kwargs)
+        triangle_plot(alms, lmax, vmin, vmax, real, cmap, xlims, ylims, title, f"{fig_file}.png")
