@@ -56,8 +56,8 @@ binning_file = "%s/binning.dat" % test_dir
 window = so_window.create_apodization(binary, apo_type="C1", apo_radius_degree=apo_radius_degree_survey)
 window.plot(file_name="%s/window"%(test_dir), hp_gnomv=(lon, lat, 3500, 1))
 
-w1_plus, w1_minus, w2_plus, w2_minus =  so_window.get_spinned_windows(window, lmax, niter)
-
+spinned_windows =  so_window.get_spinned_windows(window, lmax, niter)
+w1_plus, w1_minus, w2_plus, w2_minus = spinned_windows
 
 w1_plus.plot(file_name="%s/win_spin1_a"%(test_dir), hp_gnomv=(lon, lat, 3500, 1))
 w1_minus.plot(file_name="%s/win_spin1_b"%(test_dir), hp_gnomv=(lon, lat, 3500, 1))
@@ -93,7 +93,7 @@ for iii in range(n_sims):
     cmb=template.synfast(clfile)
 
     alm = sph_tools.get_alms(cmb, window_tuple, niter, lmax)
-    alm_pure = sph_tools.get_pure_alms(cmb, window_tuple, niter, lmax)
+    alm_pure = sph_tools.get_pure_alms(cmb, window_tuple, spinned_windows, niter, lmax)
 
     l, ps = so_spectra.get_spectra(alm, spectra=spectra)
     l, ps_pure = so_spectra.get_spectra(alm_pure, spectra=spectra)

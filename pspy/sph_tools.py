@@ -104,7 +104,7 @@ def get_alms(so_map, window, niter, lmax, theta_range=None, dtype=np.complex128,
     return alms
 
 
-def get_pure_alms(so_map, window, niter, lmax):
+def get_pure_alms(so_map, window, spinned_windows, niter, lmax, theta_range=None, alm_conv="HEALPIX"):
 
     """Compute pure alms from maps and window function
 
@@ -116,25 +116,38 @@ def get_pure_alms(so_map, window, niter, lmax):
     window: so_map or tuple of so_map
       a so map with the window function, if the so map has 3 components
       (for spin0 and 2 fields) expect a tuple (window,window_pol)
+    spinned_windows: list of so_map
+      list of derivatives of the window function as produced by
+      so_window.get_spinned_windows.
     niter: integer
       the number of iteration performed while computing the alm
       not that for CAR niter=0 should be enough
     lmax:  integer
       the maximum multipole of the transform
+    theta range: list of 2 elements
+      for healpix pixellisation you can specify
+      a range [theta_min,theta_max] in radian. All pixel outside this range
+      will be assumed to be zero. WARNING: Untested, unsure it make sense for pure B modes.
+    alm_conv: str
+        default is HEALPIX, if IAU multiply U by -1
 
     """
 
-    w1_plus, w1_minus, w2_plus, w2_minus = so_window.get_spinned_windows(window[1], lmax, niter=niter)
-    p2 = np.array([window[1].data * so_map.data[1], window[1].data * so_map.data[2]])
-    p1 = np.array([(w1_plus.data * so_map.data[1] + w1_minus.data * so_map.data[2]), (w1_plus.data * so_map.data[2] - w1_minus.data * so_map.data[1])])
-    p0 = np.array([(w2_plus.data * so_map.data[1] + w2_minus.data * so_map.data[2]), (w2_plus.data * so_map.data[2] - w2_minus.data * so_map.data[1])])
+    T,Q,U = so_map.data[0], so_map.data[1], so_map.data[2]
+    if alm_conv == "IAU":
+        U = -U
+
+    w1_plus, w1_minus, w2_plus, w2_minus = spinned_windows
+    p2 = np.array([window[1].data * Q, window[1].data * U])
+    p1 = np.array([(w1_plus.data * Q + w1_minus.data * U), (w1_plus.data * U - w1_minus.data * Q)])
+    p0 = np.array([(w2_plus.data * Q + w2_minus.data * U), (w2_plus.data * U - w2_minus.data * Q)])
 
     if so_map.pixel == "CAR":
-        p0 = enmap.samewcs(p0,so_map.data)
-        p1 = enmap.samewcs(p1,so_map.data)
-        p2 = enmap.samewcs(p2,so_map.data)
+        p0 = enmap.samewcs(p0, so_map.data)
+        p1 = enmap.samewcs(p1, so_map.data)
+        p2 = enmap.samewcs(p2, so_map.data)
 
-        alm = curvedsky.map2alm(so_map.data[0] * window[0].data, lmax=lmax)
+        alm = curvedsky.map2alm(T * window[0].data, lmax=lmax)
         s2eblm = curvedsky.map2alm(p2, spin=2, lmax=lmax)
         s1eblm = curvedsky.map2alm(p1, spin=1, lmax=lmax)
         s0eblm = s1eblm.copy()
@@ -142,19 +155,16 @@ def get_pure_alms(so_map, window, niter, lmax):
         s0eblm[1] = curvedsky.map2alm(p0[1], spin=0, lmax=lmax)
 
     if so_map.pixel == "HEALPIX":
-        alm = hp.sphtfunc.map2alm(so_map.data[0] * window[0].data, lmax=lmax, iter=niter)#curvedsky.map2alm_healpix(map.data[0]*window[0].data,lmax= lmax)
-        s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax=lmax)
-        s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax=lmax)
-        if niter != 0:
-            p2_copy = p2.copy()
-            p1_copy = p1.copy()
-            for _ in range(niter):
-                s2eblm += curvedsky.map2alm_healpix(p2-curvedsky.alm2map_healpix(s2eblm, p2_copy, spin=2), lmax=lmax, spin=2)
-                s1eblm += curvedsky.map2alm_healpix(p1-curvedsky.alm2map_healpix(s1eblm, p1_copy, spin=1), lmax=lmax, spin=1)
+    
+        theta_min, theta_max = theta_range if theta_range is not None else (None, None)
+        
+        alm  = curvedsky.map2alm_healpix(T * window[0].data, spin=0, lmax=lmax, niter=niter, theta_min=theta_min, theta_max=theta_max)
+        s2eblm = curvedsky.map2alm_healpix(p2, spin=2, lmax=lmax, niter=niter, theta_min=theta_min, theta_max=theta_max)
+        s1eblm = curvedsky.map2alm_healpix(p1, spin=1, lmax=lmax, niter=niter, theta_min=theta_min, theta_max=theta_max)
 
         s0eblm= s1eblm.copy()
-        s0eblm[0] = hp.sphtfunc.map2alm(p0[0], lmax=lmax, iter=niter)
-        s0eblm[1] = hp.sphtfunc.map2alm(p0[1], lmax=lmax, iter=niter)
+        s0eblm[0] = curvedsky.map2alm_healpix(p0[0], spin=0, lmax=lmax, niter=niter, theta_min=theta_min, theta_max=theta_max)
+        s0eblm[1] = curvedsky.map2alm_healpix(p0[1], spin=0, lmax=lmax, niter=niter, theta_min=theta_min, theta_max=theta_max)
 
     ell = np.arange(lmax+1)
     filter_1 = np.zeros(lmax+1)
@@ -170,7 +180,7 @@ def get_pure_alms(so_map, window, niter, lmax):
     elm_p = s2eblm[0] + s1eblm[0] + s0eblm[0]
     blm_b = s2eblm[1] + s1eblm[1] + s0eblm[1]
 
-    return np.array([alm,elm_p,blm_b])
+    return np.array([alm, elm_p, blm_b])
 
 def show_alm_triangle(
         alms, lmax, vmin, vmax, real=True, cmap="seismic",
