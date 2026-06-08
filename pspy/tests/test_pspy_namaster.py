@@ -85,7 +85,7 @@ def run_pspy(pure=False):
         window, binning_file, lmax=lmax, type="Cl", niter=niter, pure=pure
     )
     if pure:
-        spinned_windows =  so_window.get_spinned_windows(window, lmax, niter)
+        spinned_windows = so_window.get_spinned_windows(window[0], lmax, niter)
         alms = sph_tools.get_pure_alms(cmb, window, spinned_windows, niter=niter, lmax=lmax)
     else:
         alms = sph_tools.get_alms(cmb, window, niter=niter, lmax=lmax)
