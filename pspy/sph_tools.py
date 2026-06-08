@@ -187,7 +187,7 @@ def show_alm_triangle(
         xlims=None, ylims=None,
         title="Triangle", fig_file=None):
         
-    """
+    r"""
     This routine is from the spt3g data release
     https://pole.uchicago.edu/public/data/quan26/index.html
     Parameters
