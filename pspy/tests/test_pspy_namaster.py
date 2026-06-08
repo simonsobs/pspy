@@ -84,8 +84,11 @@ def run_pspy(pure=False):
     mbb_inv, Bbl = so_mcm.mcm_and_bbl_spin0and2(
         window, binning_file, lmax=lmax, type="Cl", niter=niter, pure=pure
     )
-    get_alms = sph_tools.get_pure_alms if pure else sph_tools.get_alms
-    alms = get_alms(cmb, window, niter=niter, lmax=lmax)
+    if pure:
+        spinned_windows =  so_window.get_spinned_windows(window, lmax, niter)
+        alms = sph_tools.get_pure_alms(cmb, window, spinned_windows, niter=niter, lmax=lmax)
+    else:
+        alms = sph_tools.get_alms(cmb, window, niter=niter, lmax=lmax)
     ell, ps = so_spectra.get_spectra(alms, spectra=spectra)
     lb, Clb = so_spectra.bin_spectra(
         ell, ps, binning_file, lmax, type="Cl", mbb_inv=mbb_inv, spectra=spectra
