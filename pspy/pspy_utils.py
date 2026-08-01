@@ -28,19 +28,20 @@ def ps_lensed_theory_to_dict(filename, output_type, lmax=None, start_at_zero=Fal
     ps["ET"] = ps["TE"].copy()
     ps["TB"], ps["BT"], ps["EB"], ps["BE"] = np.zeros((4, len(l)))
 
-    if lmax is not None:
-        l = l[:lmax]
-    scale = l * (l + 1) / (2 * np.pi)
+    scale = (l * (l + 1)) / (2 * np.pi) if output_type == "Cl" else 1.
+    lmax = lmax or l.max()
+    ell = np.arange(lmax)
     for f in fields:
-        if lmax is not None:
-            ps[f] = ps[f][:lmax]
-        if output_type == "Cl":
-            ps[f] /= scale
-        if start_at_zero:
-            ps[f] = np.append(np.array([0, 0]), ps[f])
-    if start_at_zero:
-        l = np.append(np.array([0, 1]), l)
-    return l, ps
+        spec = np.zeros(ell.shape)
+        lc = l.astype(int)
+        m = (lc < lmax)
+        spec[lc[m]] = ps[f][m] / scale
+        if not start_at_zero:
+            spec = spec[2:]
+        ps[f] = spec
+    if not start_at_zero:
+        ell = ell[2:]
+    return ell, ps
 
 
 def ps_from_params(cosmo_params, output_type, lmax, start_at_zero=False, **accuracy_pars):
