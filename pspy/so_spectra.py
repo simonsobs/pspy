@@ -268,11 +268,20 @@ def read_ps(file_name, spectra=None):
     """
     
     data = np.loadtxt(file_name)
-    if spectra is None:
-        return data[:, 0], data[:, 1]
+    if data.ndim == 1:
+        if spectra is None:
+            return data[0], data[1]
 
-    l = data[:, 0]
-    ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
+        l = data[0]
+        ps = {spec: data[i + 1] for i, spec in enumerate(spectra)}
+
+    else:
+        if spectra is None:
+            return data[:, 0], data[:, 1]
+
+        l = data[:, 0]
+        ps = {spec: data[:, i + 1] for i, spec in enumerate(spectra)}
+ 
     return l, ps
 
 def write_ps_hdf5(file, spec_name, l, ps, spectra=None):
