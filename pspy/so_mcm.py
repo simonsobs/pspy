@@ -166,7 +166,7 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
                    redo_toeplitz_as_exact=True, log=None, coupling=False,
                    pspy_index_convention=True, bin_size=1):
     """Return coupling matrices calculated by ducc. This function is a 
-    wrapper around ducc0.misc.experimental.coupling_matrix_spin0and2_new.
+    wrapper around ducc0.misc.experimental.coupling_matrix_rect.
 
     See https://mtr.pages.mpcdf.de/ducc/misc.html#module-ducc0.misc.experimental.
 
@@ -232,8 +232,20 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
         singleprec = True
 
     optype = np.asarray(optype)
-    mcm = ducc0.misc.experimental.coupling_matrix_spin0and2_new(
-        spec, lmax, optype, nthreads=nthread, res=res, singleprec=singleprec,
+
+    # coupling_matrix_spin0and2_new was renamed to coupling_matrix_rect upstream
+    # (ducc0 branch, commit ecf2885f "renamings and reordering"). the new entry
+    # point takes no lmax and requires res, so allocate it here: optype 4 emits
+    # two matrices, everything else one.
+    def _alloc(optype_arr):
+        nmat = int(np.sum(np.where(optype_arr < 4, 1, 2)))
+        return np.empty((nmat, lmax + 1, lmax + 1),
+                        dtype=np.float32 if singleprec else np.float64)
+
+    if res is None:
+        res = _alloc(optype)
+    mcm = ducc0.misc.experimental.coupling_matrix_rect(
+        spec, optype, res, nthreads=nthread,
         l_exact=l_exact, l_toeplitz=l_toeplitz, dl_band=dl_band
         )
     
@@ -278,9 +290,9 @@ def ducc_couplings(spec, lmax, optype, nthread=0, res=None,
             # OOM is very unlikely though.
             #
             # can't use res or Toeplitz; write directly into mcm
-            mcm[bad_mcm_idxs] = ducc0.misc.experimental.coupling_matrix_spin0and2_new(
-                spec[bad_spec_idxs], lmax, optype[bad_spec_idxs], nthreads=nthread,
-                singleprec=singleprec
+            mcm[bad_mcm_idxs] = ducc0.misc.experimental.coupling_matrix_rect(
+                spec[bad_spec_idxs], optype[bad_spec_idxs],
+                _alloc(optype[bad_spec_idxs]), nthreads=nthread
                 )         
 
     if not coupling:
