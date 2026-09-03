@@ -150,8 +150,6 @@ def analytical_std_tf(lmax, vk_masks=None, hk_masks=None, geometries=None,
 
                     if _ly_edge > ly_edge:
                         ly_edge = _ly_edge
-        else:
-            ly_edge = 0
         
     else:
         if vk_masks is not None:

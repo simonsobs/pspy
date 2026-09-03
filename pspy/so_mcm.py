@@ -16,7 +16,29 @@ import ducc0
 
 @njit(parallel=True)
 def _bin_kernel_1d(a, kw, op_is_mean):
-    """Parallel binning for 1D arrays."""
+    """Parallel binning for 1d arrays.
+
+    Parameters
+    ----------
+    a : (N,) np.ndarray
+        A 1d numpy array.
+    kw : int
+        The size of the bins. Can be 1.
+    op_is_mean : bool
+        Whether to bin by averaging or summming.
+
+    Returns
+    -------
+    (N // kw,) np.ndarray
+        The binned array.
+
+    Notes
+    -----
+    If the bins don't evenly divide the array, the remainder elements are
+    discarded.
+
+    Optimized with help of Gemini.
+    """
     w = a.shape[0]
     w_new = w // kw
     inv_kw = 1.0 / kw
@@ -35,7 +57,31 @@ def _bin_kernel_1d(a, kw, op_is_mean):
 
 @njit(parallel=True)
 def _bin_kernel_nd(a, kh, kw, op_is_mean):
-    """Parallel binning for 3D views (D, H, W). kh or kw can be 1."""
+    """Parallel binning for 3d arrays.
+
+    Parameters
+    ----------
+    a : (d0, h, w) np.ndarray
+        A 3d numpy array.
+    kh : int
+        The size of the bins for the h axis. Can be 1.
+    kw : int
+        The size of the bins for the w axis. Can be 1.
+    op_is_mean : bool
+        Whether to bin by averaging or summming.
+
+    Returns
+    -------
+    (d, h // kh, w // kw) np.ndarray
+        The binned array.
+
+    Notes
+    -----
+    If the bins don't evenly divide the array on either axis, the remainder
+    elements are discarded.
+
+    Optimized with help of Gemini.
+    """
     d0, h, w = a.shape
     h_new = h // kh
     w_new = w // kw
@@ -44,7 +90,7 @@ def _bin_kernel_nd(a, kh, kw, op_is_mean):
     out = np.empty((d0, h_new, w_new), dtype=a.dtype)
     
     # For ND, we parallelize over the depth slices.
-    # Interior loops uses SIMD hopefully
+    # Interior loops use SIMD hopefully
     for i in prange(d0):
         for row in range(h_new):
             r_start = row * kh
@@ -63,9 +109,6 @@ def parallel_bin(a, bin_size, op='mean'):
     Binning is ONLY along one or both of the last two axes of the
     array (or, the only axis if the array is 1-d). 
 
-    NOTE: if there are remaining elements at the end of a binned
-    axis, these are cropped (not included in any binning).
-
     Parameters
     ----------
     a : (nw,) or (..., nh, nw) np.ndarray
@@ -82,17 +125,22 @@ def parallel_bin(a, bin_size, op='mean'):
     -------
     (nw//kw,) or (..., nh//kh, nw//kw) np.ndarray
         The binned array for binsize of kw or kh, kw.
+
+    Notes
+    -----
+    If the bins don't evenly divide the array on either axis, the remainder
+    elements are discarded.
+
+    Optimized with help of Gemini.
     """
     op_is_mean = (op.lower() == 'mean')
     dims = len(a.shape)
     
-    # --- Case 1: 1D Array ---
     if dims == 1:
         kw = bin_size # must be an int
         return _bin_kernel_1d(a, kw, op_is_mean)
     
-    # --- Case 2: ND Array (N >= 2) ---
-    # Standardize bin_size to (kh, kw)
+    # if not 1d, infer bin sizes
     if isinstance(bin_size, int):
         kh = kw = bin_size
     else:
@@ -102,14 +150,14 @@ def parallel_bin(a, bin_size, op='mean'):
     prefix_dims = orig_shape[:-2]
     h, w = orig_shape[-2:]
     
-    # Flatten prefix: (..., H, W) -> (D, H, W)
-    # np.prod returns 1.0 for empty tuples, so we force int64
+    # flatten prefix: (..., H, W) -> (D, H, W)
+    # np.prod returns 1.0 for empty tuples, so we force int
     d_flat = int(np.prod(prefix_dims)) if prefix_dims else 1
     a_reshaped = a.reshape(d_flat, h, w)
     
     result = _bin_kernel_nd(a_reshaped, kh, kw, op_is_mean)
     
-    # Reshape back to (..., h_new, w_new)
+    # reshape back to (..., h_new, w_new)
     h_new, w_new = result.shape[1], result.shape[2]
     return result.reshape((*prefix_dims, h_new, w_new))
 
@@ -490,16 +538,19 @@ def sparse_dict_mat_astype(in_dict, dtype):
     return in_dict         
 
 def sparse_dict_mat_bin(in_dict, bin_size, op='sum'):
-    """Bin the blocks of a sparse dict matrix."""
+    """Bin the blocks of a sparse dict matrix. Each array in the sparse matrix
+    is binned by passing bin_size and op to parallel_bin, see parallel_bin."""
     for row, col_dict in in_dict.items():
         for col, arr in col_dict.items():
             in_dict[row][col] = parallel_bin(arr, bin_size, op=op)
     return in_dict      
 
 def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
-                                                       spectra, dense=False,
+                                                       spectra,
+                                                       interpret_spin=True,
+                                                       dense=False,
                                                        copy=False):
-    """Get a spectrum-to-spectrum matrix from 5 (or 1) blocks of a spinxspin
+    """Get a spectrum-to-spectrum matrix from 1, 4, or 5 blocks of a spinxspin
     array. By default, the spectrum-to-spectrum matrix is represented by a
     two-layer dictionary, indexing the row and col of each block of the matrix,
     ordered by the provided spectra. This maximally preserves the sparsity of
@@ -507,7 +558,7 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
 
     Parameters
     ----------
-    spin2spin_array : ({5}, x, y) np.ndarray
+    spin2spin_array : ({1, 4, 5}, x, y) np.ndarray
         The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
     spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
         The span (and ordering) of the blocks. Does not have to be all 9 pairs.
@@ -515,6 +566,15 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
         in that row (e.g., for 'EE', 'BB'), but that off-diagonal is not in 
         spectra, it will not be included in the matrix. I.e., spectra defines
         both all the rows and all the columns.
+    interpret_spin : bool, optional
+        Allow the leading index of spin2spin_array to be dynamically
+        "interpreted" according to the following rules: (1) if leading dim is
+        missing or size 1, populate the diagonals of all spectra with the array,
+        (2) if leading dim is size 4, interpret as 0x0, 0x2, 2x0, ++, and
+        populate the diagonal accordingly (this is like the classic mode-
+        coupling matrix but without the off-diagonal blocks), (3) if leading dim
+        is size 5, add the -- off-diagonal block. If False, raise an exception
+        if leading dim is not size 5.
     dense : bool, optional
         If False, return a two-layer dictionary, row-major block matrix. If
         True, realize the fully dense np.ndarray, which will be mostly 0.
@@ -541,9 +601,15 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
     
     out_dict = {spec: {} for spec in spectra}
 
-    assert spin2spin_array.ndim == 3 and spin2spin_array.shape[0] == 5, \
-        f'If not spin0, spin2spin_array must be a 3d array whose first ' + \
-        'axis has size 5'
+    if spin2spin_array.ndim == 2:
+        spin2spin_array = spin2spin_array[None]
+    assert spin2spin_array.ndim == 3, 'spin2spin_array must be a 3d array'
+
+    ncomps = spin2spin_array.shape[0]
+    if interpret_spin:
+        assert ncomps in (1, 4, 5), f'{ncomps=} must be 1, 4, or 5'
+    else:
+        assert ncomps == 5, f'If not interpret_spin, {ncomps=} must be 5'
 
     spin_diag_idxs = {'TT': 0, 'TE': 1, 'TB': 1, 'ET': 2, 'BT': 2}
     spin2_pairs_and_signs = {
@@ -556,7 +622,9 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
 
     for spec in spectra:
         # first fill the diagonal blocks
-        if spec in spin_diag_idxs:
+        if ncomps == 1:
+            idx = 0
+        elif spec in spin_diag_idxs:
             idx = spin_diag_idxs[spec]
         else:
             idx = 3
@@ -569,7 +637,7 @@ def get_spec2spec_sparse_dict_mat_from_spin2spin_array(spin2spin_array,
         out_dict[spec][spec] = block
         
         # now fill the off-diagonals
-        if spec in spin2_pairs_and_signs:
+        if ncomps == 5 and spec in spin2_pairs_and_signs:
             pair, sign = spin2_pairs_and_signs[spec]
             
             # only add to column for this row if column in spectra
@@ -816,7 +884,7 @@ def spin2spin_array_matmul_sparse_dict_mat(spin2spin_array, spectra, dict_b,
 
     Parameters
     ----------
-    spin2spin_array : ({5}, x, y) np.ndarray
+    spin2spin_array : ({1, 4, 5}, x, y) np.ndarray
         The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
     spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
         The span (and ordering) of the blocks. Does not have to be all 9 pairs.
@@ -843,7 +911,7 @@ def spin2spin_array_matmul_sparse_dict_mat(spin2spin_array, spectra, dict_b,
     
 def sparse_dict_mat_matmul_sparse_dict_vec(dict_a, dict_b, dense=False,
                                            dtype=np.float64):
-    """Multiply a sparse dict matrix and vector: C[i][j] = sum(A[i][k] @ B[k]). 
+    """Multiply a sparse dict matrix and vector: C[i] = sum(A[i][k] @ B[k]). 
     Only rows (i) in C are those in A for which a nonzero column (k) is a row
     in B. I.e., maximum sparsity.
 
@@ -895,7 +963,7 @@ def spin2spin_array_matmul_sparse_dict_vec(spin2spin_array, spectra, dict_b,
 
     Parameters
     ----------
-    spin2spin_array : ({5}, x, y) np.ndarray
+    spin2spin_array : ({1, 4, 5}, x, y) np.ndarray
         The blocks of the spinxspin matrix: 0x0, 0x2, 2x0, ++, --.
     spectra : iterable of 'XY' pairs, where X and Y are one of 'TEB'. 
         The span (and ordering) of the blocks. Does not have to be all 9 pairs.
