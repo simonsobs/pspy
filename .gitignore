@@ -111,3 +111,4 @@ venv.bak/
 *.aux
 
 pspy/tests/data/example_newcov/*
+*.vscode
