@@ -473,3 +473,86 @@ def read_coupling(prefix, spin_pairs=None):
         Bbl = np.load(prefix + "_Bbl.npy")
 
     return mode_coupling_inv, Bbl
+
+
+def coupling_block(
+                mode,
+                win1,
+                lmax,
+                niter=None,
+                win2=None,
+                input_alm=False,
+                l_exact=None,
+                l_toep=None,
+                l_band=None,
+                l3_pad=2000,
+                legacy_ell_range=False):
+ 
+    """Get the coupling matrix for two fields
+     Parameters
+     ----------
+     mode: string
+        one of "00", "02", "++" or "--"
+     win1: so_map (or alm)
+       the window function of survey 1, if input_alm=True, expect wlm1
+     lmax: integer
+       the maximum multipole to consider for the spectra computation
+     win2: so_map (or alm)
+       the window function of survey 2, if input_alm=True, expect wlm2
+     niter: int
+       specify the number of iteration in map2alm
+     l_toep: int
+     l_band: int
+     l_exact: int
+     """
+
+    if input_alm == False:
+        if niter is None:
+            raise ValueError("niter required")
+        l_max_limit = win1.get_lmax_limit()
+        if lmax > l_max_limit: raise ValueError("the requested lmax is too high with respect to the map pixellisation")
+        maxl = np.minimum(lmax + l3_pad, l_max_limit)
+
+        win1 = sph_tools.map2alm(win1, niter=niter, lmax=maxl)
+        if win2 is not None:
+            win2 = sph_tools.map2alm(win2, niter=niter, lmax=maxl)
+
+    if win2 is None:
+        wcl = hp.alm2cl(win1)
+    else:
+        wcl = hp.alm2cl(win1, win2)
+
+    l = np.arange(len(wcl))
+    wcl *= (2 * l + 1)
+
+    mcm = np.zeros((lmax + 1, lmax + 1))
+
+    if l_toep is None: l_toep = lmax + 1
+    if l_band is None: l_band = lmax + 1
+    if l_exact is None: l_exact = lmax + 1
+
+    if mode == "00":
+        mcm_fortran.calc_coupling_block_spin0(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "02":
+        mcm_fortran.calc_coupling_block_spin02(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "++":
+        mcm_fortran.calc_coupling_block_spin2_pp(wcl, l_exact, l_band, l_toep, mcm.T)
+    elif mode == "--":
+        mcm_fortran.calc_coupling_block_spin2_mm(wcl, l_exact, l_band, l_toep, mcm.T)
+    else:
+        raise ValueError(f"mode \"{mode}\" not one of (\"00\", \"02\", \"++\", \"--\")")
+      
+    if l_toep < lmax:
+        mcm = format_toepliz_fortran2(mcm, l_toep, l_exact, lmax)
+
+    mcm_fortran.fill_upper(mcm.T)
+    
+    mcm_full = np.zeros((lmax + 1, lmax + 1))
+    mcm_full[2:, 2:] = mcm[:-2, :-2]
+    mcm_full[0, 0] = 1.0
+    mcm_full[1, 1] = 1.0
+
+    if legacy_ell_range:
+        return mcm_full[2:-1, 2:-1]
+    else:
+        return mcm_full
